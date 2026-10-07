@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Ostium",
-    "slug": "Ostium",
+    "slug": "ostium",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -37,6 +37,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "13e4c944-3232-46ff-bb8c-eaf35d34d6c7"
+      }
+    },
+    "owner": "ostium-mun"
   }
 }
