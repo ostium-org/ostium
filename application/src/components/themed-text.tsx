@@ -1,6 +1,6 @@
 import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
 
-import { Fonts, ThemeColor } from '@/constants/theme';
+import { Fonts, PageTitleSize, ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export type ThemedTextProps = TextProps & {
@@ -14,14 +14,17 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
   return (
     <Text
       style={[
-        { color: theme[themeColor ?? 'text'] },
+        {
+          color: theme[themeColor ?? 'text'],
+          fontFamily: type === 'title' || type === 'subtitle' ? Fonts.display : Fonts.body,
+        },
         type === 'default' && styles.default,
         type === 'title' && styles.title,
         type === 'small' && styles.small,
         type === 'smallBold' && styles.smallBold,
         type === 'subtitle' && styles.subtitle,
         type === 'link' && styles.link,
-        type === 'linkPrimary' && styles.linkPrimary,
+        type === 'linkPrimary' && [styles.linkPrimary, { color: theme.accent }],
         type === 'code' && styles.code,
         style,
       ]}
@@ -47,14 +50,15 @@ const styles = StyleSheet.create({
     fontWeight: 500,
   },
   title: {
-    fontSize: 48,
-    fontWeight: 600,
-    lineHeight: 52,
+    ...PageTitleSize,
+    fontWeight: 700,
+    letterSpacing: 1,
   },
   subtitle: {
-    fontSize: 32,
-    lineHeight: 44,
-    fontWeight: 600,
+    fontSize: 24,
+    lineHeight: 32,
+    fontWeight: 700,
+    letterSpacing: 0.5,
   },
   link: {
     lineHeight: 30,
@@ -63,10 +67,9 @@ const styles = StyleSheet.create({
   linkPrimary: {
     lineHeight: 30,
     fontSize: 14,
-    color: '#3c87f7',
   },
   code: {
-    fontFamily: Fonts.mono,
+    fontFamily: Fonts.body,
     fontWeight: Platform.select({ android: 700 }) ?? 500,
     fontSize: 12,
   },

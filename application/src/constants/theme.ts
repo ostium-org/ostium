@@ -9,47 +9,36 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: '#4C4F69',
+    background: '#EFF1F5',
+    backgroundElement: '#E6E9EF',
+    backgroundSelected: '#CCD0DA',
+    textSecondary: '#5C5F77',
+    accent: '#8839EF',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#CDD6F4',
+    background: '#1E1E2E',
+    backgroundElement: '#181825',
+    backgroundSelected: '#313244',
+    textSecondary: '#BAC2DE',
+    accent: '#CBA6F7',
   },
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
-  },
-});
+export const Fonts =
+  Platform.select({
+    web: {
+      display: 'var(--font-display)',
+      body: 'var(--font-body)',
+    },
+    default: {
+      display: 'Doto',
+      body: 'Manrope',
+    },
+  }) ?? { display: 'Doto', body: 'Manrope' };
 
 export const Spacing = {
   half: 2,
@@ -59,6 +48,11 @@ export const Spacing = {
   four: 24,
   five: 32,
   six: 64,
+} as const;
+
+export const PageTitleSize = {
+  fontSize: 30,
+  lineHeight: 36,
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
