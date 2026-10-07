@@ -11,12 +11,10 @@ import type { SFSymbol } from 'expo-symbols';
 import type { AndroidSymbol } from 'expo-symbols';
 import { Pressable, View, StyleSheet } from 'react-native';
 
-import { ExternalLink } from './external-link';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
-import { Colors, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useThemePreference } from '@/hooks/theme-preference';
+import { Fonts, MaxContentWidth, Spacing } from '@/constants/theme';
 
 export default function AppTabs() {
   return (
@@ -25,7 +23,7 @@ export default function AppTabs() {
       <TabList asChild>
         <CustomTabList>
           <TabTrigger name="home" href="/" asChild>
-            <TabButton>Home</TabButton>
+            <TabButton icon="house" webIcon="home">Home</TabButton>
           </TabTrigger>
           <TabTrigger name="qr-code" href="/qr-code" asChild>
             <TabButton icon="qrcode" webIcon="qr_code">QR Code</TabButton>
@@ -46,7 +44,10 @@ export function TabButton({ children, isFocused, icon, webIcon, ...props }: TabT
         type={isFocused ? 'backgroundSelected' : 'backgroundElement'}
         style={styles.tabButtonView}>
         {icon && webIcon && <SymbolView name={{ ios: icon, web: webIcon }} size={16} />}
-        <ThemedText type="small" themeColor={isFocused ? 'text' : 'textSecondary'}>
+        <ThemedText
+          type="small"
+          themeColor={isFocused ? 'text' : 'textSecondary'}
+          style={styles.navLabel}>
           {children}
         </ThemedText>
       </ThemedView>
@@ -55,28 +56,14 @@ export function TabButton({ children, isFocused, icon, webIcon, ...props }: TabT
 }
 
 export function CustomTabList(props: TabListProps) {
-  const { colorScheme } = useThemePreference();
-  const colors = Colors[colorScheme];
-
   return (
     <View {...props} style={styles.tabListContainer}>
       <ThemedView type="backgroundElement" style={styles.innerContainer}>
         <ThemedText type="smallBold" style={styles.brandText}>
-          Expo Starter
+          OSTIUM
         </ThemedText>
 
         {props.children}
-
-        <ExternalLink href="https://docs.expo.dev" asChild>
-          <Pressable style={styles.externalPressable}>
-            <ThemedText type="link">Docs</ThemedText>
-            <SymbolView
-              tintColor={colors.text}
-              name={{ ios: 'arrow.up.right.square', web: 'link' }}
-              size={12}
-            />
-          </Pressable>
-        </ExternalLink>
       </ThemedView>
     </View>
   );
@@ -103,6 +90,11 @@ const styles = StyleSheet.create({
   },
   brandText: {
     marginRight: 'auto',
+    fontFamily: Fonts.display,
+    letterSpacing: 2,
+  },
+  navLabel: {
+    fontFamily: Fonts.display,
   },
   pressed: {
     opacity: 0.7,
@@ -114,12 +106,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
-  },
-  externalPressable: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: Spacing.one,
-    marginLeft: Spacing.three,
   },
 });

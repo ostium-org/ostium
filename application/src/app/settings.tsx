@@ -10,54 +10,65 @@ export default function SettingsScreen() {
   const { colorScheme, setColorScheme } = useThemePreference();
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ThemedView style={styles.container}>
-        <ThemedText type="title" style={styles.header}>
-          SETTINGS
-        </ThemedText>
-        <ThemedView type="backgroundElement" style={styles.settingCard}>
-          <View style={styles.sectionHeading}>
-            <ThemedText type="subtitle">Theme</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              Choose your preferred appearance.
-            </ThemedText>
-          </View>
-          <View style={styles.themeOptions}>
-            {(['light', 'dark'] as const).map((scheme) => {
-              const selected = colorScheme === scheme;
-              return (
-                <Pressable
-                  key={scheme}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  onPress={() => setColorScheme(scheme)}
-                  style={({ pressed }) => [styles.themeOption, pressed && styles.pressed]}>
-                  <ThemedView
-                    type={selected ? 'backgroundSelected' : 'background'}
-                    style={styles.themeOptionInner}>
-                    <View style={[styles.themePreview, { backgroundColor: Colors[scheme].background }]}>
-                      <View style={[styles.previewLine, { backgroundColor: Colors[scheme].text }]} />
+    <ThemedView style={styles.page}>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <ThemedView style={styles.container}>
+          <ThemedText type="title" style={styles.header}>
+            SETTINGS
+          </ThemedText>
+          <ThemedView type="backgroundElement" style={styles.settingCard}>
+            <View style={styles.sectionHeading}>
+              <ThemedText type="subtitle">Theme</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                Choose your preferred appearance.
+              </ThemedText>
+            </View>
+            <View style={styles.themeOptions}>
+              {(['light', 'dark'] as const).map((scheme) => {
+                const selected = colorScheme === scheme;
+                return (
+                  <Pressable
+                    key={scheme}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    onPress={() => setColorScheme(scheme)}
+                    style={({ pressed }) => [styles.themeOption, pressed && styles.pressed]}>
+                    <ThemedView
+                      type={selected ? 'backgroundSelected' : 'background'}
+                      style={styles.themeOptionInner}>
                       <View
-                        style={[styles.previewLineShort, { backgroundColor: Colors[scheme].textSecondary }]}
-                      />
-                    </View>
-                    <ThemedText type="smallBold" themeColor={selected ? 'text' : 'textSecondary'}>
-                      {scheme === 'light' ? 'LIGHT' : 'DARK'}
-                    </ThemedText>
-                  </ThemedView>
-                </Pressable>
-              );
-            })}
-          </View>
+                        style={[styles.themePreview, { backgroundColor: Colors[scheme].background }]}>
+                        <View style={[styles.previewLine, { backgroundColor: Colors[scheme].text }]} />
+                        <View
+                          style={[
+                            styles.previewLineShort,
+                            { backgroundColor: Colors[scheme].textSecondary },
+                          ]}
+                        />
+                      </View>
+                      <ThemedText type="smallBold" themeColor={selected ? 'text' : 'textSecondary'}>
+                        {scheme === 'light' ? 'LIGHT' : 'DARK'}
+                      </ThemedText>
+                    </ThemedView>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </ThemedView>
         </ThemedView>
-      </ThemedView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
+  page: {
+    flex: 1,
+    width: '100%',
+  },
   safeArea: {
     flex: 1,
+    width: '100%',
   },
   container: {
     flex: 1,
