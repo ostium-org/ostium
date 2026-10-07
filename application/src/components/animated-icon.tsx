@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
 import { useState } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import { Dimensions, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -33,7 +33,7 @@ export function AnimatedSplashOverlay() {
     },
   });
 
-  const image = <Image style={styles.image} source={require('@/assets/images/expo-logo.png')} />;
+  const image = <Text style={styles.splashWordmark}>OSTIUM</Text>;
 
   return animate ? (
     <Animated.View
@@ -140,9 +140,16 @@ const styles = StyleSheet.create({
   },
   splashOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: '#208AEF',
+    backgroundColor: '#1E1E2E',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
+  },
+  splashWordmark: {
+    color: '#CDD6F4',
+    fontFamily: 'Doto',
+    fontSize: 42,
+    fontWeight: '700',
+    letterSpacing: 4,
   },
 });

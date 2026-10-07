@@ -9,13 +9,14 @@ import {
 import { SymbolView } from 'expo-symbols';
 import type { SFSymbol } from 'expo-symbols';
 import type { AndroidSymbol } from 'expo-symbols';
-import { Pressable, useColorScheme, View, StyleSheet } from 'react-native';
+import { Pressable, View, StyleSheet } from 'react-native';
 
 import { ExternalLink } from './external-link';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { Colors, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useThemePreference } from '@/hooks/theme-preference';
 
 export default function AppTabs() {
   return (
@@ -54,8 +55,8 @@ export function TabButton({ children, isFocused, icon, webIcon, ...props }: TabT
 }
 
 export function CustomTabList(props: TabListProps) {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const { colorScheme } = useThemePreference();
+  const colors = Colors[colorScheme];
 
   return (
     <View {...props} style={styles.tabListContainer}>
