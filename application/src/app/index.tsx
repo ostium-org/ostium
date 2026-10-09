@@ -1,80 +1,85 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
+import { HouseCard } from '@/components/house-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+import {
+  BottomTabInset,
+  MaxContentWidth,
+  PageTitleSize,
+  Spacing,
+  TopTabInset,
+} from '@/constants/theme';
+import { HOUSES } from '@/data/houses';
 
 export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Ostium
-          </ThemedText>
-        </ThemedView>
+  const houses = HOUSES;
+  const isSingle = houses.length === 1;
 
+  return (
+    <ThemedView style={styles.page}>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <FlatList
+          key={isSingle ? 'single' : 'grid'}
+          data={houses}
+          numColumns={isSingle ? 1 : 2}
+          keyExtractor={(house) => house.id}
+          renderItem={({ item }) => (
+            <View style={isSingle ? styles.cellFull : styles.cellHalf}>
+              <HouseCard house={item} large={isSingle} />
+            </View>
+          )}
+          ListHeaderComponent={
+            <ThemedText type="title" style={styles.header}>
+              HOUSES
+            </ThemedText>
+          }
+          ListEmptyComponent={
+            <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
+              No houses yet.
+            </ThemedText>
+          }
+          contentContainerStyle={styles.listContent}
+        />
       </SafeAreaView>
     </ThemedView>
   );
 }
 
+
 const styles = StyleSheet.create({
-  container: {
+  page: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    width: '100%',
   },
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
+    width: '100%',
     maxWidth: MaxContentWidth,
+    alignSelf: 'center',
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  listContent: {
+    paddingHorizontal: Spacing.two,
+    paddingTop: TopTabInset,
+    paddingBottom: BottomTabInset + Spacing.three,
   },
-  title: {
+  header: {
+    ...PageTitleSize,
     textAlign: 'center',
+    marginTop: Spacing.one,
+    marginBottom: Spacing.three,
   },
-  code: {
-    textTransform: 'uppercase',
+  cellHalf: {
+    width: '50%',
+    padding: Spacing.two,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  cellFull: {
+    width: '100%',
+    padding: Spacing.two,
+  },
+  empty: {
+    textAlign: 'center',
+    paddingVertical: Spacing.five,
   },
 });
