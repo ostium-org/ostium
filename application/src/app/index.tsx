@@ -2,6 +2,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HouseCard } from '@/components/house-card';
+import { ScreenTransition } from '@/components/screen-transition';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import {
@@ -20,28 +21,30 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.page}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <FlatList
-          key={isSingle ? 'single' : 'grid'}
-          data={houses}
-          numColumns={isSingle ? 1 : 2}
-          keyExtractor={(house) => house.id}
-          renderItem={({ item }) => (
-            <View style={isSingle ? styles.cellFull : styles.cellHalf}>
-              <HouseCard house={item} large={isSingle} />
-            </View>
-          )}
-          ListHeaderComponent={
-            <ThemedText type="title" style={styles.header}>
-              HOUSES
-            </ThemedText>
-          }
-          ListEmptyComponent={
-            <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
-              No houses yet.
-            </ThemedText>
-          }
-          contentContainerStyle={styles.listContent}
-        />
+        <ScreenTransition>
+          <FlatList
+            key={isSingle ? 'single' : 'grid'}
+            data={houses}
+            numColumns={isSingle ? 1 : 2}
+            keyExtractor={(house) => house.id}
+            renderItem={({ item }) => (
+              <View style={isSingle ? styles.cellFull : styles.cellHalf}>
+                <HouseCard house={item} large={isSingle} />
+              </View>
+            )}
+            ListHeaderComponent={
+              <ThemedText type="title" style={styles.header}>
+                HOUSES
+              </ThemedText>
+            }
+            ListEmptyComponent={
+              <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
+                No houses yet.
+              </ThemedText>
+            }
+            contentContainerStyle={styles.listContent}
+          />
+        </ScreenTransition>
       </SafeAreaView>
     </ThemedView>
   );
