@@ -26,58 +26,6 @@
 create extension if not exists "pgcrypto"; -- gen_random_uuid()
 
 -- ============================================================================
--- Helper functions (security definer so they don't recurse through RLS)
--- ============================================================================
-
-create or replace function public.is_admin()
-returns boolean
-language sql
-security definer
-stable
-set search_path = public
-as $$
-  select exists (
-    select 1
-    from public.profiles
-    where id = auth.uid()
-      and role = 'admin'
-  );
-$$;
-
-create or replace function public.is_manager()
-returns boolean
-language sql
-security definer
-stable
-set search_path = public
-as $$
-  select exists (
-    select 1
-    from public.profiles
-    where id = auth.uid()
-      and role in ('manager', 'admin')
-  );
-$$;
-
--- True if the current user holds an active, non-expired grant for a unit.
-create or replace function public.has_active_unit_access(p_unit_id uuid)
-returns boolean
-language sql
-security definer
-stable
-set search_path = public
-as $$
-  select exists (
-    select 1
-    from public.access_grants g
-    where g.unit_id = p_unit_id
-      and g.grantee_id = auth.uid()
-      and g.is_active
-      and (g.valid_until is null or g.valid_until > now())
-  );
-$$;
-
--- ============================================================================
 -- profiles
 -- ============================================================================
 create table if not exists public.profiles (
@@ -228,6 +176,58 @@ create index if not exists access_events_user_id_idx
   on public.access_events (user_id);
 create index if not exists access_events_occurred_at_idx
   on public.access_events (occurred_at desc);
+
+-- ============================================================================
+-- Helper functions (security definer so they don't recurse through RLS)
+-- ============================================================================
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.profiles
+    where id = auth.uid()
+      and role = 'admin'
+  );
+$$;
+
+create or replace function public.is_manager()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.profiles
+    where id = auth.uid()
+      and role in ('manager', 'admin')
+  );
+$$;
+
+-- True if the current user holds an active, non-expired grant for a unit.
+create or replace function public.has_active_unit_access(p_unit_id uuid)
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.access_grants g
+    where g.unit_id = p_unit_id
+      and g.grantee_id = auth.uid()
+      and g.is_active
+      and (g.valid_until is null or g.valid_until > now())
+  );
+$$;
 
 -- ============================================================================
 -- Triggers
