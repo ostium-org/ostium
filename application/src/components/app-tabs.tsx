@@ -10,9 +10,11 @@ export default function AppTabs() {
     <NativeTabs
       backgroundColor={colors.background}
       indicatorColor={colors.backgroundElement}
-      labelStyle={{ fontFamily: 'Doto' }}
-      selectedLabelStyle={{ color: colors.text }}>
-      <NativeTabs.Trigger name="index">
+      labelStyle={{
+        default: { fontFamily: 'Doto' },
+        selected: { fontFamily: 'Doto', color: colors.text },
+      }}>
+      <NativeTabs.Trigger name="(home)">
         <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/home.png')}
