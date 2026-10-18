@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import QRCode from 'react-native-qrcode-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Button } from '@/components/button';
 import { ScreenTransition } from '@/components/screen-transition';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -17,7 +18,7 @@ export default function QRCodeScreen() {
   const [expanded, setExpanded] = useState(false);
   const [cardWidth, setCardWidth] = useState(0);
   const house = HOUSES.find((item) => item.id === selectedHouseId);
-  const { code, seconds, error } = useRotatingQRCode(house?.id);
+  const { code, seconds, error, refresh } = useRotatingQRCode(house?.id);
 
   return (
     <ThemedView style={styles.page}>
@@ -28,7 +29,7 @@ export default function QRCodeScreen() {
             {house ? (
               <>
                 <View style={styles.selector}>
-                  <ThemedText type="smallBold">HOUSE</ThemedText>
+                  <ThemedText type="smallBold">SELECT HOUSE</ThemedText>
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Select house. Current house: ${house.name}`}
@@ -40,7 +41,7 @@ export default function QRCodeScreen() {
                       <ThemedText type="smallBold">{house.name}</ThemedText>
                       <ThemedText type="small" themeColor="textSecondary">{house.address}</ThemedText>
                     </View>
-                    <ThemedText>{expanded ? '▴' : '▾'}</ThemedText>
+                    <ThemedText type="smallBold">{expanded ? 'Close ▴' : 'Change ▾'}</ThemedText>
                   </Pressable>
                   {expanded && (
                     <ThemedView type="backgroundElement" style={styles.options}>
@@ -100,6 +101,7 @@ export default function QRCodeScreen() {
                     Hold this code in front of the door camera.
                   </ThemedText>
                 </ThemedView>
+                <Button title="Refresh QR code" onPress={refresh} />
               </>
             ) : (
               <ThemedText themeColor="textSecondary" style={styles.centered}>
