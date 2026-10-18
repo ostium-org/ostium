@@ -1,11 +1,8 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-<<<<<<< Updated upstream:application/src/app/settings.tsx
 import { ScreenTransition } from '@/components/screen-transition';
-=======
 import { Button } from '@/components/button';
->>>>>>> Stashed changes:application/src/app/(app)/settings.tsx
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, PageTitleSize, Spacing } from '@/constants/theme';
@@ -63,23 +60,19 @@ export default function SettingsScreen() {
                 })}
               </View>
             </ThemedView>
-          </ThemedView>
-<<<<<<< Updated upstream:application/src/app/settings.tsx
-        </ScreenTransition>
-=======
 
-          {/* Account card: who is signed in, and the way to sign out. */}
-          <ThemedView type="backgroundElement" style={styles.settingCard}>
-            <View style={styles.sectionHeading}>
-              <ThemedText type="subtitle">Account</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                Signed in as {user?.email}
-              </ThemedText>
-            </View>
-            <Button title="SIGN OUT" variant="secondary" onPress={() => void signOut()} />
+            {/* Account card: who is signed in, and the way to sign out. */}
+            <ThemedView type="backgroundElement" style={styles.settingCard}>
+              <View style={styles.sectionHeading}>
+                <ThemedText type="subtitle">Account</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  Signed in as {user?.email}
+                </ThemedText>
+              </View>
+              <Button title="SIGN OUT" variant="secondary" onPress={() => void signOut()} />
+            </ThemedView>
           </ThemedView>
-        </ThemedView>
->>>>>>> Stashed changes:application/src/app/(app)/settings.tsx
+        </ScreenTransition>
       </SafeAreaView>
     </ThemedView>
   );
