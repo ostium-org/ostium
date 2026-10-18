@@ -9,7 +9,6 @@ import { useTheme } from '@/hooks/use-theme';
 
 type HouseCardProps = {
   house: House;
-  /** Renders the big single-house variant instead of the compact grid variant. */
   large?: boolean;
   onPress?: (house: House) => void;
 };
