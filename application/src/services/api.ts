@@ -44,6 +44,10 @@ const BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? '').trim().replace(/\/+$/, 
 
 const MOCK_ENABLED = __DEV__ && BASE_URL === '';
 
+export function isMockApiEnabled(): boolean {
+  return MOCK_ENABLED;
+}
+
 const REQUEST_TIMEOUT_MS = 15_000;
 
 // mock accounts for the fake login

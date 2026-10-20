@@ -16,13 +16,3 @@ export function createDemoQRCode(houseId: string, id: string, now: number): Demo
 export function remainingQRSeconds(expiresAt: number, now: number): number {
   return Math.max(0, Math.ceil((expiresAt - now) / 1000));
 }
-
-export function getCurrentDemoQRCode(
-  current: DemoQRCode | null,
-  houseId: string,
-  now: number,
-  createId: () => string,
-): DemoQRCode {
-  if (current?.houseId === houseId && current.expiresAt > now) return current;
-  return createDemoQRCode(houseId, createId(), now);
-}

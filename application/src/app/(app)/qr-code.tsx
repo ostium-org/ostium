@@ -18,7 +18,7 @@ export default function QRCodeScreen() {
   const [expanded, setExpanded] = useState(false);
   const [cardWidth, setCardWidth] = useState(0);
   const house = HOUSES.find((item) => item.id === selectedHouseId);
-  const { code, seconds, error, refresh } = useRotatingQRCode(house?.id);
+  const { code, seconds, error, loading, refresh } = useRotatingQRCode(house?.id);
 
   return (
     <ThemedView style={styles.page}>
@@ -76,14 +76,14 @@ export default function QRCodeScreen() {
                   onLayout={(event) => setCardWidth(event.nativeEvent.layout.width)}>
                   <ThemedText type="subtitle" style={styles.centered}>{house.name}</ThemedText>
                   <View
-                    accessible
-                    accessibilityLabel={`Demo QR code for ${house.name}`}
+                    accessible={Boolean(code)}
+                    accessibilityLabel={code ? `${code.isDemo ? 'Demo QR code' : 'QR code'} for ${house.name}` : undefined}
                     style={styles.qrBackground}>
                     {error ? (
-                      <ThemedText style={styles.error}>Unable to generate code. Retrying…</ThemedText>
+                      <ThemedText accessibilityRole="alert" style={styles.error}>{error}</ThemedText>
                     ) : code && cardWidth > 0 ? (
                       <QRCode
-                        value={JSON.stringify(code)}
+                        value={code.payload}
                         size={Math.max(80, Math.min(260, cardWidth - 96))}
                         color="#000000"
                         backgroundColor="#FFFFFF"
@@ -97,11 +97,17 @@ export default function QRCodeScreen() {
                       Refreshes in {Math.floor(seconds / 60).toString().padStart(2, '0')}:{(seconds % 60).toString().padStart(2, '0')}
                     </ThemedText>
                   )}
-                  <ThemedText type="small" themeColor="textSecondary" style={styles.centered}>
-                    Hold this code in front of the door camera.
-                  </ThemedText>
+                  {code && (
+                    <ThemedText type="small" themeColor="textSecondary" style={styles.centered}>
+                      {code.isDemo ? 'Demo code — door unlocking is not connected.' : 'Hold this code in front of the door camera.'}
+                    </ThemedText>
+                  )}
                 </ThemedView>
-                <Button title="Refresh QR code" onPress={refresh} />
+                <Button
+                  title={error ? 'Retry QR code' : 'Refresh QR code'}
+                  onPress={refresh}
+                  loading={loading}
+                />
               </>
             ) : (
               <ThemedText themeColor="textSecondary" style={styles.centered}>

@@ -1,80 +1,46 @@
-import { randomUUID } from 'expo-crypto';
 import { useIsFocused } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
-import { createDemoQRCode, getCurrentDemoQRCode, remainingQRSeconds, type DemoQRCode } from '@/utils/qr-code';
+import { QRCredentialController } from '@/services/qr-credential-controller';
+import { getQRCredential } from '@/services/qr-credentials';
 
 export function useRotatingQRCode(houseId: string | undefined) {
   const isFocused = useIsFocused();
-  const current = useRef<DemoQRCode | null>(null);
-  const [code, setCode] = useState<DemoQRCode | null>(null);
-  const [seconds, setSeconds] = useState(60);
-  const [error, setError] = useState(false);
+  const [controller] = useState(() => new QRCredentialController(getQRCredential));
+  const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
 
-  const refresh = useCallback(() => {
-    if (!houseId || !isFocused) return;
-    try {
-      const now = Date.now();
-      const next = createDemoQRCode(houseId, randomUUID(), now);
-      current.current = next;
-      setCode(next);
-      setSeconds(remainingQRSeconds(next.expiresAt, now));
-      setError(false);
-    } catch {
-      current.current = null;
-      setCode(null);
-      setError(true);
-    }
-  }, [houseId, isFocused]);
-
-  // When the houseId changes, reset the QR code and start over.
   useEffect(() => {
     if (!houseId || !isFocused) return;
     const selectedHouseId = houseId;
     let timer: ReturnType<typeof setInterval> | undefined;
-
-    function update() {
-      const now = Date.now();
-      try {
-        const next = getCurrentDemoQRCode(current.current, selectedHouseId, now, randomUUID);
-        if (next !== current.current) {
-          current.current = next;
-          setCode(current.current);
-        }
-        setSeconds(remainingQRSeconds(next.expiresAt, now));
-        setError(false);
-      } catch {
-        current.current = null;
-        setCode(null);
-        setError(true);
-      }
-    }
-
-    // Stop the timer when the component unmounts or the houseId changes.
     function stop() {
       if (timer !== undefined) clearInterval(timer);
       timer = undefined;
+      controller.deactivate();
     }
-
     function start() {
       stop();
-      update();
-      timer = setInterval(update, 250);
+      controller.activate(selectedHouseId);
+      timer = setInterval(controller.tick, 250);
     }
-
-    // Start the timer when the component mounts or the houseId changes.
     if (AppState.currentState === 'active' || AppState.currentState === null) start();
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') start();
+    const subscription = AppState.addEventListener('change', (status) => {
+      if (status === 'active') start();
       else stop();
     });
     return () => {
       stop();
       subscription.remove();
     };
-  }, [houseId, isFocused]);
+  }, [controller, houseId, isFocused]);
 
-  // Return the current QR code, remaining time, and any error state.
-  return { code: isFocused && code?.houseId === houseId ? code : null, seconds, error, refresh };
+  const visible = isFocused && state.active && state.houseId === houseId;
+  return {
+    code: visible && state.seconds > 0 ? state.credential : null,
+    seconds: visible ? state.seconds : 0,
+    error: visible ? state.error : null,
+    loading: visible ? state.loading : Boolean(houseId),
+    refresh: controller.refresh,
+  };
 }
