@@ -1,15 +1,11 @@
 import { afterAll, afterEach, beforeEach, mock } from 'bun:test';
 
-declare global {
-  var __DEV__: boolean;
-}
-
 const originalDev = Object.getOwnPropertyDescriptor(globalThis, '__DEV__');
 const originalUrl = process.env.EXPO_PUBLIC_API_URL;
 const originalFetch = globalThis.fetch;
 
 // Configure services before their first import, regardless of the developer's environment.
-globalThis.__DEV__ = false;
+Object.defineProperty(globalThis, '__DEV__', { value: false, configurable: true, writable: true });
 process.env.EXPO_PUBLIC_API_URL = 'https://api.ostium.test';
 
 beforeEach(() => {
