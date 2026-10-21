@@ -57,6 +57,7 @@ export default function SignupScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<SignupFieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const submittingRef = useRef(false);
@@ -76,13 +77,19 @@ export default function SignupScreen() {
     );
     setFieldErrors(errors);
     setFormError(null);
+    setConfirmationEmail(null);
     if (errors.email || errors.password || errors.confirmPassword) return;
 
     submittingRef.current = true;
     setSubmitting(true);
     try {
-      // On success the AuthProvider updates `user` and the layout swaps to the app.
-      await signUp(email.trim(), password, fullName.trim() || undefined);
+      const result = await signUp(email.trim(), password, fullName.trim() || undefined);
+      if (result === "confirmation-required") {
+        setConfirmationEmail(email.trim());
+        setPassword("");
+        setConfirmPassword("");
+        setShowPassword(false);
+      }
     } catch (error) {
       setFormError(messageFor(error));
       setPassword("");
@@ -211,6 +218,13 @@ export default function SignupScreen() {
                   onSubmitEditing={handleSubmit}
                   editable={!submitting}
                 />
+
+                {confirmationEmail ? (
+                  <ThemedText type="small" role="status">
+                    Check {confirmationEmail} for a confirmation link. Confirm your
+                    email, then return here and sign in.
+                  </ThemedText>
+                ) : null}
 
                 {formError ? (
                   <ThemedText

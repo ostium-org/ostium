@@ -58,15 +58,19 @@ describe('QR credential responses', () => {
 
 // Isolate module-level API configuration and the native UUID stub from other test files.
 test.each([
-  [true, '', true], [true, 'https://api.ostium.test', false], [false, '', false],
-] as const)('QR mock mode follows development=%s and API URL=%s', (dev, url, expectedMock) => {
+  [true, '', '', false],
+  [true, '', 'true', true],
+  [true, 'https://api.ostium.test', 'true', false],
+  [false, '', 'true', false],
+] as const)('QR mock mode follows development=%s, API URL=%s, and opt-in=%s', (dev, url, optIn, expectedMock) => {
   const script = `
     import { mock } from 'bun:test';
     globalThis.__DEV__ = ${dev};
     process.env.EXPO_PUBLIC_API_URL = ${JSON.stringify(url)};
+    process.env.EXPO_PUBLIC_MOCK_API = ${JSON.stringify(optIn)};
     mock.module('expo-crypto', () => ({ randomUUID: () => 'demo-unique-id' }));
     globalThis.fetch = async () => { throw new Error('API request attempted'); };
-    const { isMockApiEnabled } = await import('./src/services/api');
+    const { isMockApiEnabled, signup } = await import('./src/services/api');
     const { getQRCredential } = await import('./src/services/qr-credentials');
     if (isMockApiEnabled() !== ${expectedMock}) throw new Error('Incorrect mock mode');
     if (${expectedMock}) {
@@ -77,6 +81,8 @@ test.each([
           result.expiresAt !== payload.issuedAt + 60000 || payload.issuedAt < before) throw new Error('Invalid demo');
     } else {
       try { await getQRCredential('house-1'); throw new Error('Unexpected success'); }
+      catch (error) { if (!['network', 'not-configured'].includes(error.kind)) throw error; }
+      try { await signup('tenant@example.com', 'password123'); throw new Error('Fake signup succeeded'); }
       catch (error) { if (!['network', 'not-configured'].includes(error.kind)) throw error; }
     }
   `;
