@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -29,7 +30,16 @@ export default function HomeScreen() {
             keyExtractor={(house) => house.id}
             renderItem={({ item }) => (
               <View style={isSingle ? styles.cellFull : styles.cellHalf}>
-                <HouseCard house={item} large={isSingle} />
+                <HouseCard
+                  house={item}
+                  large={isSingle}
+                  onPress={(house) =>
+                  router.push({
+                  pathname: '/houses/[id]',
+                  params: { id: house.id },
+                  })
+                  }
+                  />
               </View>
             )}
             ListHeaderComponent={
