@@ -3,6 +3,7 @@ import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test';
 import {
   getDevLoginHint,
   login,
+  signup,
   parseAuthUser,
   request,
   setAccessToken,
@@ -10,6 +11,29 @@ import {
 } from '@/services/api';
 
 const user = { id: 'tenant-1', email: 'tenant@example.com', role: 'tenant' } as const;
+
+describe('signup', () => {
+  test('returns email confirmation without requiring a session', async () => {
+    const fetchMock = respond({ confirmation_required: true, email: user.email });
+    await expect(signup(user.email, 'password123', 'Tenant')).resolves.toEqual({
+      confirmationRequired: true, email: user.email,
+    });
+    expect(fetchMock).toHaveBeenCalledWith('https://api.ostium.test/api/v1/auth/signup',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ email: user.email, password: 'password123', full_name: 'Tenant' }) }));
+  });
+
+  test('preserves immediate sessions when confirmation is disabled', async () => {
+    respond({ access_token: 'token', expires_in: 3600, user });
+    await expect(signup(user.email, 'password123')).resolves.toEqual({
+      accessToken: 'token', expiresIn: 3600, user,
+    });
+  });
+
+  test('rejects malformed confirmation responses', async () => {
+    respond({ confirmation_required: true });
+    await expect(signup(user.email, 'password123')).rejects.toMatchObject({ kind: 'bad-response' });
+  });
+});
 
 function respond(body: unknown, status = 200) {
   const fetchMock = mock(async (_url: string | URL | Request, _options?: RequestInit) =>

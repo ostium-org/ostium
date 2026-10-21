@@ -16,16 +16,17 @@ from __future__ import annotations
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 
-from .config import get_settings
-from .schemas import (
+from ..config import get_settings
+from ..schemas import (
     AuthResponse,
     AuthUser,
     LoginRequest,
     MessageResponse,
     SetRoleRequest,
     SignupRequest,
+    SignupConfirmationResponse,
 )
-from .supabase import (
+from ..supabase import (
     DEFAULT_TOKEN_TTL_SECONDS,
     SupabaseAuthError,
     SupabaseNotConfigured,
@@ -52,8 +53,8 @@ def _auth_user_from(auth_user: dict, profile: dict | None) -> AuthUser:
     )
 
 
-@router.post("/signup", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
-async def signup(body: SignupRequest) -> AuthResponse:
+@router.post("/signup", response_model=AuthResponse | SignupConfirmationResponse, status_code=status.HTTP_201_CREATED)
+async def signup(body: SignupRequest) -> AuthResponse | SignupConfirmationResponse:
     """Create an account. The new user is always a 'tenant'."""
     supabase = get_supabase()
     try:
@@ -63,18 +64,17 @@ async def signup(body: SignupRequest) -> AuthResponse:
     except SupabaseAuthError as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
 
-    user = result.get("user") or {}
+    # Auth REST returns the user directly when email confirmation is required;
+    # auto-confirmed signup returns a session with a nested user instead.
+    user = result.get("user") or result
     if not user.get("id"):
         raise HTTPException(status_code=502, detail="Supabase did not return a user.")
 
-    profile = await supabase.get_profile(user["id"])
     access_token = result.get("access_token")
     if not access_token:
-        # Some Supabase configs require email confirmation before issuing a token.
-        raise HTTPException(
-            status_code=403,
-            detail="Email confirmation is required before signing in.",
-        )
+        return SignupConfirmationResponse(email=body.email)
+
+    profile = await supabase.get_profile(user["id"])
 
     return AuthResponse(
         access_token=access_token,

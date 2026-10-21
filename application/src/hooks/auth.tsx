@@ -32,7 +32,7 @@ type AuthContextValue = {
   user: AuthUser | null; // null = signed out
   isLoading: boolean; // true only while checking storage for an existing session at startup
   signIn: (email: string, password: string) => Promise<void>; // throws ApiError on failure
-  signUp: (email: string, password: string, fullName?: string) => Promise<void>; // throws ApiError on failure
+  signUp: (email: string, password: string, fullName?: string) => Promise<"signed-in" | "confirmation-required">;
   signOut: () => Promise<void>;
 };
 
@@ -108,7 +108,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = useCallback(
     async (email: string, password: string, fullName?: string) => {
       const result = await signup(email, password, fullName); // throws on failure
+      if ("confirmationRequired" in result) return "confirmation-required" as const;
       await adoptSession(result);
+      return "signed-in" as const;
     },
     [adoptSession],
   );

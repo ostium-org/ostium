@@ -7,6 +7,8 @@ The response shapes intentionally match what the Expo client already parses in
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -40,6 +42,11 @@ class AuthResponse(BaseModel):
     access_token: str
     expires_in: int
     user: AuthUser
+
+
+class SignupConfirmationResponse(BaseModel):
+    confirmation_required: Literal[True] = True
+    email: str
 
 
 class MessageResponse(BaseModel):

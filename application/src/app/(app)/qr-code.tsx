@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
 import QRCode from 'react-native-qrcode-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -12,13 +13,18 @@ import { HOUSES } from '@/data/houses';
 import { useRotatingQRCode } from '@/hooks/use-rotating-qr-code';
 import { useTheme } from '@/hooks/use-theme';
 
+// Set to false when the live QR endpoint is ready. Placeholder mode makes no requests.
+const USE_QR_PLACEHOLDER = true;
+
 export default function QRCodeScreen() {
   const theme = useTheme();
   const [selectedHouseId, setSelectedHouseId] = useState(HOUSES[0]?.id);
   const [expanded, setExpanded] = useState(false);
   const [cardWidth, setCardWidth] = useState(0);
   const house = HOUSES.find((item) => item.id === selectedHouseId);
-  const { code, seconds, error, loading, refresh } = useRotatingQRCode(house?.id);
+  const { code, seconds, error, loading, refresh } = useRotatingQRCode(
+    USE_QR_PLACEHOLDER ? undefined : house?.id,
+  );
 
   return (
     <ThemedView style={styles.page}>
@@ -76,10 +82,16 @@ export default function QRCodeScreen() {
                   onLayout={(event) => setCardWidth(event.nativeEvent.layout.width)}>
                   <ThemedText type="subtitle" style={styles.centered}>{house.name}</ThemedText>
                   <View
-                    accessible={Boolean(code)}
-                    accessibilityLabel={code ? `${code.isDemo ? 'Demo QR code' : 'QR code'} for ${house.name}` : undefined}
+                    accessible={!USE_QR_PLACEHOLDER && Boolean(code)}
+                    accessibilityLabel={!USE_QR_PLACEHOLDER && code ? `${code.isDemo ? 'Demo QR code' : 'QR code'} for ${house.name}` : undefined}
                     style={styles.qrBackground}>
-                    {error ? (
+                    {USE_QR_PLACEHOLDER ? <Image
+                      source={require('../../../assets/images/qr-placeholder.png')}
+                      style={styles.qrImage}
+                      contentFit="contain"
+                      accessible
+                      accessibilityLabel="Placeholder QR code"
+                    /> : error ? (
                       <ThemedText accessibilityRole="alert" style={styles.error}>{error}</ThemedText>
                     ) : code && cardWidth > 0 ? (
                       <QRCode
@@ -92,22 +104,24 @@ export default function QRCodeScreen() {
                       />
                     ) : <ActivityIndicator color="#000000" />}
                   </View>
-                  {code && !error && (
+                  {!USE_QR_PLACEHOLDER && code && !error && (
                     <ThemedText type="smallBold" style={styles.countdown}>
                       Refreshes in {Math.floor(seconds / 60).toString().padStart(2, '0')}:{(seconds % 60).toString().padStart(2, '0')}
                     </ThemedText>
                   )}
-                  {code && (
+                  {(USE_QR_PLACEHOLDER || code) && (
                     <ThemedText type="small" themeColor="textSecondary" style={styles.centered}>
-                      {code.isDemo ? 'Demo code — door unlocking is not connected.' : 'Hold this code in front of the door camera.'}
+                      {USE_QR_PLACEHOLDER ? 'Placeholder QR code' : code?.isDemo ? 'Demo code — door unlocking is not connected.' : 'Hold this code in front of the door camera.'}
                     </ThemedText>
                   )}
                 </ThemedView>
-                <Button
-                  title={error ? 'Retry QR code' : 'Refresh QR code'}
-                  onPress={refresh}
-                  loading={loading}
-                />
+                {!USE_QR_PLACEHOLDER && (
+                  <Button
+                    title={error ? 'Retry QR code' : 'Refresh QR code'}
+                    onPress={refresh}
+                    loading={loading}
+                  />
+                )}
               </>
             ) : (
               <ThemedText themeColor="textSecondary" style={styles.centered}>
@@ -158,6 +172,8 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.four,
   },
   qrBackground: {
+    width: '100%',
+    maxWidth: 300,
     backgroundColor: '#FFFFFF',
     borderRadius: Spacing.two,
     overflow: 'hidden',
@@ -166,6 +182,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  qrImage: { width: '100%', aspectRatio: 1 },
   countdown: { fontVariant: ['tabular-nums'] },
   error: { color: '#000000', textAlign: 'center', padding: Spacing.three },
 });

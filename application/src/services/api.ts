@@ -13,8 +13,7 @@ export type LoginResult = {
   user: AuthUser;
 };
 
-// Same shape as LoginResult: the backend returns a ready-to-use session on signup.
-export type SignupResult = LoginResult;
+export type SignupResult = LoginResult | { confirmationRequired: true; email: string };
 
 // What went wrong
 export type ApiErrorKind =
@@ -44,7 +43,9 @@ const BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? "")
   .trim()
   .replace(/\/+$/, "");
 
-const MOCK_ENABLED = __DEV__ && BASE_URL === "";
+// Demo mode must be intentional: missing configuration must not fake a signup.
+const MOCK_ENABLED =
+  __DEV__ && BASE_URL === "" && process.env.EXPO_PUBLIC_MOCK_API === "true";
 
 export function isMockApiEnabled(): boolean {
   return MOCK_ENABLED;
@@ -75,7 +76,9 @@ const DEV_ACCOUNTS: { password: string; user: AuthUser }[] = [
 ];
 
 export function getDevLoginHint(): string | null {
-  return MOCK_ENABLED ? "Dev mode: tenant@example.com / tenant-pass" : null;
+  return MOCK_ENABLED
+    ? "Demo mode (no Supabase data): tenant@example.com / tenant-pass"
+    : null;
 }
 
 function getBaseUrl(): string {
@@ -281,6 +284,13 @@ export async function signup(
       body,
       authenticated: false, // we have no token yet
     });
+    if (typeof data === "object" && data !== null &&
+        "confirmation_required" in data && data.confirmation_required === true) {
+      if (!("email" in data) || typeof data.email !== "string" || !data.email.trim()) {
+        throw new ApiError("bad-response", "Unexpected signup response.");
+      }
+      return { confirmationRequired: true, email: data.email };
+    }
     return parseLoginResponse(data);
   } catch (error) {
     // A 401 from signup means the email is already taken / auth rejected.
