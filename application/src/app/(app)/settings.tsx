@@ -2,13 +2,16 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ScreenTransition } from '@/components/screen-transition';
+import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, PageTitleSize, Spacing } from '@/constants/theme';
+import { useAuth } from '@/hooks/auth';
 import { useThemePreference } from '@/hooks/theme-preference';
 
 export default function SettingsScreen() {
   const { colorScheme, setColorScheme } = useThemePreference();
+  const { user, signOut } = useAuth();
 
   return (
     <ThemedView style={styles.page}>
@@ -56,6 +59,17 @@ export default function SettingsScreen() {
                   );
                 })}
               </View>
+            </ThemedView>
+
+            {/* Account card: who is signed in, and the way to sign out. */}
+            <ThemedView type="backgroundElement" style={styles.settingCard}>
+              <View style={styles.sectionHeading}>
+                <ThemedText type="subtitle">Account</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  Signed in as {user?.email}
+                </ThemedText>
+              </View>
+              <Button title="SIGN OUT" variant="secondary" onPress={() => void signOut()} />
             </ThemedView>
           </ThemedView>
         </ScreenTransition>

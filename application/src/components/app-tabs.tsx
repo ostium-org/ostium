@@ -10,12 +10,11 @@ export default function AppTabs() {
     <NativeTabs
       backgroundColor={colors.background}
       indicatorColor={colors.backgroundElement}
-      labelStyle={{
-        default: { fontFamily: 'Doto' },
-        selected: { fontFamily: 'Doto', color: colors.text },
-      }}>
+            labelStyle={{ fontFamily: 'Doto' }}>
       <NativeTabs.Trigger name="(home)">
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label selectedStyle={{ color: colors.text }}>
+          Home
+        </NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/home.png')}
           renderingMode="template"
@@ -23,12 +22,12 @@ export default function AppTabs() {
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="qr-code">
-        <NativeTabs.Trigger.Label>QR Code</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label selectedStyle={{ color: colors.text }}>QR Code</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'qrcode', selected: 'qrcode' }} />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="settings">
-        <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label selectedStyle={{ color: colors.text }}>Settings</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'gearshape', selected: 'gearshape.fill' }} />
       </NativeTabs.Trigger>
     </NativeTabs>

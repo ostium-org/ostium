@@ -1,0 +1,12 @@
+{
+  "extends": "../../application/tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["../../application/src/*"],
+      "@/assets/*": ["../../application/assets/*"]
+    },
+    "typeRoots": ["../../application/node_modules/@types"],
+    "types": ["bun"]
+  },
+  "include": ["./**/*.ts"]
+}
