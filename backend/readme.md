@@ -67,7 +67,7 @@ backend/
 | POST   | `/api/v1/auth/signup`          | Create an account (always a `tenant`)         |
 | POST   | `/api/v1/auth/login`           | Sign in with email + password                 |
 | GET    | `/api/v1/auth/me`              | Return the signed-in user (validates token)   |
-| POST   | `/api/v1/auth/users/{id}/role` | Set a user's role (admin / service role only) |
+| POST   | `/api/v1/auth/users/{id}/role` | Set a user's role (authenticated admin only) |
 | GET    | `/health`                      | Liveness + Supabase configuration status      |
 
 All auth responses use the shape the Expo client already parses:
@@ -81,3 +81,48 @@ All auth responses use the shape the Expo client already parses:
   `prevent_role_change` trigger) allow only an admin or the service role.
 - **The service role key stays server-side.** It is never sent to the client.
 - **RLS is enabled on all public tables** and governs the Expo app's access.
+
+
+## Commands, reports, and QR setup
+
+See [API examples and Thursday walkthrough](../docs/api.md). This change does
+not provision records or alter tables, SQL functions, policies, or frontend
+behavior. The QR placeholder remains enabled.
+
+Existing `devices.credential_hash` values must be the **lowercase 64-character
+hex SHA-256 digest of the exact UTF-8 bearer token** (no prefix or whitespace).
+Use independently generated high-entropy tokens, such as 32 random bytes from
+`secrets.token_urlsafe(32)`. Firmware stores its own plaintext token securely;
+the database stores only the digest. A token from another device is not valid
+unless the same token was incorrectly provisioned on both. Never use the
+Supabase service key on firmware. Existing hashes using another format must be
+reprovisioned manually outside this implementation.
+
+Generate an Ed25519 PKCS8 private key outside the repository:
+
+```sh
+openssl genpkey -algorithm ED25519 -out /secure/path/ostium-qr.pem
+openssl pkey -in /secure/path/ostium-qr.pem -pubout -out /secure/path/ostium-qr-public.pem
+```
+
+Set backend-only `QR_SIGNING_PRIVATE_KEY` to the PEM text (literal `\n` escapes
+are accepted). Optional settings: `QR_ISSUER=ostium`,
+`QR_AUDIENCE=ostium-devices`, `QR_KEY_ID=ostium-qr-1`. Keep the private key in a
+backend secret store, never in a frontend `EXPO_PUBLIC_` variable, firmware,
+committed `.env`, or logs. Distribute only the public key to firmware through a
+trusted provisioning/configuration channel. Pin the matching key ID, issuer,
+and audience there. During rotation, retain old public keys until their issued
+credentials expire. Firmware must enforce EdDSA signature verification, trusted
+`kid`, issuer/audience, unit binding, issuance/expiry times, JTI and its local
+revocation rules. This backend does not implement firmware verification.
+
+Run backend checks from `backend/`:
+
+```sh
+.venv/bin/python -m unittest discover -s tests -v
+```
+
+Tests use an in-memory database stand-in plus mocked HTTP transport; they do not
+write to live Supabase. The concurrency test forces duplicate insert races and
+checks the primary-key collision path. A live firmware/database walkthrough
+still requires the existing provisioned test records and configured keys.
