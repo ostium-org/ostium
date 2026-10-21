@@ -12,16 +12,27 @@ import {
   useMemo,
   useState,
   type ReactNode,
-} from 'react';
+} from "react";
 
-import { login, setAccessToken, setUnauthorizedHandler, type AuthUser } from '@/services/api';
-import type { StoredSession } from '@/services/session';
-import { clearSession, loadSession, saveSession } from '@/services/token-storage';
+import {
+  login,
+  setAccessToken,
+  setUnauthorizedHandler,
+  signup,
+  type AuthUser,
+} from "@/services/api";
+import type { StoredSession } from "@/services/session";
+import {
+  clearSession,
+  loadSession,
+  saveSession,
+} from "@/services/token-storage";
 
 type AuthContextValue = {
   user: AuthUser | null; // null = signed out
   isLoading: boolean; // true only while checking storage for an existing session at startup
   signIn: (email: string, password: string) => Promise<void>; // throws ApiError on failure
+  signUp: (email: string, password: string, fullName?: string) => Promise<void>; // throws ApiError on failure
   signOut: () => Promise<void>;
 };
 
@@ -66,23 +77,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => setUnauthorizedHandler(null);
   }, [signOut]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const result = await login(email, password); // throws if the credentials are rejected
+  // Shared by signIn and signUp: persist the session and flip the UI to the app.
+  const adoptSession = useCallback(
+    async (result: {
+      accessToken: string;
+      expiresIn: number;
+      user: AuthUser;
+    }) => {
+      const next: StoredSession = {
+        accessToken: result.accessToken,
+        expiresAt: Date.now() + result.expiresIn * 1000,
+        user: result.user,
+      };
 
-    const next: StoredSession = {
-      accessToken: result.accessToken,
-      expiresAt: Date.now() + result.expiresIn * 1000,
-      user: result.user,
-    };
+      setAccessToken(next.accessToken);
+      await saveSession(next).catch(() => {});
+      setSession(next); // flips the app from the login screen to the main app
+    },
+    [],
+  );
 
-    setAccessToken(next.accessToken);
-    await saveSession(next).catch(() => {});
-    setSession(next); // flips the app from the login screen to the main app
-  }, []);
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      const result = await login(email, password); // throws if the credentials are rejected
+      await adoptSession(result);
+    },
+    [adoptSession],
+  );
+
+  const signUp = useCallback(
+    async (email: string, password: string, fullName?: string) => {
+      const result = await signup(email, password, fullName); // throws on failure
+      await adoptSession(result);
+    },
+    [adoptSession],
+  );
 
   const value = useMemo(
-    () => ({ user: session?.user ?? null, isLoading, signIn, signOut }),
-    [session, isLoading, signIn, signOut],
+    () => ({ user: session?.user ?? null, isLoading, signIn, signUp, signOut }),
+    [session, isLoading, signIn, signUp, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -92,7 +125,7 @@ export function useAuth() {
   const context = useContext(AuthContext);
   // fail if a component is rendered outside the provider.
   if (!context) {
-    throw new Error('useAuth must be used inside AuthProvider');
+    throw new Error("useAuth must be used inside AuthProvider");
   }
   return context;
 }
