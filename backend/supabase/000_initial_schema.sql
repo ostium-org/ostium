@@ -229,6 +229,36 @@ as $$
   );
 $$;
 
+-- Promote/demote a user's role. SECURITY: only an admin may call this.
+-- The backend calls it with the service role key (auth.uid() is null in that
+-- case); a signed-in admin may also call it directly. Any other caller is
+-- rejected. This is the ONLY supported way to change a role after signup.
+create or replace function public.set_user_role(p_user_id uuid, p_role text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if p_role not in ('tenant', 'manager', 'admin') then
+    raise exception 'invalid role %', p_role;
+  end if;
+
+  -- Allow the service role (no auth.uid()) or a signed-in admin.
+  if auth.uid() is not null and not public.is_admin() then
+    raise exception 'not authorized to change roles';
+  end if;
+
+  update public.profiles
+     set role = p_role
+   where id = p_user_id;
+
+  if not found then
+    raise exception 'user % not found', p_user_id;
+  end if;
+end;
+$$;
+
 -- ============================================================================
 -- Triggers
 -- ============================================================================
@@ -264,8 +294,10 @@ create trigger access_grants_set_updated_at
   before update on public.access_grants
   for each row execute function public.set_updated_at();
 
--- Prevent a non-manager from changing their own role (defense in depth;
--- the API should also enforce this).
+-- Prevent a user from changing their own role (defense in depth; the API
+-- should also enforce this). Role changes are allowed only for an admin or
+-- the service role (backend, where auth.uid() is null). Everyone else —
+-- including a tenant editing their own row — is blocked.
 create or replace function public.prevent_role_change()
 returns trigger
 language plpgsql
@@ -274,7 +306,7 @@ set search_path = public
 as $$
 begin
   if new.role is distinct from old.role
-     and not public.is_manager() then
+     and not (public.is_admin() or auth.uid() is null) then
     raise exception 'not authorized to change role';
   end if;
   return new;
@@ -287,6 +319,10 @@ create trigger profiles_prevent_role_change
   for each row execute function public.prevent_role_change();
 
 -- Auto-create a profile row when a new auth user signs up.
+-- SECURITY: the role is ALWAYS 'tenant' on signup. The role supplied in the
+-- signup request (raw_user_meta_data ->> 'role') is intentionally ignored so a
+-- client cannot self-promote to manager/admin. Only an admin can promote a
+-- user, via public.set_user_role() below.
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -302,7 +338,7 @@ begin
       new.raw_user_meta_data ->> 'name',
       split_part(coalesce(new.email, ''), '@', 1)
     ),
-    coalesce(new.raw_user_meta_data ->> 'role', 'tenant')
+    'tenant'
   )
   on conflict (id) do nothing;
   return new;
