@@ -24,12 +24,16 @@ Expected JSON response:
 
 The frontend requests credentials on house selection, manual refresh, or expiry while the QR screen is active. It hides replaced/expired credentials and shows a retry action on failure. Development without `EXPO_PUBLIC_API_URL` uses local mock responses with 60-second expiry and a visible demo label. With an API URL configured, requests use the endpoint above and errors never fall back to demo credentials. The current house selector still uses sample data; real house IDs must be connected before production use.
 
-## Device API
+## Device API (proposed; backend not implemented)
+
+For the MVP, a manager sends Lock or Unlock from the app, the door unit polls for the command, and the door reports one event per command. These routes come from SCRUM-60. For the full contract, including request and response bodies and the rules the door follows, see the [lock command contract](firmware/lock-command-v0.md).
 
 ```text
-GET  /devices/{device_id}/config
-POST /devices/{device_id}/events
-POST /devices/{device_id}/snapshots
+POST /api/v1/doors/{door_id}/commands      manager app, user access token
+GET  /api/v1/devices/{device_id}/commands  door unit, device token
+POST /api/v1/devices/{device_id}/events    door unit, device token
 ```
 
-`config` returns the current device configuration and revocation data. `events` accepts an access result or doorbell event. Snapshot upload is optional in the MVP. Device calls must be authenticated, scoped to the requested device ID, and accepted only over HTTPS.
+Device calls must be authenticated with the door unit's own credential, scoped to the requested device ID, and accepted only over HTTPS. Configuration sync, revocation data, doorbell events, and snapshot upload (`/devices/{device_id}/config` and `/devices/{device_id}/snapshots`) move to the final product along with signed QR credentials.
+
+The command route is an online unlock path, so it departs from the no-online-unlock rule in [Security](security.md) and the trust boundary in [Architecture](architecture.md). Those documents still describe local QR validation, which returns with signed credentials in the final product (SCRUM-38).

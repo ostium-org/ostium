@@ -1,0 +1,19 @@
+{
+  "server_time": "2026-10-22T15:05:01.800Z",
+  "commands": [
+    {
+      "command_id": "a7c9e1b3-5d7f-4a9c-8e1b-3d5f7a9c1e2f",
+      "action": "unlock",
+      "door_id": "9a1d7c3b-2e4f-4b6a-8c0d-5f3e2b1a7c64",
+      "issued_at": "2026-10-22T15:05:00.400Z",
+      "expires_at": "2026-10-22T15:05:10.400Z"
+    },
+    {
+      "command_id": "c2b4d6e8-1a3c-4e5f-9b7d-2f4a6c8e0b1d",
+      "action": "lock",
+      "door_id": "9a1d7c3b-2e4f-4b6a-8c0d-5f3e2b1a7c64",
+      "issued_at": "2026-10-22T15:05:01.100Z",
+      "expires_at": "2026-10-22T15:05:11.100Z"
+    }
+  ]
+}
