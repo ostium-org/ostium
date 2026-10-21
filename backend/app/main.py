@@ -8,11 +8,14 @@ It owns user auth (signup/login/me/role) and will later own units, devices,
 grants, credentials, and access events.
 """
 
-from fastapi import FastAPI
+import httpx
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
-from .routers import auth
+from .routers import auth, access
+from .supabase import SupabaseAuthError, SupabaseNotConfigured
 
 settings = get_settings()
 
@@ -31,6 +34,23 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(access.router)
+
+
+@app.exception_handler(SupabaseNotConfigured)
+async def missing_config(request: Request, exc: SupabaseNotConfigured):
+    return JSONResponse(status_code=503, content={"detail": "Supabase is not configured."})
+
+
+@app.exception_handler(SupabaseAuthError)
+async def upstream_error(request: Request, exc: SupabaseAuthError):
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
+
+
+@app.exception_handler(httpx.RequestError)
+async def connection_error(request: Request, exc: httpx.RequestError):
+    code = 504 if isinstance(exc, httpx.TimeoutException) else 502
+    return JSONResponse(status_code=code, content={"detail": "Could not reach Supabase."})
 
 
 @app.get("/health", tags=["meta"])

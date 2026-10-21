@@ -144,6 +144,36 @@ class SupabaseClient:
         if response.status_code >= 400:
             raise self._error_from_response(response, default_status=403)
 
+    async def rows(self, table: str, params: dict) -> list[dict]:
+        """Read all matching rows, including beyond the PostgREST page limit."""
+        self._require_config()
+        rows = []
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            while True:
+                response = await client.get(
+                    f"{self._base_url}/rest/v1/{table}", headers=self._headers(),
+                    params={"select": "*", "order": "id.asc", **params,
+                            "offset": len(rows), "limit": 500},
+                )
+                if response.is_error:
+                    raise SupabaseAuthError("Database read failed.", 502)
+                page = response.json()
+                rows.extend(page)
+                if not page:
+                    return rows
+
+    async def insert(self, table: str, row: dict) -> None:
+        self._require_config()
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            response = await client.post(
+                f"{self._base_url}/rest/v1/{table}",
+                headers={**self._headers(), "Prefer": "return=minimal"}, json=row,
+            )
+        if response.status_code == 409 and response.json().get("code") == "23505":
+            raise SupabaseAuthError("Duplicate record.", 409)
+        if response.is_error:
+            raise SupabaseAuthError("Database write failed.", 502)
+
     @staticmethod
     def _error_from_response(response: httpx.Response, default_status: int) -> SupabaseAuthError:
         try:

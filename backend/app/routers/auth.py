@@ -6,7 +6,7 @@ Security model
 --------------
 * New users are ALWAYS created with the 'tenant' role (enforced by the DB
   trigger `handle_new_user`). A client cannot self-promote.
-* Only an admin (or the service role) can change a role, via `set_user_role`.
+* Only an active authenticated admin can request a role change.
 * The backend holds the Supabase service role key server-side only; it is never
   sent to the client.
 """
@@ -106,44 +106,48 @@ async def login(body: LoginRequest) -> AuthResponse:
     )
 
 
+def bearer_token(authorization: str | None) -> str:
+    parts = (authorization or "").split()
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        raise HTTPException(401, "Missing or invalid bearer token.")
+    return parts[1]
+
+
 @router.get("/me", response_model=AuthUser)
 async def me(authorization: str | None = Header(default=None)) -> AuthUser:
-    """Return the signed-in user (validates the bearer token with Supabase)."""
-    supabase = get_supabase()
+    """Validate the bearer token and active profile; also used by user routes."""
+    token = bearer_token(authorization)
     settings = get_settings()
-
-    if not authorization or not authorization.lower().startswith("bearer "):
-        raise HTTPException(status_code=401, detail="Missing bearer token.")
-    token = authorization.split(" ", 1)[1].strip()
-
     base_url = settings.supabase_url.rstrip("/")
-    if not base_url:
-        raise HTTPException(status_code=503, detail="Supabase is not configured.")
+    if not base_url or not settings.supabase_secret_key:
+        raise HTTPException(503, "Supabase is not configured.")
 
-    try:
-        async with httpx.AsyncClient(timeout=20.0) as client:
-            response = await client.get(
-                f"{base_url}/auth/v1/user",
-                headers={"Authorization": f"Bearer {token}", "apikey": settings.supabase_secret_key},
-            )
-    except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail="Could not reach Supabase.") from exc
-
-    if response.status_code >= 400:
-        raise HTTPException(status_code=401, detail="Invalid or expired token.")
-
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        response = await client.get(
+            f"{base_url}/auth/v1/user",
+            headers={"Authorization": f"Bearer {token}", "apikey": settings.supabase_secret_key},
+        )
+    if response.status_code in (400, 401, 403, 422):
+        raise HTTPException(401, "Invalid or expired token.")
+    if response.is_error:
+        raise HTTPException(502, "User validation unavailable.")
     user = response.json()
-    profile = await supabase.get_profile(user["id"])
+    if not user.get("id"):
+        raise HTTPException(502, "Invalid user response.")
+    profile = await get_supabase().get_profile(user["id"])
+    if not profile or profile.get("is_active") is not True:
+        raise HTTPException(403, "An active profile is required.")
     return _auth_user_from(user, profile)
 
 
 @router.post("/users/{user_id}/role", response_model=MessageResponse)
-async def set_role(user_id: str, body: SetRoleRequest) -> MessageResponse:
-    """Promote/demote a user. Only an admin (or service role) may do this.
+async def set_role(user_id: str, body: SetRoleRequest, user: AuthUser = Depends(me)) -> MessageResponse:
+    """Promote/demote a user. Requires an active authenticated admin.
 
-    The DB function `public.set_user_role` re-checks authorization, so even a
-    misconfigured caller cannot change roles.
+    Caller authorization is enforced before using the service-role RPC.
     """
+    if user.role != "admin":
+        raise HTTPException(403, "Admin access required.")
     supabase = get_supabase()
     try:
         await supabase.set_user_role(user_id, body.role)

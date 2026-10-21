@@ -1,6 +1,6 @@
 # Security
 
-QR credentials must be short-lived, signed, bound to the intended unit or device, and validated locally by the ESP32-CAM. The backend must not provide an online "unlock" endpoint.
+QR credentials must be short-lived, signed, bound to the intended unit or device, and validated locally by the ESP32-CAM. Active managers/admins may also issue authenticated ten-second remote lock/unlock commands, which devices poll and acknowledge. Remote commands supplement the offline QR flow.
 
 Store the QR signing key and each device credential outside the repository. Use HTTPS for all user and device traffic, parameterized SQL for SQLite queries, Argon2 password hashes, short-lived user tokens, and role checks on every manager action.
 
