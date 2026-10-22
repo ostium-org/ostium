@@ -84,7 +84,7 @@ These are the `OSTIUM_API_ROOT` forms:
 | FastAPI on a bench laptop, started with `uvicorn app.main:app --host 0.0.0.0` | `http://<laptop LAN IP>:8000/api/v1` |
 | Local mock on the bench network | `http://<laptop LAN IP>:<port>/api/v1` |
 
-If the backend moves, for example to Supabase Edge Functions under SCRUM-62, only `OSTIUM_API_ROOT` changes, as long as the paths and bodies stay the same.
+SCRUM-62 plans to replace FastAPI with Supabase Edge Functions. If it does, `OSTIUM_API_ROOT` becomes the function URL, for example `https://<project-ref>.supabase.co/functions/v1/<function>/api/v1`. The functions must be deployed with JWT verification off (`--no-verify-jwt`), because the door's bearer token isn't a Supabase JWT. The paths, bodies, and status codes in this document must stay the same.
 
 The firmware removes a trailing slash from `OSTIUM_API_ROOT` and adds only `/devices/{device_id}/commands` or `/devices/{device_id}/events`. It doesn't follow redirects.
 
@@ -229,7 +229,7 @@ Request bodies stay under 1 KiB.
 | Response | What the door does |
 |---|---|
 | Any `2xx` | The event is delivered. The door removes it from the retry queue. |
-| `409` | The backend already holds a different report under this event ID, for example one sent before a reset, or the action doesn't match the command. Retrying can't succeed, so the door removes the event from the queue. |
+| `409` | The backend already holds a different report under this event ID, or the action doesn't match the command. Retrying can't succeed, so the door removes the event from the queue. |
 | `400`, `404`, `413`, `415`, or `422` | Retrying can't succeed. The door drops the event and logs the status. |
 | `401` | The device token was rejected. The door keeps the event, retries it with the event retry backoff in [Timing](#timing), and logs the status. |
 | `429`, `5xx`, a timeout, or a network error | The door keeps the event and retries it with the event retry backoff. |
@@ -293,7 +293,7 @@ Before a bench run, someone with database access creates the door unit's `device
 ## Testing
 
 - **Unit tests (SCRUM-51):** `pio test -d hardware/esp32/native-tests`, run from the repository root, runs the R1 to R16 tests with a fake lock output, clock, timer, and network. For details, see [Testing](../testing.md#firmware-unit-tests).
-- **Mock backend (SCRUM-58):** to test the polling code on the bench before the real routes exist, run a local mock that serves the two device routes.
+- **Mock backend (SCRUM-58):** to test the polling code on the bench without the real backend, run a local mock that serves the two device routes.
   - For polls, the mock returns bodies shaped like the `poll-response` files in the [example JSON files](examples/). It sets `server_time` to its current UTC time, and sets `issued_at` and `expires_at` relative to it. With the fixed example timestamps, R5 could reject a command depending on how soon after startup the first poll arrives.
   - For events, the mock returns `200` with `{"event_id": ..., "command_id": ..., "recorded": true}`, as the real backend does. The event example files show what the door posts.
 - **Replay tests:** `hardware/esp32/tools/capture_backend_responses.py` runs the real FastAPI routes in process and records their responses in `hardware/esp32/test/test_core/backend_responses.h`. The `test_backend_*` tests run those responses through the firmware core and check that the firmware writes the exact event bodies the backend accepted. To record them again after a backend change, see [Testing](../testing.md#firmware-unit-tests).
