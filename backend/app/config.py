@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     # publishable key (Supabase's "anon key") - optional for the backend
     supabase_publishable_key: str = ""
 
+    qr_signing_private_key: str = ""  # PEM Ed25519 key, escaped newlines accepted
+    qr_issuer: str = "ostium"
+    qr_audience: str = "ostium-devices"
+    qr_key_id: str = "ostium-qr-1"
+
     cors_origins: str = "*"
 
     @property
