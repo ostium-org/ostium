@@ -1,11 +1,10 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test';
+import { describe, expect, mock, test } from 'bun:test';
 
-import { setAccessToken, setUnauthorizedHandler } from '@/services/api';
+import { client } from './supabase-mock';
 import { getQRCredential, parseQRCredential } from '@/services/qr-credentials';
 
 const now = Date.parse('2026-10-20T12:00:00Z');
 const response = { house_id: 'house-1', payload: ' exact.signed.payload\n', expires_at: '2026-10-20T12:02:00Z' };
-afterEach(() => { setAccessToken(null); setUnauthorizedHandler(null); });
 
 describe('QR credential responses', () => {
   test('preserves the opaque payload and converts the returned expiry to milliseconds', () => {
@@ -32,12 +31,11 @@ describe('QR credential responses', () => {
     const data = { ...response, house_id: 'house /2', expires_at: new Date(Date.now() + 90000).toISOString() };
     const fetchMock = mock(async () => new Response(JSON.stringify(data), { status: 200 }));
     globalThis.fetch = fetchMock as unknown as typeof fetch;
-    setAccessToken('access-token');
     const result = await getQRCredential('house /2');
     expect(result.payload).toBe(data.payload);
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://api.ostium.test/api/v1/houses/house%20%2F2/qr-credentials',
-      expect.objectContaining({ method: 'POST', headers: { Accept: 'application/json', Authorization: 'Bearer access-token' } }),
+      'https://project.ostium.test/functions/v1/ostium-api/api/v1/houses/house%20%2F2/qr-credentials',
+      expect.objectContaining({ method: 'POST', headers: { Accept: 'application/json', apikey: 'publishable-test', Authorization: 'Bearer session-token' } }),
     );
   });
 
@@ -47,12 +45,9 @@ describe('QR credential responses', () => {
   });
 
   test('uses existing sign-out handling when the credential request is unauthorized', async () => {
-    const signOut = mock(() => {});
-    setAccessToken('access-token');
-    setUnauthorizedHandler(signOut);
     globalThis.fetch = mock(async () => new Response('{}', { status: 401 })) as unknown as typeof fetch;
     await expect(getQRCredential('house-1')).rejects.toMatchObject({ kind: 'unauthorized' });
-    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(client.auth.signOut).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -66,9 +61,13 @@ test.each([
   const script = `
     import { mock } from 'bun:test';
     globalThis.__DEV__ = ${dev};
-    process.env.EXPO_PUBLIC_API_URL = ${JSON.stringify(url)};
+    process.env.EXPO_PUBLIC_SUPABASE_URL = ${JSON.stringify(url)};
     process.env.EXPO_PUBLIC_MOCK_API = ${JSON.stringify(optIn)};
     mock.module('expo-crypto', () => ({ randomUUID: () => 'demo-unique-id' }));
+    mock.module('./src/services/supabase', () => ({
+      supabaseUrl: ${JSON.stringify(url)}, supabaseKey: ${JSON.stringify(url)} ? 'publishable-test' : '',
+      getSupabase: async () => { throw { kind: 'network' }; },
+    }));
     globalThis.fetch = async () => { throw new Error('API request attempted'); };
     const { isMockApiEnabled, signup } = await import('./src/services/api');
     const { getQRCredential } = await import('./src/services/qr-credentials');

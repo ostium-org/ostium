@@ -1,0 +1,9 @@
+{
+  "compilerOptions": { "strict": true },
+  "tasks": {
+    "check": "deno check functions/ostium-api/index.ts functions/device-api/index.ts tests/api_test.ts",
+    "test": "deno test tests/",
+    "lint": "deno lint functions/ tests/",
+    "fmt": "deno fmt --check functions/ tests/ deno.json"
+  }
+}

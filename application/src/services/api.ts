@@ -1,4 +1,7 @@
-export type UserRole = "tenant" | "manager";
+import type { Session } from "@supabase/supabase-js";
+import { getSupabase, supabaseUrl, supabaseKey } from "@/services/supabase";
+
+export type UserRole = "tenant" | "manager" | "admin";
 
 export type AuthUser = {
   id: string;
@@ -39,17 +42,8 @@ export class ApiError extends Error {
   }
 }
 
-const BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? "")
-  .trim()
-  .replace(/\/+$/, "");
-
-// Demo mode must be intentional: missing configuration must not fake a signup.
-const MOCK_ENABLED =
-  __DEV__ && BASE_URL === "" && process.env.EXPO_PUBLIC_MOCK_API === "true";
-
-export function isMockApiEnabled(): boolean {
-  return MOCK_ENABLED;
-}
+const MOCK_ENABLED = __DEV__ && supabaseUrl === "" && process.env.EXPO_PUBLIC_MOCK_API === "true";
+export function isMockApiEnabled(): boolean { return MOCK_ENABLED; }
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
@@ -81,27 +75,38 @@ export function getDevLoginHint(): string | null {
     : null;
 }
 
-function getBaseUrl(): string {
-  if (BASE_URL === "") {
-    throw new ApiError("not-configured", "EXPO_PUBLIC_API_URL is not set.");
-  }
-
-  if (!__DEV__ && !BASE_URL.startsWith("https://")) {
-    throw new ApiError("not-configured", "The API URL must use HTTPS.");
-  }
-  return BASE_URL;
+function configured() {
+  if (!supabaseUrl || !supabaseKey) throw new ApiError("not-configured", "Supabase public configuration is missing.");
+  if (!__DEV__ && !supabaseUrl.startsWith("https://")) throw new ApiError("not-configured", "Supabase URL must use HTTPS.");
 }
 
-let accessToken: string | null = null;
-
-export function setAccessToken(token: string | null) {
-  accessToken = token;
+function authError(error: { status?: number; name?: string; message?: string }, loginAttempt = false): ApiError {
+  const status = error.status;
+  if (error.name === "AuthRetryableFetchError") return new ApiError("network", "Could not reach Supabase.", status);
+  if (status === 429) return new ApiError("rate-limited", "Too many requests.", status);
+  if (status && status >= 500) return new ApiError("server", "Server error.", status);
+  if (status === 400 || status === 401 || status === 403) return new ApiError(loginAttempt ? "invalid-credentials" : "unauthorized", loginAttempt ? "Incorrect email or password." : "Not authorized.", status);
+  return new ApiError("request-failed", "Authentication failed.", status);
 }
 
-let onUnauthorized: (() => void) | null = null;
+export async function loadProfile(session: Session): Promise<AuthUser> {
+  const client = await getSupabase();
+  const { data, error } = await client.from("profiles").select("id, full_name, role, is_active").eq("id", session.user.id).maybeSingle();
+  if (error) throw new ApiError("server", "Could not load your profile.");
+  if (!data || data.is_active !== true) throw new ApiError("request-failed", "An active profile is required.", 403);
+  const user = parseAuthUser({ id: data.id, email: session.user.email, name: data.full_name, role: data.role });
+  if (!user) throw new ApiError("bad-response", "Invalid profile response.");
+  return user;
+}
 
-export function setUnauthorizedHandler(handler: (() => void) | null) {
-  onUnauthorized = handler;
+async function sessionResult(session: Session): Promise<LoginResult> {
+  try {
+    return { accessToken: session.access_token, expiresIn: session.expires_in, user: await loadProfile(session) };
+  } catch (error) {
+    // Never leave a new session signed in after its profile was rejected.
+    await (await getSupabase()).auth.signOut({ scope: "local" });
+    throw error;
+  }
 }
 
 type RequestOptions = {
@@ -114,12 +119,19 @@ export async function request<T = unknown>(
   path: string,
   { method = "GET", body, authenticated = true }: RequestOptions = {},
 ): Promise<T> {
-  const url = `${getBaseUrl()}${path}`;
+  configured();
+  const url = `${supabaseUrl}/functions/v1/ostium-api${path}`;
 
-  const headers: Record<string, string> = { Accept: "application/json" };
+  const headers: Record<string, string> = { Accept: "application/json", apikey: supabaseKey };
   if (body !== undefined) headers["Content-Type"] = "application/json";
-  const sentToken = authenticated && accessToken !== null;
-  if (sentToken) headers.Authorization = `Bearer ${accessToken}`;
+  let sentToken = false;
+  if (authenticated) {
+    const { data, error } = await (await getSupabase()).auth.getSession();
+    if (error) throw authError(error);
+    if (!data.session) throw new ApiError("unauthorized", "Not authorized.", 401);
+    headers.Authorization = `Bearer ${data.session.access_token}`;
+    sentToken = true;
+  }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -158,7 +170,7 @@ export async function request<T = unknown>(
   }
 
   if (status === 401) {
-    if (sentToken) onUnauthorized?.();
+    if (sentToken) await (await getSupabase()).auth.signOut({ scope: "local" });
     throw new ApiError("unauthorized", "Not authorized.", status);
   }
   if (status === 429)
@@ -174,7 +186,7 @@ export function parseAuthUser(value: unknown): AuthUser | null {
   const id = typeof v.id === "number" ? String(v.id) : v.id; // SQLite ids are often integers
   if (typeof id !== "string" || id === "") return null;
   if (typeof v.email !== "string" || v.email === "") return null;
-  if (v.role !== "tenant" && v.role !== "manager") return null;
+  if (v.role !== "tenant" && v.role !== "manager" && v.role !== "admin") return null;
   if (v.name !== undefined && v.name !== null && typeof v.name !== "string")
     return null;
 
@@ -184,25 +196,6 @@ export function parseAuthUser(value: unknown): AuthUser | null {
     role: v.role,
     ...(typeof v.name === "string" ? { name: v.name } : {}),
   };
-}
-
-function parseLoginResponse(data: unknown): LoginResult {
-  const bad = () => new ApiError("bad-response", "Unexpected login response.");
-  if (typeof data !== "object" || data === null) throw bad();
-  const d = data as Record<string, unknown>;
-
-  if (typeof d.access_token !== "string" || d.access_token === "") throw bad();
-  if (
-    typeof d.expires_in !== "number" ||
-    !Number.isFinite(d.expires_in) ||
-    d.expires_in <= 0
-  ) {
-    throw bad();
-  }
-  const user = parseAuthUser(d.user);
-  if (!user) throw bad();
-
-  return { accessToken: d.access_token, expiresIn: d.expires_in, user };
 }
 
 async function mockLogin(
@@ -227,80 +220,22 @@ async function mockLogin(
   };
 }
 
-export async function login(
-  email: string,
-  password: string,
-): Promise<LoginResult> {
+export async function login(email: string, password: string): Promise<LoginResult> {
   if (MOCK_ENABLED) return mockLogin(email, password);
-
-  try {
-    const data = await request("/api/v1/auth/login", {
-      method: "POST",
-      body: { email, password },
-      authenticated: false, // we have no token yet
-    });
-    return parseLoginResponse(data);
-  } catch (error) {
-    if (error instanceof ApiError && error.kind === "unauthorized") {
-      throw new ApiError(
-        "invalid-credentials",
-        "Incorrect email or password.",
-        error.status,
-      );
-    }
-    throw error;
-  }
+  configured();
+  const { data, error } = await (await getSupabase()).auth.signInWithPassword({ email, password });
+  if (error) throw authError(error, true);
+  if (!data.session) throw new ApiError("bad-response", "Unexpected login response.");
+  return sessionResult(data.session);
 }
 
-// Create a new account. The backend always creates the user as a 'tenant';
-// only an admin can promote them later.
-export async function signup(
-  email: string,
-  password: string,
-  fullName?: string,
-): Promise<SignupResult> {
-  if (MOCK_ENABLED) {
-    // In dev mode there is no real backend, so "signup" just signs the caller
-    // in as a tenant so the rest of the app can be exercised.
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    return {
-      accessToken: "dev-token-tenant",
-      expiresIn: 60 * 60,
-      user: {
-        id: "dev-tenant",
-        email: email.trim().toLowerCase(),
-        name: fullName,
-        role: "tenant",
-      },
-    };
-  }
-
-  const body: Record<string, unknown> = { email, password };
-  if (fullName && fullName.trim() !== "") body.full_name = fullName.trim();
-
-  try {
-    const data = await request("/api/v1/auth/signup", {
-      method: "POST",
-      body,
-      authenticated: false, // we have no token yet
-    });
-    if (typeof data === "object" && data !== null &&
-        "confirmation_required" in data && data.confirmation_required === true) {
-      if (!("email" in data) || typeof data.email !== "string" || !data.email.trim()) {
-        throw new ApiError("bad-response", "Unexpected signup response.");
-      }
-      return { confirmationRequired: true, email: data.email };
-    }
-    return parseLoginResponse(data);
-  } catch (error) {
-    // A 401 from signup means the email is already taken / auth rejected.
-    if (error instanceof ApiError && error.kind === "unauthorized") {
-      throw new ApiError(
-        "request-failed",
-        "That email may already be registered.",
-        error.status,
-      );
-    }
-    throw error;
-  }
+export async function signup(email: string, password: string, fullName?: string): Promise<SignupResult> {
+  if (MOCK_ENABLED) return { accessToken: "dev-token-tenant", expiresIn: 3600,
+    user: { id: "dev-tenant", email: email.trim().toLowerCase(), name: fullName, role: "tenant" } };
+  configured();
+  const { data, error } = await (await getSupabase()).auth.signUp({ email, password,
+    options: { data: fullName?.trim() ? { full_name: fullName.trim() } : {} } });
+  if (error) throw authError(error);
+  if (!data.session) return { confirmationRequired: true, email };
+  return sessionResult(data.session);
 }

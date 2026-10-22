@@ -1,34 +1,39 @@
-// the shape of a signed-in session and how to safely read one back from storage.
-// shared by token-storage.ts (phones) and token-storage.web.ts (browsers).
+import type { Session, SupabaseClient } from '@supabase/supabase-js';
+import type { AuthUser } from '@/services/api';
 
-import { parseAuthUser, type AuthUser } from '@/services/api';
+export type AuthState = { user: AuthUser | null; isLoading: boolean; error?: unknown };
 
-export type StoredSession = {
-  accessToken: string;
-  expiresAt: number; // when the token expires
-  user: AuthUser;
-};
-
-
-const EXPIRY_MARGIN_MS = 30_000;
-
-// storage holds text that something else wrote, so it's validated before use.
-export function parseStoredSession(raw: string | null, now: number = Date.now()): StoredSession | null {
-  if (!raw) return null;
-
-  try {
-    const value: unknown = JSON.parse(raw);
-    if (typeof value !== 'object' || value === null) return null;
-    const v = value as Record<string, unknown>;
-
-    if (typeof v.accessToken !== 'string' || v.accessToken === '') return null;
-    if (typeof v.expiresAt !== 'number' || !Number.isFinite(v.expiresAt)) return null;
-    if (v.expiresAt <= now + EXPIRY_MARGIN_MS) return null;
-    const user = parseAuthUser(v.user);
-    if (!user) return null;
-
-    return { accessToken: v.accessToken, expiresAt: v.expiresAt, user };
-  } catch {
-    return null;
+/** No SDK calls inside its auth callback: Supabase holds its session lock there. */
+export function observeSession(
+  client: SupabaseClient,
+  profile: (session: Session) => Promise<AuthUser>,
+  emit: (state: AuthState) => void,
+): () => void {
+  let stopped = false;
+  let generation = 0;
+  let events = 0;
+  async function apply(session: Session | null) {
+    const ticket = ++generation;
+    if (!session) { if (!stopped) emit({ user: null, isLoading: false }); return; }
+    try {
+      const user = await profile(session);
+      if (!stopped && ticket === generation) emit({ user, isLoading: false });
+    } catch (error) {
+      if (stopped || ticket !== generation) return;
+      emit({ user: null, isLoading: false, error });
+      if ((error as { status?: number })?.status === 403) await client.auth.signOut({ scope: 'local' });
+    }
   }
+  const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
+    events++;
+    // Invalidate in-flight profile loads immediately, before the deferred update.
+    generation++;
+    queueMicrotask(() => { if (!stopped) void apply(session); });
+  });
+  void client.auth.getSession().then(({ data, error }) => {
+    if (stopped || events) return;
+    if (error) emit({ user: null, isLoading: false, error });
+    else void apply(data.session);
+  }).catch((error) => { if (!stopped && !events) emit({ user: null, isLoading: false, error }); });
+  return () => { stopped = true; generation++; subscription.unsubscribe(); };
 }
