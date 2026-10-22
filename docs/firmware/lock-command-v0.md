@@ -140,15 +140,15 @@ The door ignores any other fields. The backend writes timestamps with 6 fraction
 
 ## Rules the door follows
 
-Each rule has a planned unit test in SCRUM-51. The test names are the names the suite uses.
+Each rule has unit tests in `hardware/esp32/test/test_core/` (SCRUM-51), with the names listed here.
 
-| # | Rule | Planned tests |
+| # | Rule | Tests |
 |---|---|---|
 | R1 | The lock stays locked through power-on, reset, and a crash. The first statement of `setup()` writes the locked level, before Serial, the camera, or Wi-Fi start. Before `setup()` runs, the wiring keeps the lock locked: the lock output uses a GPIO that isn't a strapping pin (0, 3, 45, or 46) and isn't used by the camera or PSRAM, with a pull resistor that keeps the relay off while the pin floats. | `test_lock_is_locked_after_startup` |
 | R2 | The door runs every command in response order and doesn't skip an earlier command because a later one is queued. A Lock still ends an unlock in progress (R11). So `[unlock, lock]` in one response ends locked, and `[lock, unlock]` ends unlocked until the relock. | `test_commands_run_in_response_order`, `test_unlock_then_lock_in_one_poll_ends_locked` |
-| R3 | The door doesn't run a `command_id` it has already run or rejected, and a redelivered unlock doesn't restart the relock timer. It keeps each ID until that command's `expires_at` has passed by the R4 estimate, in a list of 32, and never removes an unexpired ID. If the list is full of unexpired IDs, the door rejects the new command with `duplicate_cache_full`. | `test_duplicate_command_is_not_run_again`, `test_redelivered_unlock_does_not_restart_timer`, `test_duplicate_list_never_drops_unexpired_id` |
-| R4 | The door estimates the current time as `server_time` plus the time elapsed since the poll response arrived. If `expires_at` is at or before that time when the command would run, the door rejects it with `expired` and doesn't move the lock. | `test_expired_command_is_rejected` |
-| R5 | If `issued_at` is before the door started, the door rejects the command with `issued_before_boot`. The door can't tell whether it ran that command before a reset, so it doesn't risk a second unlock. The door sets its start time once, from the first successful poll after startup: `server_time` minus its uptime when that response arrived, plus 2,000 ms. The margin errs toward rejecting. | `test_command_issued_before_boot_is_rejected`, `test_boot_time_is_set_once_from_first_poll` |
+| R3 | The door doesn't run a `command_id` it has already run or rejected, and a redelivered unlock doesn't restart the relock timer. It keeps each ID, in a list of 32, until a poll's `server_time` reaches that command's `expires_at`. It uses `server_time` rather than the R4 estimate, because the estimate can run ahead of the backend's clock, and the backend serves a command until its own clock passes `expires_at`. It never removes an unexpired ID. If the list is full of unexpired IDs, the door rejects the new command with `duplicate_cache_full`. | `test_duplicate_command_is_not_run_again`, `test_redelivered_unlock_does_not_restart_timer`, `test_duplicate_list_never_drops_unexpired_id`, `test_duplicate_id_kept_while_backend_still_serves` |
+| R4 | The door estimates the current time as `server_time` plus the time elapsed since the poll request started. `runPoll()` records the request start before it sends the request. If `expires_at` is at or before that time when the command would run, the door rejects it with `expired` and doesn't move the lock. | `test_expired_command_is_rejected` |
+| R5 | If `issued_at` is before the door started, the door rejects the command with `issued_before_boot`. The door can't tell whether it ran that command before a reset, so it doesn't risk a second unlock. The door sets its start time once, from the first successful poll after startup: `server_time` minus its uptime when that poll request started, plus 2,000 ms. The backend stamps `server_time` after the request starts, so this estimate is never earlier than the real start, however slow the response is. The margin and the request time both err toward rejecting, so a command issued in the first few seconds after startup can also be rejected. | `test_command_issued_before_boot_is_rejected`, `test_boot_time_is_set_once_from_first_poll`, `test_slow_response_cannot_rerun_command_from_before_boot` |
 | R6 | If `door_id` doesn't equal `OSTIUM_DEVICE_ID`, the door rejects the command with `wrong_door`. The backend only returns commands issued to this device's key, so R6 guards against backend bugs. | `test_command_for_other_door_is_rejected` |
 | R7 | If a required field is missing or a timestamp can't be parsed, the door rejects the command with `malformed_command`. An `action` longer than 16 characters, or any string with a NUL character, counts as missing. If there's no usable `command_id`, the door can't report the command, so it logs the first 200 bytes of the command and skips it. | `test_malformed_command_is_rejected` |
 | R8 | If `action` isn't `lock` or `unlock`, the door rejects the command with `invalid_action`. | `test_unknown_action_is_rejected` |
@@ -257,7 +257,7 @@ The retry queue holds 8 events. When it's full, the door drops the oldest event 
 | Backoff after a failed poll | 2,000, 4,000, then 8,000 ms |
 | Event retry backoff | 2,000, 4,000, then 8,000 ms for each queued event, reset after a `2xx` |
 | Command expiry, set by the backend | 10 seconds after `issued_at` |
-| Start-time margin (R5) | 2,000 ms |
+| Start-time margin (R5), added to the estimate from the first poll's request start | 2,000 ms |
 | Command IDs kept for the duplicate check | Up to 32, each until its command expires |
 | Event retry queue | 8 events |
 | Largest poll response | 8 KiB |
@@ -296,6 +296,7 @@ Before a bench run, someone with database access creates the door unit's `device
 - **Mock backend (SCRUM-58):** to test the polling code on the bench before the real routes exist, run a local mock that serves the two device routes.
   - For polls, the mock returns bodies shaped like the `poll-response` files in the [example JSON files](examples/). It sets `server_time` to its current UTC time, and sets `issued_at` and `expires_at` relative to it. With the fixed example timestamps, R5 could reject a command depending on how soon after startup the first poll arrives.
   - For events, the mock returns `200` with `{"event_id": ..., "command_id": ..., "recorded": true}`, as the real backend does. The event example files show what the door posts.
+- **Replay tests:** `hardware/esp32/tools/capture_backend_responses.py` runs the real FastAPI routes in process and records their responses in `hardware/esp32/test/test_core/backend_responses.h`. The `test_backend_*` tests run those responses through the firmware core and check that the firmware writes the exact event bodies the backend accepted. To record them again after a backend change, see [Testing](../testing.md#firmware-unit-tests).
 - **Integration with the real backend:** run FastAPI on a laptop as [backend setup](../../backend/readme.md) describes, and follow the walkthrough in [API](../api.md#thursday-walkthrough) with the door unit as the device.
 - **Certificates:** before integration, run the mock over HTTPS at least once, with a self-signed CA loaded as `OSTIUM_ROOT_CA`. Then load a different CA, and confirm that every request fails and the door stays locked.
 - **Bench tests (SCRUM-52):**

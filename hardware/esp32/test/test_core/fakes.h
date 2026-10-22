@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace fakes {
@@ -143,15 +144,36 @@ class BlockingSender : public ostium::EventSender {
   uint32_t blockMs_;
 };
 
+// Returns one scripted poll response after blocking for delayMs of fake time,
+// like a slow request.
+class SlowFetcher : public ostium::PollFetcher {
+ public:
+  SlowFetcher(FakeClock& clock, uint32_t delayMs, int status, std::string body)
+      : clock_(clock), delayMs_(delayMs), status_(status), body_(std::move(body)) {}
+
+  int get(std::string& body) override {
+    clock_.advance(delayMs_);
+    body = body_;
+    return status_;
+  }
+
+ private:
+  FakeClock& clock_;
+  uint32_t delayMs_;
+  int status_;
+  std::string body_;
+};
+
 // Times are offsets in ms from this base, 2026-10-22T15:00:00.000Z.
 constexpr int64_t kBaseEpochMs = 1792681200000LL;
-constexpr const char* kDoorId = "9a1d7c3b-2e4f-4b6a-8c0d-5f3e2b1a7c64";
+// This door unit's device key. The backend also uses it as the door_id.
+constexpr const char* kDeviceId = "door-unit-01";
 
 inline std::string at(int64_t offsetMs) { return ostium::formatTimestamp(kBaseEpochMs + offsetMs); }
 
 inline std::string commandJson(const std::string& commandId, const std::string& action,
                                int64_t issuedOffsetMs, int64_t expiresOffsetMs,
-                               const std::string& doorId = kDoorId) {
+                               const std::string& doorId = kDeviceId) {
   return "{\"command_id\":\"" + commandId + "\",\"action\":\"" + action + "\",\"door_id\":\"" +
          doorId + "\",\"issued_at\":\"" + at(issuedOffsetMs) + "\",\"expires_at\":\"" +
          at(expiresOffsetMs) + "\"}";
@@ -196,16 +218,18 @@ struct Harness {
   static constexpr int64_t kFirstPollOffsetMs = 20000;
   static constexpr int64_t kStartOffsetMs = 12000;
 
-  explicit Harness(uint32_t unlockMs = ostium::LockController::kDefaultUnlockMs)
-      : lock(output, timer, unlockMs), processor(kDoorId, lock, outbox, clock, log) {
+  explicit Harness(uint32_t unlockMs = ostium::LockController::kDefaultUnlockMs,
+                   const std::string& deviceId = kDeviceId)
+      : lock(output, timer, unlockMs), processor(deviceId, lock, outbox, clock, log) {
     clock.set(kUptimeAtFirstPollMs);
     lock.begin();
   }
 
-  // Parses and handles a poll response that arrived receivedAgoMs ago.
-  ostium::PollResult poll(const std::string& body, int status = 200, uint32_t receivedAgoMs = 0) {
+  // Parses and handles a poll response whose request started startedAgoMs
+  // ago, so the response took that long to arrive.
+  ostium::PollResult poll(const std::string& body, int status = 200, uint32_t startedAgoMs = 0) {
     ostium::PollResult result = ostium::parsePollResponse(status, body);
-    processor.handlePoll(result, clock.nowMs() - receivedAgoMs);
+    processor.handlePoll(result, clock.nowMs() - startedAgoMs);
     return result;
   }
 
@@ -232,6 +256,7 @@ struct Harness {
   ostium::EventOutbox outbox{log};
   ostium::LockController lock;
   ostium::CommandProcessor processor;
+  ostium::PollScheduler scheduler;
 };
 
 }  // namespace fakes

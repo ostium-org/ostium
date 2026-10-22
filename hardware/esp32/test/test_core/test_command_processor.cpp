@@ -108,8 +108,8 @@ void test_expired_command_is_rejected() {
   Harness door;
   door.poll(pollJson(20000, {}));  // Sets the start time.
 
-  // The response arrived 6 s ago, so by the R4 estimate the command expired
-  // 1 s ago.
+  // The poll request started 6 s ago, so by the R4 estimate the command
+  // expired 1 s ago.
   door.clock.advance(7000);
   door.poll(pollJson(21000, {commandJson("cmd-late", "unlock", 20000, 26000)}), 200, 6000);
 
@@ -163,7 +163,7 @@ void test_boot_time_is_set_once_from_first_poll() {
 
 void test_command_for_other_door_is_rejected() {
   Harness door;
-  const std::string thisDoor = fakes::kDoorId;
+  const std::string thisDoor = fakes::kDeviceId;
   door.poll(pollJson(20000, {commandJson("cmd-a", "unlock", 19000, 29000, "other-door"),
                              // An empty door_id isn't a wildcard.
                              commandJson("cmd-b", "unlock", 19000, 29000, ""),
@@ -190,7 +190,7 @@ void test_command_for_other_door_is_rejected() {
 
 void test_malformed_command_is_rejected() {
   Harness door;
-  const std::string door_id = fakes::kDoorId;
+  const std::string door_id = fakes::kDeviceId;
   const std::string issued = fakes::at(19000);
   const std::string expires = fakes::at(29000);
   door.poll(pollJson(
@@ -425,12 +425,14 @@ void test_duplicate_id_kept_until_its_own_expiry() {
   TEST_ASSERT_EQUAL_INT(1, door.timer.starts());
 }
 
-void test_boot_time_uses_response_arrival_time() {
+void test_boot_time_uses_poll_start_time() {
   Harness door;
-  // The first response arrived at uptime 10,000 ms but is handled 3,000 ms
-  // later. The start time still comes from the arrival time.
-  door.clock.advance(3000);
-  door.poll(pollJson(20000, {commandJson("cmd-old", "unlock", 11000, 24000)}), 200, 3000);
+  // The first poll request starts at uptime 10,000 ms, and its response takes
+  // 3,000 ms. runPoll records the start before the request, so the start
+  // time comes from 10,000 ms, not from the arrival at 13,000 ms.
+  fakes::SlowFetcher fetcher(door.clock, 3000, 200,
+                             pollJson(20000, {commandJson("cmd-old", "unlock", 11000, 24000)}));
+  TEST_ASSERT_TRUE(ostium::runPoll(fetcher, door.clock, door.scheduler, door.processor));
 
   TEST_ASSERT_EQUAL_INT64(fakes::kBaseEpochMs + Harness::kStartOffsetMs,
                           door.processor.startTimeMs());
@@ -450,7 +452,7 @@ void test_long_action_is_malformed_and_event_stays_small() {
   }();
   const std::string longAction(900, 'x');
   door.poll(pollJson(20000, {"{\"command_id\":\"" + escapedId + "\",\"action\":\"" + longAction +
-                             "\",\"door_id\":\"" + std::string(fakes::kDoorId) +
+                             "\",\"door_id\":\"" + std::string(fakes::kDeviceId) +
                              "\",\"issued_at\":\"" + fakes::at(19000) + "\",\"expires_at\":\"" +
                              fakes::at(29000) + "\"}"}));
 
@@ -483,4 +485,70 @@ void test_poll_command_count_is_capped() {
   TEST_ASSERT_LESS_OR_EQUAL_UINT32(ostium::kMaxCommandsPerPoll + 1, door.log.messages.size());
   TEST_ASSERT_TRUE(door.log.contains("commands for a later poll"));
   TEST_ASSERT_TRUE(door.writesAfterBegin().empty());
+}
+
+void test_slow_response_cannot_rerun_command_from_before_boot() {
+  // The door started at server offset 15,000 ms. Its first poll request
+  // starts at uptime 5,000 ms, the backend stamps server_time 100 ms later,
+  // and the response takes 2,600 ms to arrive. The command was issued 300 ms
+  // before the door started, so it may already have run before a reset.
+  Harness door;
+  door.clock.set(5000);
+  fakes::SlowFetcher fetcher(door.clock, 2600, 200,
+                             pollJson(20100, {commandJson("cmd-old", "unlock", 14700, 24700)}));
+  TEST_ASSERT_TRUE(ostium::runPoll(fetcher, door.clock, door.scheduler, door.processor));
+
+  // Measured from the request start, the start time is 20,100 - 5,000 +
+  // 2,000 = 17,100 ms, so the command is rejected instead of run again.
+  // Measured from the arrival, it would be 14,500 ms, and the command would run.
+  TEST_ASSERT_EQUAL_INT64(fakes::kBaseEpochMs + 17100, door.processor.startTimeMs());
+  TEST_ASSERT_FALSE(door.output.unlocked());
+  const auto events = door.flushEvents();
+  TEST_ASSERT_EQUAL_UINT32(1, events.size());
+  TEST_ASSERT_EQUAL_STRING("issued_before_boot", events[0].reason.c_str());
+  TEST_ASSERT_EQUAL_STRING(fakes::at(22700).c_str(), events[0].occurredAt.c_str());
+}
+
+void test_run_poll_backs_off_after_a_failed_poll() {
+  Harness door;
+  fakes::SlowFetcher failing(door.clock, 3000, -1, "");
+  TEST_ASSERT_FALSE(ostium::runPoll(failing, door.clock, door.scheduler, door.processor));
+  TEST_ASSERT_EQUAL_UINT32(1, door.scheduler.failures());
+  // The 2 s backoff starts when the failed request returns, at 13,000 ms.
+  TEST_ASSERT_FALSE(door.scheduler.due(14999));
+  TEST_ASSERT_TRUE(door.scheduler.due(15000));
+  TEST_ASSERT_FALSE(door.processor.hasStartTime());
+
+  door.clock.set(15000);
+  fakes::SlowFetcher good(door.clock, 100, 200, pollJson(25000, {}));
+  TEST_ASSERT_TRUE(ostium::runPoll(good, door.clock, door.scheduler, door.processor));
+  TEST_ASSERT_EQUAL_UINT32(0, door.scheduler.failures());
+  TEST_ASSERT_TRUE(door.scheduler.due(16500));  // 1.5 s after the request started.
+}
+
+void test_duplicate_id_kept_while_backend_still_serves() {
+  // The R4 estimate can run ahead of the backend's clock after a slow poll,
+  // but the backend keeps serving a command until its own clock passes
+  // expires_at. The door must not forget the ID before then.
+  Harness door;
+  const std::string unlock = commandJson("cmd-a", "unlock", 20000, 30500);
+  door.poll(pollJson(20000, {unlock}));
+  fakes::FakeSender dropping;
+  dropping.fallbackStatus = 422;
+  door.outbox.service(dropping, door.clock);  // The event is dropped, so it's never recorded.
+  TEST_ASSERT_EQUAL_UINT32(0, door.outbox.size());
+
+  // A slow poll: the request starts at uptime 18,500 ms, the backend stamps
+  // 29,900 ms, and the response arrives 1,500 ms after the start, so the R4
+  // estimate is 31,400 ms, past cmd-a's expiry. A new command is added in the
+  // same poll.
+  door.clock.advance(10000);
+  door.poll(pollJson(29900, {unlock, commandJson("cmd-b", "lock", 29000, 39000)}), 200, 1500);
+
+  // The next poll is fast: stamped 30,000 ms, 200 ms in flight. The backend
+  // still serves cmd-a, and the door still remembers it.
+  door.clock.advance(200);
+  door.poll(pollJson(30000, {unlock, commandJson("cmd-b", "lock", 29000, 39000)}), 200, 200);
+  TEST_ASSERT_FALSE(door.output.unlocked());
+  TEST_ASSERT_EQUAL_INT(1, door.timer.starts());
 }

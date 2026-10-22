@@ -32,7 +32,10 @@ void test_checks_report_first_failure_in_contract_order();
 void test_cache_full_rejection_is_final();
 void test_cache_full_rejection_is_queued_once();
 void test_duplicate_id_kept_until_its_own_expiry();
-void test_boot_time_uses_response_arrival_time();
+void test_boot_time_uses_poll_start_time();
+void test_slow_response_cannot_rerun_command_from_before_boot();
+void test_run_poll_backs_off_after_a_failed_poll();
+void test_duplicate_id_kept_while_backend_still_serves();
 void test_long_action_is_malformed_and_event_stays_small();
 void test_poll_command_count_is_capped();
 
@@ -49,6 +52,17 @@ void test_event_queue_drops_oldest_when_full();
 void test_event_service_posts_at_most_one_event();
 void test_event_retry_backoff_starts_after_slow_post();
 void test_event_retry_survives_millis_wraparound();
+
+// test_backend_replay.cpp, against responses from the real backend
+void test_backend_poll_runs_unlock_then_lock();
+void test_backend_accepts_firmware_event_bodies();
+void test_backend_event_statuses_follow_response_table();
+void test_backend_rejected_token_runs_nothing();
+void test_backend_timestamps_parse();
+void test_backend_door_id_is_the_device_key();
+void test_backend_command_matches_poll();
+void test_backend_stops_serving_expired_commands();
+void test_backend_accepts_report_after_reset();
 
 // test_poll_scheduler.cpp
 void test_poll_interval_is_start_to_start();

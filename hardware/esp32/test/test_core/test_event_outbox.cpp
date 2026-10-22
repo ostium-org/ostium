@@ -63,7 +63,7 @@ void test_example_poll_response_parses() {
       200,
       "{\"server_time\":\"2026-10-22T15:00:01.200Z\",\"commands\":[{"
       "\"command_id\":\"6f1e2d3c-4b5a-4c7d-8e9f-0a1b2c3d4e5f\",\"action\":\"unlock\","
-      "\"door_id\":\"9a1d7c3b-2e4f-4b6a-8c0d-5f3e2b1a7c64\","
+      "\"door_id\":\"door-unit-01\","
       "\"issued_at\":\"2026-10-22T15:00:00.000Z\",\"expires_at\":\"2026-10-22T15:00:10.000Z\"}]}");
 
   TEST_ASSERT_TRUE(result.ok);
@@ -72,7 +72,7 @@ void test_example_poll_response_parses() {
   const ostium::ParsedCommand& command = result.commands[0];
   TEST_ASSERT_TRUE(command.problem == ostium::CommandProblem::None);
   TEST_ASSERT_TRUE(command.action == ostium::Action::Unlock);
-  TEST_ASSERT_EQUAL_STRING(fakes::kDoorId, command.doorId.c_str());
+  TEST_ASSERT_EQUAL_STRING(fakes::kDeviceId, command.doorId.c_str());
   TEST_ASSERT_EQUAL_INT64(fakes::kBaseEpochMs, command.issuedAtMs);
   TEST_ASSERT_EQUAL_INT64(fakes::kBaseEpochMs + 10000, command.expiresAtMs);
 

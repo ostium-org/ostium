@@ -40,4 +40,12 @@ pio test -d hardware/esp32/native-tests
 
 The first run downloads the native platform, ArduinoJson, and Unity. The command exits with a nonzero status when any test fails. The build treats compiler warnings as errors.
 
+The `test_backend_*` tests replay responses recorded from the real FastAPI door routes, in `hardware/esp32/test/test_core/backend_responses.h`. After any change to `backend/app/routers/access.py` or `backend/app/routers/auth.py`, record them again and rerun the suite. To record them, install the backend's requirements (see [backend setup](../backend/readme.md)), and then run this from the repository root:
+
+```sh
+python hardware/esp32/tools/capture_backend_responses.py
+```
+
+The tool fixes the clock and the command IDs, so the file changes only when the backend's behavior changes. It checks the status of every call, and if a status isn't the one it expects, it stops with an error and leaves the file unchanged.
+
 `test_core` defines its own `main()`, so it builds only for the native environment. When the board project is added at `hardware/esp32/platformio.ini`, add `test_ignore = test_core` to its board environment, so that `pio test` for the board skips this suite.

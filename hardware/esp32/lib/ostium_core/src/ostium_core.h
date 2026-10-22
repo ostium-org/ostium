@@ -11,5 +11,6 @@
 #include "lock_controller.h"
 #include "poll_parser.h"
 #include "poll_scheduler.h"
+#include "poll_service.h"
 #include "timestamp.h"
 #include "timing.h"
