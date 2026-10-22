@@ -1,0 +1,10 @@
+{
+  "name": "ostium_core",
+  "version": "0.1.0",
+  "description": "Door unit lock control and command handling for Ostium. Plain C++ with no hardware dependencies, so it runs in the PlatformIO native test environment.",
+  "frameworks": "*",
+  "platforms": "*",
+  "dependencies": {
+    "bblanchon/ArduinoJson": "^7.2.0"
+  }
+}

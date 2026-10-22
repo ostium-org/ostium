@@ -25,3 +25,19 @@ bun run test:typecheck
 Coverage reports describe the imported utility and service modules, not the whole application. There is no required coverage threshold. For Bun configuration details, see the [official test configuration documentation](https://bun.com/docs/test/configuration).
 
 Also run `bunx tsc --noEmit` and `bun run lint` for the application. ESLint dependencies/configuration are not set up; that baseline issue is separate from SCRUM-25 and is not repaired by the unit suite.
+
+## Firmware unit tests
+
+The firmware suite (SCRUM-51) tests the door unit's core logic in `hardware/esp32/lib/ostium_core/`: lock and unlock timing, command checks, event reports, timestamp parsing, and poll backoff. Each rule in the [lock command contract](firmware/lock-command-v0.md) has at least one test, and the test names match the contract. The tests live in `hardware/esp32/test/test_core/`.
+
+The suite runs on a laptop in PlatformIO's native environment, so it needs no board, backend, or network after the first run. Fakes stand in for the lock output, clock, relock timer, and network. The native project is `hardware/esp32/native-tests/`, separate from the board's configuration.
+
+To run the suite, install PlatformIO Core 6 (for example, with `brew install platformio`), and then run this from the repository root:
+
+```sh
+pio test -d hardware/esp32/native-tests
+```
+
+The first run downloads the native platform, ArduinoJson, and Unity. The command exits with a nonzero status when any test fails. The build treats compiler warnings as errors.
+
+`test_core` defines its own `main()`, so it builds only for the native environment. When the board project is added at `hardware/esp32/platformio.ini`, add `test_ignore = test_core` to its board environment, so that `pio test` for the board skips this suite.
