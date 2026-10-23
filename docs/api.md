@@ -1,6 +1,6 @@
 # API
 
-FastAPI exposes JSON over HTTPS under `/api/v1`. User calls validate the
+Supabase Edge Functions expose JSON over HTTPS. Prefix user routes with `/functions/v1/ostium-api` and device routes with `/functions/v1/device-api`, retaining the `/api/v1/...` suffix. Signup, login, and sessions use Supabase Auth directly. User calls validate the
 Supabase bearer token and require an active `profiles` row. Manager/admin
 roles may command every door. The role-change route requires an authenticated,
 active admin. Device bearer tokens are independent of user tokens.
@@ -126,18 +126,18 @@ Commands and reports reuse `access_events`, with `event_type=config_sync` and
 `metadata.kind=door_command` / `command_result`. Command rows use the command
 UUID as their ID and store the response fields in metadata. Reports store all
 normalized original fields in metadata. Unrelated constrained fields such as
-`result` remain null. No schema, policies, or SQL functions are changed.
+`result` remain null. The schema remains in `backend/schema/000_initial_schema.sql`; this implementation changes no tables, policies, or SQL functions.
 
 Upstream connection failures return `502`, timeouts `504`, and database read
-or write failures `502`. Missing Supabase configuration returns `503`. API
+or write failures `502`. Missing function configuration returns `503`. API
 errors do not log tokens or secret keys. Event scans are suitable for the
 integration workload; indexing and schema changes are deferred.
 
 ## Thursday walkthrough
 
-Use existing active manager, unit, and active/offline device records. Configure
-the backend and firmware as described in [backend setup](../backend/readme.md).
-Set `API`, `MANAGER_TOKEN`, `DEVICE_ID` (device key), and `DEVICE_TOKEN` in your
+After deploying the functions, use existing active manager, unit, and active/offline device records. Configure
+the backend and firmware as described in [Supabase setup](../backend/supabase/README.md).
+Set `API` to the user function base, `DEVICE_API` to the device function base, and `MANAGER_TOKEN`, `DEVICE_ID` (device key), and `DEVICE_TOKEN` in your
 local shell. Do not put tokens into committed scripts or shared logs.
 
 1. Issue a command and copy its `command_id`:
@@ -151,7 +151,7 @@ local shell. Do not put tokens into committed scripts or shared logs.
 2. Within ten seconds, poll twice. Both responses should contain the command:
 
    ```sh
-   curl "$API/api/v1/devices/$DEVICE_ID/commands" \
+   curl "$DEVICE_API/api/v1/devices/$DEVICE_ID/commands" \
      -H "Authorization: Bearer $DEVICE_TOKEN"
    ```
 
@@ -159,7 +159,7 @@ local shell. Do not put tokens into committed scripts or shared logs.
    timestamp. Report the result (the same timestamp must be used for retries):
 
    ```sh
-   curl -X POST "$API/api/v1/devices/$DEVICE_ID/events" \
+   curl -X POST "$DEVICE_API/api/v1/devices/$DEVICE_ID/events" \
      -H "Authorization: Bearer $DEVICE_TOKEN" \
      -H 'Content-Type: application/json' \
      -d "{\"event_id\":\"thursday-unique-event-1\",\"command_id\":\"$COMMAND_ID\",\"action\":\"unlock\",\"result\":\"done\",\"reason\":null,\"occurred_at\":\"$OCCURRED_AT\"}"
