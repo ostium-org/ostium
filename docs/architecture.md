@@ -1,5 +1,7 @@
 # Architecture
 
+The Assignment 1 MVP door unit works differently from this page: the backend is in the unlock path, and the door polls for Lock and Unlock commands. For the door unit's design and diagrams, see [Door unit design](firmware/design.md).
+
 ## Components
 
 The system has three runtime components:

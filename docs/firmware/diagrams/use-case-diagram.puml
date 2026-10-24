@@ -1,0 +1,72 @@
+@startuml firmware-use-case-diagram
+!pragma layout smetana
+' Door unit use cases (SCRUM-55). The MVP boundary is what Assignment 1
+' demonstrates; the future-scope boundary is the final product.
+' To render: java -jar plantuml.jar -tsvg docs/firmware/diagrams/use-case-diagram.puml
+
+title Door unit: use case diagram
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+actor "Property Manager" as Manager
+actor "Tenant" as Tenant
+actor "Guest" as Guest
+actor "Smart Access Device\n(ESP32-S3 door unit)" as Device
+actor "Backend API\n(FastAPI)" as Backend <<system>>
+
+rectangle "Assignment 1 MVP" {
+  usecase "Lock door" as Lock
+  usecase "Unlock door" as Unlock
+  usecase "Receive command" as Receive
+  usecase "Unlock for a set time\n(3 s, at most 5 s)" as Timed
+  usecase "Relock" as Relock
+  usecase "Report lock event" as Report
+  usecase "Reject command\n(malformed, invalid action,\nwrong door, issued before boot,\nexpired, unlock failed,\nduplicate list full)" as Reject
+}
+
+rectangle "Future scope" #EEEEEE {
+  usecase "Present QR code" as Present
+  usecase "Scan QR code" as Scan
+  usecase "Verify credential" as Verify
+}
+
+Manager --> Lock
+Manager --> Unlock
+Lock --> Backend
+Unlock --> Backend
+
+Device --> Receive
+Device --> Timed
+Device --> Relock
+Device --> Report
+Receive --> Backend
+Report --> Backend
+
+Unlock ..> Receive : <<include>>
+Lock ..> Receive : <<include>>
+Unlock ..> Timed : <<include>>
+Lock ..> Relock : <<include>>
+Timed ..> Relock : <<include>>
+Receive ..> Report : <<include>>
+Reject ..> Receive : <<extend>>
+
+Tenant --> Present
+Guest --> Present
+Device --> Scan
+Device --> Verify
+Present ..> Scan : <<include>>
+Scan ..> Verify : <<include>>
+
+note right of Scan
+  The SCRUM-59 bench demo accepts one fixed code.
+  It isn't a credential check, so it stays future scope.
+end note
+
+note right of Verify
+  A valid credential runs the same
+  timed unlock as an app command.
+end note
+
+@enduml
