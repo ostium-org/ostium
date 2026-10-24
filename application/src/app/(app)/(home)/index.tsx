@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
+import { Button } from '@/components/button';
 import { HouseCard } from '@/components/house-card';
 import { ScreenTransition } from '@/components/screen-transition';
 import { ThemedText } from '@/components/themed-text';
@@ -48,13 +48,25 @@ export default function HomeScreen() {
                   />
               </View>
             )}
-            ListHeaderComponent={
-              <ThemedText type="title" style={styles.header}>
-                HOUSES
-              </ThemedText>
+                       ListHeaderComponent={
+              <View>
+                <ThemedText type="title" style={styles.header}>
+                  HOUSES
+                </ThemedText>
+
+                {user?.role === 'manager' && (
+                  <Button
+                    title="Add house"
+                    onPress={() => router.push('/houses/new')}
+                  />
+                )}
+              </View>
             }
             ListEmptyComponent={
-              <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
+              <ThemedText
+                type="small"
+                themeColor="textSecondary"
+                style={styles.empty}>
                 No houses yet.
               </ThemedText>
             }
