@@ -77,7 +77,7 @@ const DEV_ACCOUNTS: { password: string; user: AuthUser }[] = [
 
 export function getDevLoginHint(): string | null {
   return MOCK_ENABLED
-    ? 'Demo mode (no Supabase data): tenant@example.com / tenant-pass (tenant) | manager@example.com / manager-pass (manager)'
+    ? 'Dev accounts: tenant@example.com / tenant-pass (tenant) | manager@example.com / manager-pass (manager)'
     : null;
 }
 
