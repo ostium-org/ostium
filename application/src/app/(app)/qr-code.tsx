@@ -28,16 +28,11 @@ export default function QRCodeScreen() {
   const [selectedHouseId, setSelectedHouseId] = useState(houses[0]?.id);
   const [expanded, setExpanded] = useState(false);
   const [cardWidth, setCardWidth] = useState(0);
-<<<<<<< Updated upstream
-  const house = HOUSES.find((item) => item.id === selectedHouseId);
+  const selectedHouse = houses.find((item) => item.id === selectedHouseId);
+  const house = selectedHouse ?? houses[0];
   const { code, seconds, error, loading, refresh } = useRotatingQRCode(
     USE_QR_PLACEHOLDER ? undefined : house?.id,
   );
-=======
-  const selectedHouse = houses.find((item) => item.id === selectedHouseId);
-  const house = selectedHouse ?? houses[0];
-  const { code, seconds, error, loading, refresh } = useRotatingQRCode(house?.id);
->>>>>>> Stashed changes
 
   return (
     <ThemedView style={styles.page}>
