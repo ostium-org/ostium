@@ -14,9 +14,15 @@ import {
   TopTabInset,
 } from '@/constants/theme';
 import { HOUSES } from '@/data/houses';
+import { useHouseAccessRevision, userHasHouseAccess } from '@/data/house-access';
+import { useAuth } from '@/hooks/auth';
 
 export default function HomeScreen() {
-  const houses = HOUSES;
+  const { user } = useAuth();
+  useHouseAccessRevision();
+  const houses = user?.role === 'manager'
+    ? HOUSES
+    : HOUSES.filter((house) => user && userHasHouseAccess(house.id, user.id, user.email));
   const isSingle = houses.length === 1;
 
   return (
