@@ -1,0 +1,266 @@
+@startuml firmware-class-diagram
+!pragma layout smetana
+' Door unit firmware classes (SCRUM-54). Drawn by hand from the headers in
+' hardware/esp32/lib/ostium_core/src/ and hardware/esp32/include/.
+' To render: java -jar plantuml.jar -tsvg docs/firmware/diagrams/class-diagram.puml
+
+title Door unit firmware: class diagram (Assignment 1 MVP)
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+hide empty members
+
+package "ostium_core: core logic (plain C++, no hardware)" as core {
+
+  class LockController {
+    + {static} kDefaultUnlockMs : uint32_t = 3000
+    + {static} kMaxUnlockMs : uint32_t = 5000
+    - unlockMs_ : uint32_t
+    - unlocked_ : atomic<bool>
+    - mutex_ : std::mutex
+    + begin() : void
+    + unlock() : bool
+    + lock() : void
+    + isUnlocked() : bool
+    - {static} onRelockTimer(context : void*) : void
+  }
+
+  class CommandProcessor {
+    + {static} kStartTimeMarginMs : int64_t = 2000
+    + {static} kFallbackRetentionMs : int64_t = 10000
+    - deviceId_ : string
+    - startTimeMs_ : int64_t
+    - hasStartTime_ : bool
+    + handlePoll(poll : PollResult, requestStartedAtMs : uint32_t) : void
+    + startTimeMs() : int64_t
+    - handleCommand(command : ParsedCommand, nowEpochMs : int64_t, serverTimeMs : int64_t) : void
+    - reject(command : ParsedCommand, reasonCode : string, nowEpochMs : int64_t) : void
+    - report(command : ParsedCommand, result : Result, reasonCode : string, nowEpochMs : int64_t) : void
+  }
+
+  class DuplicateList {
+    + {static} kCapacity : size_t = 32
+    + contains(commandId : string) : bool
+    + add(commandId : string, expiresAtEpochMs : int64_t, nowEpochMs : int64_t) : bool
+  }
+
+  class EventOutbox {
+    + {static} kCapacity : size_t = 8
+    + push(event : Event, nowMs : uint32_t) : void
+    + service(sender : EventSender, clock : Clock) : void
+    + contains(eventId : string) : bool
+  }
+
+  class "EventOutbox::Entry" as OutboxEntry <<struct>> {
+    + eventId : string
+    + body : string
+    + nextAttemptMs : uint32_t
+    + failures : uint32_t
+  }
+
+  class PollScheduler {
+    + {static} kIntervalMs : uint32_t = 1500
+    - nextDueMs_ : uint32_t
+    - failures_ : uint32_t
+    + due(nowMs : uint32_t) : bool
+    + started(nowMs : uint32_t) : void
+    + succeeded() : void
+    + failed(nowMs : uint32_t) : void
+  }
+
+  class "poll_service.h" as PollService <<utility>> {
+    + {static} runPoll(fetcher : PollFetcher, clock : Clock, scheduler : PollScheduler, processor : CommandProcessor) : bool
+  }
+
+  class "poll_parser.h" as PollParser <<utility>> {
+    + {static} parsePollResponse(status : int, body : string) : PollResult
+  }
+
+  class "timestamp.h" as Timestamp <<utility>> {
+    + {static} parseTimestamp(text : string, epochMs : int64_t*) : bool
+    + {static} formatTimestamp(epochMs : int64_t) : string
+  }
+
+  class "event.h" as EventFns <<utility>> {
+    + {static} serializeEvent(event : Event) : string
+    + {static} eventIdFor(commandId : string) : string
+  }
+
+  class PollResult <<struct>> {
+    + ok : bool
+    + error : string
+    + serverTimeMs : int64_t
+    + deferred : size_t
+  }
+
+  class ParsedCommand <<struct>> {
+    + commandId : string
+    + actionText : string
+    + action : Action
+    + doorId : string
+    + issuedAtMs : int64_t
+    + expiresAtMs : int64_t
+    + problem : CommandProblem
+  }
+
+  class Event <<struct>> {
+    + commandId : string
+    + action : string
+    + result : Result
+    + reason : string
+    + occurredAtMs : int64_t
+    + eventId() : string
+  }
+
+  enum Action {
+    None
+    Lock
+    Unlock
+  }
+
+  enum CommandProblem {
+    None
+    NoCommandId
+    Malformed
+    InvalidAction
+  }
+
+  enum Result {
+    Done
+    Rejected
+  }
+}
+
+package "ostium_core: interfaces to the hardware" as ports {
+
+  interface LockOutput {
+    + write(unlocked : bool) : void
+  }
+
+  interface OneShotTimer {
+    + start(delayMs : uint32_t, callback, context) : bool
+    + cancel() : void
+  }
+
+  interface Clock {
+    + nowMs() : uint32_t
+  }
+
+  interface Log {
+    + write(message : string) : void
+  }
+
+  interface PollFetcher {
+    + get(body : string&) : int
+  }
+
+  interface EventSender {
+    + post(body : string) : int
+  }
+}
+
+package "Board adapters (Arduino-ESP32, src/ and include/)" as board {
+
+  class GpioLockOutput {
+    - pin_ : uint8_t
+    - activeHigh_ : bool
+    + write(unlocked : bool) : void
+  }
+
+  class EspOneShotTimer {
+    - handle_ : esp_timer_handle_t
+    + begin() : bool
+    + start(delayMs : uint32_t, callback, context) : bool
+    + cancel() : void
+  }
+
+  class MillisClock {
+    + nowMs() : uint32_t
+  }
+
+  class SerialLog {
+    + write(message : string) : void
+  }
+
+  class BackendClient {
+    + {static} kTimeoutMs : uint32_t = 3000
+    - commandsUrl_ : String
+    - eventsUrl_ : String
+    - authorization_ : String
+    + begin() : bool
+    + get(body : string&) : int
+    + post(body : string) : int
+  }
+
+  class WifiLink {
+    - retryMs_ : uint32_t
+    + begin() : void
+    + maintain(nowMs : uint32_t) : void
+    + connected() : bool
+  }
+}
+
+package "Future scope (final product)" as future #EEEEEE {
+  class QrScanner <<future>> {
+    + scan() : string
+  }
+  class CredentialVerifier <<future>> {
+    + verify(payload : string) : bool
+  }
+}
+
+' Core associations
+CommandProcessor "1" --> "1" LockController : locks and unlocks >
+CommandProcessor "1" --> "1" EventOutbox : queues events >
+CommandProcessor "1" *-- "1" DuplicateList : handled IDs
+CommandProcessor "1" --> "1" Clock
+CommandProcessor "1" --> "1" Log
+CommandProcessor ..> PollResult : reads
+PollResult "1" *-- "0..32" ParsedCommand : commands
+CommandProcessor ..> Event : creates
+CommandProcessor ..> EventFns : eventIdFor()
+EventOutbox "1" *-- "0..8" OutboxEntry : entries_
+EventOutbox ..> EventFns : push() serializes with
+EventFns ..> Event : reads
+EventFns ..> Timestamp : formats occurred_at
+EventOutbox ..> EventSender : posts with
+EventOutbox "1" --> "1" Log
+LockController "1" --> "1" LockOutput : drives >
+LockController "1" --> "1" OneShotTimer : arms relock >
+PollService ..> PollFetcher : fetches with
+PollService ..> PollScheduler : updates
+PollService ..> CommandProcessor : hands poll to
+PollService ..> PollParser : parses with
+PollParser ..> PollResult : creates
+PollParser ..> Timestamp
+
+' Realizations
+GpioLockOutput ..|> LockOutput
+EspOneShotTimer ..|> OneShotTimer
+MillisClock ..|> Clock
+SerialLog ..|> Log
+BackendClient ..|> PollFetcher
+BackendClient ..|> EventSender
+WifiLink "1" --> "1" Log
+BackendClient "1" --> "1" Log
+
+' Future scope
+QrScanner ..> CredentialVerifier : scanned payload
+CredentialVerifier ..> LockController : unlock() on a valid credential
+
+legend right
+  Assignment 1 classes, by the names in SCRUM-54:
+  lock controller = LockController
+  relay = LockOutput, GpioLockOutput
+  command client = BackendClient (PollFetcher), runPoll() in poll_service.h
+  command validator = parsePollResponse() in poll_parser.h, CommandProcessor
+  event reporter = EventOutbox, EventSender
+  clock = Clock, MillisClock, OneShotTimer
+  Wi-Fi manager = WifiLink
+  <<utility>> boxes are header files of free functions, not classes.
+  main.cpp creates one LockController, EventOutbox, CommandProcessor,
+  PollScheduler, and one of each board adapter, and wires them together.
+endlegend
+
+@enduml
