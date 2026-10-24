@@ -39,6 +39,7 @@ void EventOutbox::service(EventSender& sender, const Clock& clock) {
     const std::string eventId = entry.eventId;
     switch (classify(status)) {
       case Outcome::Delivered:
+        log_.write("event " + eventId + " delivered");
         entries_.erase(entries_.begin() + static_cast<std::ptrdiff_t>(i));
         break;
       case Outcome::AlreadyReported:

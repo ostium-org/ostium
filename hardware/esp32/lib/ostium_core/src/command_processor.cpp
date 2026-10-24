@@ -7,7 +7,10 @@ CommandProcessor::CommandProcessor(const std::string& deviceId, LockController& 
     : deviceId_(deviceId), lock_(lock), outbox_(outbox), clock_(clock), log_(log) {}
 
 void CommandProcessor::handlePoll(const PollResult& poll, uint32_t requestStartedAtMs) {
-  if (!poll.ok) return;
+  if (!poll.ok) {
+    log_.write("poll failed: " + poll.error);
+    return;
+  }
 
   if (!hasStartTime_) {
     startTimeMs_ =
@@ -75,6 +78,7 @@ void CommandProcessor::handleCommand(const ParsedCommand& command, int64_t nowEp
   } else {
     lock_.lock();  // R11
   }
+  log_.write("ran command " + command.commandId + ": " + command.actionText);
   report(command, Result::Done, nullptr, nowEpochMs);
 }
 

@@ -146,6 +146,9 @@ void test_network_error_keeps_door_locked() {
   TEST_ASSERT_TRUE(door.writesAfterBegin().empty());
   TEST_ASSERT_FALSE(door.output.unlocked());
   TEST_ASSERT_EQUAL_UINT32(0, door.outbox.size());
+  // Each failed poll is logged with its status.
+  TEST_ASSERT_TRUE(door.log.contains("poll failed: poll returned status -1"));
+  TEST_ASSERT_TRUE(door.log.contains("poll failed: poll returned status 503"));
 
   // Failing event posts don't move the lock either.
   door.poll(fakes::pollJson(20000, {fakes::commandJson("cmd-b", "lock", 19000, 29000)}));
