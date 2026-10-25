@@ -29,7 +29,7 @@ Because the backend is now in the unlock path, this contract departs from the tr
 - **Framework:** Arduino-ESP32 on PlatformIO.
 - **Board:** ESP32-S3 with an onboard camera. The firmware team sets the PlatformIO board ID after it records the exact model (SCRUM-49).
 - **Lock:** the rules assume a fail-secure lock that's locked when its output is off, such as a solenoid on a relay. A motor-driven lock needs different rules.
-- **Core logic:** plain C++ that doesn't include `Arduino.h`. The lock output, clock, timer, and network sit behind interfaces, so the Unity tests run on a laptop with `pio test -e native` (SCRUM-51). The tests don't need a board or a backend.
+- **Core logic:** plain C++ that doesn't include `Arduino.h`. The lock output, clock, timer, and network sit behind interfaces, so the Unity tests run on a laptop with `pio test -d hardware/esp32/native-tests` (SCRUM-51). The tests don't need a board or a backend.
 - **Libraries:** ArduinoJson 7 for JSON, and `HTTPClient` with `WiFiClientSecure` for HTTPS.
 
 In this document, the *lock controller* is the core logic that decides when to lock and unlock, and the *lock output* is the GPIO pin that drives the relay or lock.
@@ -64,7 +64,7 @@ sequenceDiagram
 
 ## Configuration
 
-The firmware build reads these values from `hardware/esp32/include/secrets.h`, which Git ignores. When the firmware code lands, it includes `hardware/esp32/include/secrets.example.h` with placeholders. To configure a door unit, copy that file to `secrets.h` in the same folder, and then replace the placeholders with the bench values.
+The firmware build reads these values from `hardware/esp32/include/secrets.h`, which Git ignores. To configure a door unit, copy `hardware/esp32/include/secrets.example.h` to `secrets.h` in the same folder, and then replace the placeholders with the bench values. Settings that aren't secret, such as the lock GPIO and the unlock time, are in `hardware/esp32/include/board_config.h`.
 
 | Setting | Meaning | Example |
 |---|---|---|
@@ -74,7 +74,7 @@ The firmware build reads these values from `hardware/esp32/include/secrets.h`, w
 | `OSTIUM_ROOT_CA` | PEM root certificate of the backend host | The CA for the deployed host |
 | `OSTIUM_WIFI_SSID`, `OSTIUM_WIFI_PASSWORD` | Wi-Fi network | Bench network |
 | `OSTIUM_QR_ACCESS_VALUE` | Text the fixed-QR proof of concept accepts. If it's empty, QR unlock is off. | The value in the app's placeholder QR |
-| `OSTIUM_ALLOW_PLAIN_HTTP` | Build flag that allows an `http://` API root. Define it only in a bench build that talks to the local mock or to FastAPI on a laptop. | Not defined |
+| `OSTIUM_ALLOW_PLAIN_HTTP` | Build flag that allows an `http://` API root. The `esp32s3-bench` environment defines it, for the local mock or FastAPI on a laptop. | Not defined |
 
 These are the `OSTIUM_API_ROOT` forms:
 
@@ -124,7 +124,7 @@ The backend returns `200` with the unexpired commands that this device hasn't re
 }
 ```
 
-When there are no commands, `commands` is `[]`. For more requests and responses, see the [example JSON files](examples/).
+When there are no commands, `commands` is `[]`. The door handles at most the first 32 commands in one response. It doesn't report the rest, so the backend returns them on a later poll. For more requests and responses, see the [example JSON files](examples/).
 
 | Field | Required | Door's use |
 |---|---|---|
@@ -140,26 +140,26 @@ The door ignores any other fields. The backend writes timestamps with 6 fraction
 
 ## Rules the door follows
 
-Each rule has a planned unit test in SCRUM-51. The test names are the names the suite uses.
+Each rule has unit tests in `hardware/esp32/test/test_core/` (SCRUM-51), with the names listed here.
 
-| # | Rule | Planned tests |
+| # | Rule | Tests |
 |---|---|---|
-| R1 | The lock stays locked through power-on, reset, and a crash. The first statement of `setup()` writes the locked level, before Serial, the camera, or Wi-Fi start. Before `setup()` runs, the wiring keeps the lock locked: the lock output uses a GPIO that isn't a strapping pin (0, 3, 45, or 46) and isn't used by the camera or PSRAM, with a pull resistor that keeps the relay off while the pin floats. | `test_lock_is_locked_after_startup` |
+| R1 | The lock starts locked. The first statement of `setup()` writes the locked level, before Serial, the camera, or Wi-Fi start. A power-on or brownout reset resets the GPIO, and until `setup()` runs, the wiring keeps the lock locked: the lock output uses a GPIO that isn't a strapping pin (0, 3, 45, or 46) and isn't used by the camera or PSRAM, with a pull resistor toward the locked level. A panic or watchdog reset restarts only the CPUs, not the GPIO, so an unlock that a crash interrupts lasts its elapsed time plus the panic handler, the core dump, and the boot, until `setup()` writes the locked level. | `test_lock_is_locked_after_startup` |
 | R2 | The door runs every command in response order and doesn't skip an earlier command because a later one is queued. A Lock still ends an unlock in progress (R11). So `[unlock, lock]` in one response ends locked, and `[lock, unlock]` ends unlocked until the relock. | `test_commands_run_in_response_order`, `test_unlock_then_lock_in_one_poll_ends_locked` |
-| R3 | The door doesn't run a `command_id` it has already run or rejected, and a redelivered unlock doesn't restart the relock timer. It keeps each ID until that command's `expires_at` has passed by the R4 estimate, in a list of 32, and never removes an unexpired ID. If the list is full of unexpired IDs, the door rejects the new command with `duplicate_cache_full`. | `test_duplicate_command_is_not_run_again`, `test_redelivered_unlock_does_not_restart_timer`, `test_duplicate_list_never_drops_unexpired_id` |
-| R4 | The door estimates the current time as `server_time` plus the time elapsed since the poll response arrived. If `expires_at` is at or before that time when the command would run, the door rejects it with `expired` and doesn't move the lock. | `test_expired_command_is_rejected` |
-| R5 | If `issued_at` is before the door started, the door rejects the command with `issued_before_boot`. The door can't tell whether it ran that command before a reset, so it doesn't risk a second unlock. The door sets its start time once, from the first successful poll after startup: `server_time` minus its uptime when that response arrived, plus 2,000 ms. The margin errs toward rejecting. | `test_command_issued_before_boot_is_rejected`, `test_boot_time_is_set_once_from_first_poll` |
+| R3 | The door doesn't run a `command_id` it has already run or rejected, and a redelivered unlock doesn't restart the relock timer. It keeps each ID, in a list of 32, until a poll's `server_time` reaches that command's `expires_at`. It uses `server_time` rather than the R4 estimate, because the estimate can run ahead of the backend's clock, and the backend serves a command until its own clock passes `expires_at`. It never removes an unexpired ID. If the list is full of unexpired IDs, the door rejects the new command with `duplicate_cache_full`. | `test_duplicate_command_is_not_run_again`, `test_redelivered_unlock_does_not_restart_timer`, `test_duplicate_list_never_drops_unexpired_id`, `test_duplicate_id_kept_while_backend_still_serves` |
+| R4 | The door estimates the current time as `server_time` plus the time elapsed since the poll request started. `runPoll()` records the request start before it sends the request. If `expires_at` is at or before that time when the command would run, the door rejects it with `expired` and doesn't move the lock. | `test_expired_command_is_rejected` |
+| R5 | If `issued_at` is before the door started, the door rejects the command with `issued_before_boot`. The door can't tell whether it ran that command before a reset, so it doesn't risk a second unlock. The door sets its start time once, from the first successful poll after startup: `server_time` minus its uptime when that poll request started, plus 2,000 ms. The backend stamps `server_time` after the request starts, so this estimate is never earlier than the real start, however slow the response is. The margin and the request time both err toward rejecting, so a command issued in the first few seconds after startup can also be rejected. | `test_command_issued_before_boot_is_rejected`, `test_boot_time_is_set_once_from_first_poll`, `test_slow_response_cannot_rerun_command_from_before_boot` |
 | R6 | If `door_id` doesn't equal `OSTIUM_DEVICE_ID`, the door rejects the command with `wrong_door`. The backend only returns commands issued to this device's key, so R6 guards against backend bugs. | `test_command_for_other_door_is_rejected` |
-| R7 | If a required field is missing or a timestamp can't be parsed, the door rejects the command with `malformed_command`. If there's no usable `command_id`, the door can't report the command, so it logs the command and skips it. | `test_malformed_command_is_rejected` |
+| R7 | If a required field is missing or a timestamp can't be parsed, the door rejects the command with `malformed_command`. An `action` longer than 16 characters, or any string with a NUL character, counts as missing. If there's no usable `command_id`, the door can't report the command, so it logs the first 200 bytes of the command and skips it. | `test_malformed_command_is_rejected` |
 | R8 | If `action` isn't `lock` or `unlock`, the door rejects the command with `invalid_action`. | `test_unknown_action_is_rejected` |
-| R9 | Unlock turns on the lock output for the unlock time (default 3,000 ms), and then the door relocks. | `test_unlock_pulses_for_configured_time` |
+| R9 | Unlock arms the relock timer and then turns on the lock output for the unlock time (default 3,000 ms), and then the door relocks. If the door can't arm the relock timer, it stays locked and rejects the command with `unlock_failed`. | `test_unlock_pulses_for_configured_time` |
 | R10 | No input extends an unlock. An unlock that arrives during an unlock reports `done` and doesn't change the relock time. The lock controller takes the unlock time as a parameter and clamps any value above 5,000 ms to 5,000 ms. | `test_unlock_never_exceeds_maximum` (configure 10,000 ms, expect the relock at 5,000 ms), `test_second_unlock_does_not_extend` |
 | R11 | Lock relocks right away and ends an unlock early. Lock on a locked door reports `done`. | `test_lock_during_unlock_relocks_immediately` |
 | R12 | A network error never unlocks the door. The relock runs from a one-shot `esp_timer` callback, behind the timer interface, that writes the lock output itself. It fires on time while the main loop is blocked in an HTTP request, DNS lookup, TLS handshake, Wi-Fi reconnect, or QR decode. Network code never writes the lock output. | `test_network_error_keeps_door_locked`, `test_relock_fires_while_request_blocks` |
 | R13 | Each command with a usable `command_id` gets at most one event, and its `event_id` is `evt-` followed by the `command_id`. A command gets no event if the door drops the event (see [How the door handles each response](#how-the-door-handles-each-response)) or if the command has no usable `command_id` (R7). | `test_event_id_derives_from_command_id` |
 | R14 | The door retries a failed event post without blocking lock control or later polls. | `test_failed_event_post_does_not_block_lock_control` |
 | R15 | The door parses ISO 8601 timestamps with 0 to 9 fractional digits, ending in `Z` or a `±hh:mm` offset. | `test_timestamp_parser_accepts_utc_formats` |
-| R16 | A bad poll response runs nothing. The door treats the poll as failed, runs none of its commands, posts no events for them, and backs off, in any of these cases: the status isn't `200`, the body isn't valid JSON or is over 8 KiB, `server_time` is missing or can't be parsed, or `commands` isn't an array. | `test_bad_poll_response_runs_nothing` |
+| R16 | A bad poll response runs nothing. The door treats the poll as failed, runs none of its commands, posts no events for them, and backs off, in any of these cases: the status isn't `200`, the body isn't valid JSON (including a raw control character inside a string), is over 8 KiB, or has anything but whitespace after the JSON, `server_time` is missing or can't be parsed, or `commands` isn't an array. The parser also accepts single-quoted strings and unquoted keys, which the backend never sends. | `test_bad_poll_response_runs_nothing` |
 
 In `test_relock_fires_while_request_blocks`, the fake network call advances the fake clock by 10,000 ms, and the fake timer must fire the relock at 3,000 ms.
 
@@ -188,6 +188,7 @@ A `rejected` event always has one of these reasons:
 | `wrong_door` | The command is for another door (R6). |
 | `issued_before_boot` | The command was issued before the door started (R5). The door may have run it before a reset, so this result means the outcome is unknown, not that the door refused. |
 | `expired` | The command expired before it ran (R4). |
+| `unlock_failed` | The door couldn't arm its relock timer, so it stayed locked (R9). |
 
 v0 has no lock position sensor, so the door can't detect a lock or relock that failed. The SCRUM-52 bench tests check relocking.
 
@@ -216,7 +217,7 @@ Content-Type: application/json
 |---|---|
 | `event_id` | `evt-` followed by the `command_id`. It's the same on every retry, including after a reset. |
 | `command_id` | The command this event reports. |
-| `action` | The command's `action` as received, or `null` if the command had none. If the backend refuses the event with `400` or `422`, the door drops it, as the response table says. |
+| `action` | The command's `action` as received, or `null` if the command had none or it was longer than 16 characters. If the backend refuses the event with `400` or `422`, the door drops it, as the response table says. |
 | `result` | `done` or `rejected`. For an unlock, `done` means the door turned on the lock output. A Lock later in the same response can end that unlock within milliseconds. The relock happens on the door and isn't reported. |
 | `reason` | `null` when `result` is `done`, otherwise a [reason code](#reason-codes). |
 | `occurred_at` | When the door ran or rejected the command, estimated as in R4, in UTC ending in `Z`. |
@@ -256,7 +257,7 @@ The retry queue holds 8 events. When it's full, the door drops the oldest event 
 | Backoff after a failed poll | 2,000, 4,000, then 8,000 ms |
 | Event retry backoff | 2,000, 4,000, then 8,000 ms for each queued event, reset after a `2xx` |
 | Command expiry, set by the backend | 10 seconds after `issued_at` |
-| Start-time margin (R5) | 2,000 ms |
+| Start-time margin (R5), added to the estimate from the first poll's request start | 2,000 ms |
 | Command IDs kept for the duplicate check | Up to 32, each until its command expires |
 | Event retry queue | 8 events |
 | Largest poll response | 8 KiB |
@@ -291,14 +292,15 @@ Before a bench run, someone with database access creates the door unit's `device
 
 ## Testing
 
-- **Unit tests (SCRUM-51):** `pio test -e native` runs the R1 to R16 tests with a fake lock output, clock, timer, and network.
+- **Unit tests (SCRUM-51):** `pio test -d hardware/esp32/native-tests`, run from the repository root, runs the R1 to R16 tests with a fake lock output, clock, timer, and network. For details, see [Testing](../testing.md#firmware-unit-tests).
 - **Mock backend (SCRUM-58):** to test the polling code on the bench without the real backend, run a local mock that serves the two device routes.
   - For polls, the mock returns bodies shaped like the `poll-response` files in the [example JSON files](examples/). It sets `server_time` to its current UTC time, and sets `issued_at` and `expires_at` relative to it. With the fixed example timestamps, R5 could reject a command depending on how soon after startup the first poll arrives.
   - For events, the mock returns `200` with `{"event_id": ..., "command_id": ..., "recorded": true}`, as the real backend does. The event example files show what the door posts.
+- **Replay tests:** `hardware/esp32/tools/capture_backend_responses.py` runs the real FastAPI routes in process and records their responses in `hardware/esp32/test/test_core/backend_responses.h`. The `test_backend_*` tests run those responses through the firmware core and check that the firmware writes the exact event bodies the backend accepted. To record them again after a backend change, see [Testing](../testing.md#firmware-unit-tests).
 - **Integration with the real backend:** run FastAPI on a laptop as [backend setup](../../backend/readme.md) describes, and follow the walkthrough in [API](../api.md#thursday-walkthrough) with the door unit as the device.
 - **Certificates:** before integration, run the mock over HTTPS at least once, with a self-signed CA loaded as `OSTIUM_ROOT_CA`. Then load a different CA, and confirm that every request fails and the door stays locked.
 - **Bench tests (SCRUM-52):**
-  - Boot and reset behavior, including a reset and a forced crash during an unlock.
+  - Boot and reset behavior, including a reset and a forced crash during an unlock. For the crash, measure how long the relay stays on.
   - Unlock timing over at least 20 unlocks, and the time for Lock to end an unlock.
   - An unlock while the backend host is unreachable, and again with the access point off. The lock output turns off at 3,000 ms in every run.
 

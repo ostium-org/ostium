@@ -25,3 +25,27 @@ npm run test:typecheck
 Coverage reports cover service and utility modules, excluding platform token-storage adapters; they do not cover the whole application. There is no required coverage threshold. For runner configuration details, see the [Vitest configuration documentation](https://vitest.dev/config/).
 
 Also run `npx tsc --noEmit` and `npm run lint` for the application. These checks cover the app source separately from the unit suite; resolve any reported source errors before merging.
+
+## Firmware unit tests
+
+The firmware suite (SCRUM-51) tests the door unit's core logic in `hardware/esp32/lib/ostium_core/`: lock and unlock timing, command checks, event reports, timestamp parsing, poll backoff, and reading response bodies with a size cap and deadlines. Each rule in the [lock command contract](firmware/lock-command-v0.md) has at least one test, and the test names match the contract. The tests live in `hardware/esp32/test/test_core/`.
+
+The suite runs on a laptop in PlatformIO's native environment, so it needs no board, backend, or network after the first run. Fakes stand in for the lock output, clock, relock timer, and network. The native project is `hardware/esp32/native-tests/`, separate from the board's configuration.
+
+To run the suite, install PlatformIO Core 6 (for example, with `brew install platformio`), and then run this from the repository root:
+
+```sh
+pio test -d hardware/esp32/native-tests
+```
+
+The first run downloads the native platform, ArduinoJson, and Unity. The command exits with a nonzero status when any test fails. The build treats compiler warnings as errors.
+
+The `test_backend_*` tests replay responses recorded from the real FastAPI door routes, in `hardware/esp32/test/test_core/backend_responses.h`. After any change to `backend/app/routers/access.py` or `backend/app/routers/auth.py`, record them again and rerun the suite. To record them, install the backend's requirements (see [backend setup](../backend/readme.md)), and then run this from the repository root:
+
+```sh
+python hardware/esp32/tools/capture_backend_responses.py
+```
+
+The tool fixes the clock and the command IDs, so the file changes only when the backend's behavior changes. It checks the status of every call, and if a status isn't the one it expects, it stops with an error and leaves the file unchanged.
+
+`test_core` defines its own `main()`, so it builds only for the native environment. The board project, `hardware/esp32/platformio.ini`, sets `test_ignore = test_core`, so `pio test` for the board skips this suite.
