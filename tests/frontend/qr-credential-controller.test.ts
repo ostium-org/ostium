@@ -1,4 +1,4 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, vi, test } from 'vitest';
 
 import { QRCredentialController } from '@/services/qr-credential-controller';
 import type { QRCredential } from '@/services/qr-credentials';
@@ -15,7 +15,7 @@ const settle = async () => { await Promise.resolve(); await Promise.resolve(); }
 
 describe('QR request lifecycle', () => {
   test('loads once, preserves the exact payload, and uses the response expiry', async () => {
-    const load = mock(async () => credential('house-1', '  signed.payload\n', 121000));
+    const load = vi.fn(async () => credential('house-1', '  signed.payload\n', 121000));
     const controller = new QRCredentialController(load, () => 1000);
     controller.activate('house-1');
     controller.tick();
@@ -29,7 +29,7 @@ describe('QR request lifecycle', () => {
 
   test('manual refresh hides the old code and ignores repeated presses while loading', async () => {
     const pending = deferred<QRCredential>();
-    const load = mock(async () => credential());
+    const load = vi.fn(async () => credential());
     const controller = new QRCredentialController(load, () => 1000);
     controller.activate('house-1');
     await settle();
@@ -45,7 +45,7 @@ describe('QR request lifecycle', () => {
 
   test('ignores late responses after switching houses, including switching back', async () => {
     const old = deferred<QRCredential>();
-    const load = mock(() => old.promise);
+    const load = vi.fn(() => old.promise);
     const controller = new QRCredentialController(load, () => 1000);
     controller.activate('house-1');
     load.mockImplementation(async () => credential('house-2', 'house-two'));
@@ -61,7 +61,7 @@ describe('QR request lifecycle', () => {
 
   test('rotates once at expiry and resumes with a new code after background expiry', async () => {
     let now = 1000;
-    const load = mock(async () => credential('house-1', 'first', now + 60000));
+    const load = vi.fn(async () => credential('house-1', 'first', now + 60000));
     const controller = new QRCredentialController(load, () => now);
     controller.activate('house-1');
     await settle();
@@ -82,7 +82,7 @@ describe('QR request lifecycle', () => {
   });
 
   test('keeps a valid credential on return without requesting another', async () => {
-    const load = mock(async () => credential());
+    const load = vi.fn(async () => credential());
     const controller = new QRCredentialController(load, () => 1000);
     controller.activate('house-1');
     await settle();
@@ -94,7 +94,7 @@ describe('QR request lifecycle', () => {
 
   test('ignores responses after deactivation and reloads pending work on return', async () => {
     const pending = deferred<QRCredential>();
-    const load = mock(() => pending.promise);
+    const load = vi.fn(() => pending.promise);
     const controller = new QRCredentialController(load, () => 1000);
     controller.activate('house-1');
     controller.deactivate();
@@ -108,7 +108,7 @@ describe('QR request lifecycle', () => {
   });
 
   test('shows failures without an automatic retry loop, then supports explicit retry', async () => {
-    const load = mock(async (): Promise<QRCredential> => { throw new Error('Server error.'); });
+    const load = vi.fn(async (): Promise<QRCredential> => { throw new Error('Server error.'); });
     const controller = new QRCredentialController(load, () => 1000);
     controller.activate('house-1');
     await settle();

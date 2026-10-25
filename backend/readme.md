@@ -1,8 +1,8 @@
 # Ostium Backend
 
-FastAPI service that fronts **Supabase** (Auth + Postgres). It owns user
-authentication and will later own units, devices, access grants, credentials,
-and access events.
+FastAPI service that fronts **Supabase** (Auth + Postgres). It handles user
+authentication, door commands, device command polling, access events, and QR
+credential issuance.
 
 > The original design docs mention SQLite + a monolith; that has been
 > superseded. We use Supabase for the database and auth, reached through this
@@ -25,6 +25,7 @@ backend/
     supabase.py      # async Supabase Auth + REST client (service role)
     routers/
       auth.py        # /api/v1/auth/* (signup, login, me, role)
+      access.py      # door commands, device polling/events, QR credentials
   supabase/
     000_initial_schema.sql   # tables, RLS, triggers, helper functions
   requirements.txt
@@ -33,32 +34,77 @@ backend/
 
 ## Setup
 
+Run the commands below from `backend/`. From the repository root:
+
+```sh
+cd backend
+```
+
 1. **Create the database schema.** Run `supabase/000_initial_schema.sql` in the
    Supabase SQL editor (or `supabase db push`). It is idempotent and safe to
    re-run.
 
 2. **Install dependencies.**
 
-   ```
-   python -m venv .venv
-   .venv\Scripts\activate        # Windows
-   # source .venv/bin/activate   # macOS / Linux
-   pip install -r requirements.txt
+   ```sh
+   python3 -m venv .venv
+   source .venv/bin/activate
+   python -m pip install -r requirements.txt
    ```
 
-3. **Configure environment.** Copy `.env.example` to `.env` and fill in:
-   - `SUPABASE_URL` — your project URL
+   On Windows PowerShell, use `python -m venv .venv` and activate with
+   `.venv\Scripts\Activate.ps1`.
+
+3. **Configure environment.** If `.env` does not already exist, copy
+   `.env.example` to `.env`. Preserve existing settings when updating it.
+   The application reads `backend/.env` when launched from `backend/`;
+   `.env.local` is not loaded by the current settings configuration. Fill in:
+   - `SUPABASE_URL` — the project root, `https://<project-ref>.supabase.co`;
+     do not append `/rest/v1` or `/auth/v1` (the backend adds these paths)
    - `SUPABASE_SECRET_KEY` — the **service role** key (Supabase's "secret key")
    - `CORS_ORIGINS` — allowed browser origins (`*` for local dev)
 
-   > Supabase renamed the old keys: _anon key_ → **publishable key**,
-   > _service role key_ → **secret key**. The backend only needs the secret key.
+   `SUPABASE_PUBLISHABLE_KEY` is optional. Keep the secret/service role key
+   server-side; do not commit it or share it in group chats or firmware.
+
+   Restart FastAPI after changing `.env`; settings are cached, and the reload
+   watcher does not necessarily detect environment-file changes.
 
 4. **Run.**
+   ```sh
+   python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
    ```
-   uvicorn app.main:app --reload
-   ```
-   Open http://localhost:8000/docs for the interactive API docs.
+   Open http://localhost:8000/docs for the interactive API docs, including
+   `POST /api/v1/doors/{door_id}/commands`.
+
+   Check http://localhost:8000/health. It should return `"status": "ok"`.
+   `"supabase_configured": true` means the URL and secret key are present;
+   it does not verify connectivity, credentials, or database schema.
+
+### Subsequent starts
+
+From the repository root on macOS/Linux:
+
+```sh
+cd backend
+source .venv/bin/activate
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Press **Ctrl+C** to stop the server. `--reload` is for local development.
+
+### Board bench test
+
+With the laptop and board on the same network, configure the board's backend
+address as `http://<laptop-LAN-IP>:8000`, using the laptop's actual LAN address.
+`localhost` on the board refers to the board itself; `0.0.0.0` is the server's
+bind address, not a client destination. Allow inbound connections to port 8000
+in the laptop firewall if needed.
+
+Use plain HTTP only on a trusted, isolated bench network; use HTTPS for
+deployment. The demo also requires a provisioned active device with its token
+hash, the associated door records, and a manager/admin account authorized to
+send commands. See [API examples](../docs/api.md) for the request flow.
 
 ## Auth endpoints
 

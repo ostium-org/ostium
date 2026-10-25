@@ -10,18 +10,18 @@ Before a pull request, run the affected component's documented test command and 
 
 The frontend suite lives in the repository-root `tests/frontend/` directory. It tests login form validation, saved-session parsing (including expiry boundaries), user parsing, API requests and error handling, and login response validation. These are service and utility tests; screens, native storage, and browser flows are outside this suite.
 
-Install application dependencies, then run from `application/` using Bun 1.3.14 or newer:
+Install application dependencies, then run from `application/` using Node.js 22.13 or newer and npm:
 
 ```sh
-bun install --frozen-lockfile
-bun run test
-bun run test:watch
-bun run test:coverage
-bun run test:typecheck
+npm ci
+npm run test
+npm run test:watch
+npm run test:coverage
+npm run test:typecheck
 ```
 
-`application/bunfig.toml` points the runner at the root test directory. The test-specific TypeScript configuration extends the app configuration and resolves `@/` imports to `application/src/`. The preload sets a fixed HTTPS API URL and disables development mock login before services load. Tests mock `fetch`, block unexpected network calls, use fixed clocks or simulated timer callbacks, and restore shared state between cases. No running backend, emulator, browser, or environment file is needed; after installing dependencies, tests run offline.
+`application/vitest.config.mts` points the runner at the root test directory. The test-specific TypeScript configuration extends the app configuration and resolves `@/` imports to `application/src/`. The setup file sets a fixed HTTPS API URL and disables development mock login before services load. Tests mock `fetch`, block unexpected network calls, use fixed clocks or simulated timer callbacks, and restore shared state between cases. No running backend, emulator, browser, or environment file is needed; after installing dependencies, tests run offline.
 
-Coverage reports describe the imported utility and service modules, not the whole application. There is no required coverage threshold. For Bun configuration details, see the [official test configuration documentation](https://bun.com/docs/test/configuration).
+Coverage reports cover service and utility modules, excluding platform token-storage adapters; they do not cover the whole application. There is no required coverage threshold. For runner configuration details, see the [Vitest configuration documentation](https://vitest.dev/config/).
 
-Also run `bunx tsc --noEmit` and `bun run lint` for the application. ESLint dependencies/configuration are not set up; that baseline issue is separate from SCRUM-25 and is not repaired by the unit suite.
+Also run `npx tsc --noEmit` and `npm run lint` for the application. These checks cover the app source separately from the unit suite; resolve any reported source errors before merging.

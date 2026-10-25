@@ -1,4 +1,4 @@
-import { describe, expect, spyOn, test } from 'bun:test';
+import { describe, expect, vi, test } from 'vitest';
 
 import { parseStoredSession } from '@/services/session';
 
@@ -15,7 +15,7 @@ describe('parseStoredSession', () => {
   });
 
   test('uses the current clock when no time is supplied', () => {
-    spyOn(Date, 'now').mockReturnValue(now);
+    vi.spyOn(Date, 'now').mockReturnValue(now);
     expect(parseStoredSession(JSON.stringify(session))).toEqual(session);
   });
 

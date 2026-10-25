@@ -2,11 +2,24 @@
   "extends": "../../application/tsconfig.json",
   "compilerOptions": {
     "paths": {
-      "@/*": ["../../application/src/*"],
-      "@/assets/*": ["../../application/assets/*"]
+      "@/*": [
+        "../../application/src/*"
+      ],
+      "@/assets/*": [
+        "../../application/assets/*"
+      ],
+      "vitest": [
+        "../../application/node_modules/vitest"
+      ]
     },
-    "typeRoots": ["../../application/node_modules/@types"],
-    "types": ["bun"]
+    "typeRoots": [
+      "../../application/node_modules/@types"
+    ],
+    "types": [
+      "node"
+    ]
   },
-  "include": ["./**/*.ts"]
+  "include": [
+    "./**/*.ts"
+  ]
 }

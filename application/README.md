@@ -1,5 +1,20 @@
 # Mobile and Web Client
 
+## Package manager
+
+Use npm for installs and scripts, and commit `package-lock.json` with dependency
+changes. Keep it as the only lockfile so local installs and EAS Build use the
+same package manager. Use `npm ci` after cloning or pulling dependency changes;
+use `npm install` when intentionally updating dependencies.
+
+```sh
+npm ci
+npm run start
+```
+
+Use `npx expo install <package>` to add SDK-compatible Expo dependencies and
+`npx expo-doctor` to check dependency health.
+
 ## Connect signup to Supabase
 
 1. Follow [backend setup](../backend/readme.md), including running the SQL schema

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, mock, spyOn, test } from 'bun:test';
+import { afterEach, describe, expect, vi, test } from 'vitest';
 
 import {
   getDevLoginHint,
@@ -36,7 +36,7 @@ describe('signup', () => {
 });
 
 function respond(body: unknown, status = 200) {
-  const fetchMock = mock(async (_url: string | URL | Request, _options?: RequestInit) =>
+  const fetchMock = vi.fn(async (_url: string | URL | Request, _options?: RequestInit) =>
     new Response(JSON.stringify(body), { status }),
   );
   globalThis.fetch = fetchMock as unknown as typeof fetch;
@@ -123,12 +123,12 @@ describe('request', () => {
   });
 
   test('accepts an empty 204 response', async () => {
-    globalThis.fetch = mock(async () => new Response(null, { status: 204 })) as unknown as typeof fetch;
+    globalThis.fetch = vi.fn(async () => new Response(null, { status: 204 })) as unknown as typeof fetch;
     await expect(request('/resource')).resolves.toBeUndefined();
   });
 
   test('rejects invalid JSON in a successful response', async () => {
-    globalThis.fetch = mock(async () => new Response('{')) as unknown as typeof fetch;
+    globalThis.fetch = vi.fn(async () => new Response('{')) as unknown as typeof fetch;
     await expect(request('/resource')).rejects.toMatchObject({
       name: 'ApiError', kind: 'bad-response', status: 200,
     });
@@ -143,28 +143,28 @@ describe('request', () => {
   });
 
   test('maps a fetch failure to a network error', async () => {
-    globalThis.fetch = mock(async () => { throw new TypeError('Offline'); }) as unknown as typeof fetch;
+    globalThis.fetch = vi.fn(async () => { throw new TypeError('Offline'); }) as unknown as typeof fetch;
     await expect(request('/resource')).rejects.toMatchObject({ kind: 'network' });
   });
 
   test('maps a response-body read failure to a network error', async () => {
     const response = new Response('{}');
-    spyOn(response, 'text').mockRejectedValue(new TypeError('Connection closed'));
-    globalThis.fetch = mock(async () => response) as unknown as typeof fetch;
+    vi.spyOn(response, 'text').mockRejectedValue(new TypeError('Connection closed'));
+    globalThis.fetch = vi.fn(async () => response) as unknown as typeof fetch;
     await expect(request('/resource')).rejects.toMatchObject({ kind: 'network' });
   });
 
   test('aborts after the configured deadline and clears its timer', async () => {
     let expire: (() => void) | undefined;
     const timer = 123 as unknown as ReturnType<typeof setTimeout>;
-    const schedule = spyOn(globalThis, 'setTimeout').mockImplementation(((handler: TimerHandler) => {
+    const schedule = vi.spyOn(globalThis, 'setTimeout').mockImplementation(((handler: TimerHandler) => {
       if (typeof handler !== 'function') throw new Error('Expected a timer callback');
       expire = () => handler();
       return timer;
     }) as unknown as typeof setTimeout);
-    const cancel = spyOn(globalThis, 'clearTimeout').mockImplementation(() => {});
+    const cancel = vi.spyOn(globalThis, 'clearTimeout').mockImplementation(() => {});
     let signal: AbortSignal | null | undefined;
-    globalThis.fetch = mock((_url: unknown, options?: RequestInit) => {
+    globalThis.fetch = vi.fn((_url: unknown, options?: RequestInit) => {
       signal = options?.signal;
       return new Promise<Response>((_resolve, reject) => {
         signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
@@ -182,8 +182,8 @@ describe('request', () => {
   });
 
   test.each([200, 401, 500])('clears the timeout after HTTP %i', async (status) => {
-    const schedule = spyOn(globalThis, 'setTimeout');
-    const cancel = spyOn(globalThis, 'clearTimeout');
+    const schedule = vi.spyOn(globalThis, 'setTimeout');
+    const cancel = vi.spyOn(globalThis, 'clearTimeout');
     respond({}, status);
     await request('/resource').catch(() => {});
     expect(cancel).toHaveBeenCalledWith(schedule.mock.results[0].value);
@@ -192,7 +192,7 @@ describe('request', () => {
   test.each([
     [null, true, false], ['token', false, false], ['token', true, true],
   ] as const)('handles a 401 with token=%j and authenticated=%j', async (token, authenticated, notified) => {
-    const handler = mock(() => {});
+    const handler = vi.fn(() => {});
     setUnauthorizedHandler(handler);
     setAccessToken(token);
     respond({}, 401);
@@ -201,7 +201,7 @@ describe('request', () => {
   });
 
   test('allows the unauthorized handler to be removed', async () => {
-    const handler = mock(() => {});
+    const handler = vi.fn(() => {});
     setUnauthorizedHandler(handler);
     setUnauthorizedHandler(null);
     setAccessToken('token');
@@ -249,12 +249,12 @@ describe('login', () => {
 
   test('rejects a non-finite token lifetime', async () => {
     const body = JSON.stringify(response).replace('3600', '1e400');
-    globalThis.fetch = mock(async () => new Response(body)) as unknown as typeof fetch;
+    globalThis.fetch = vi.fn(async () => new Response(body)) as unknown as typeof fetch;
     await expect(login(user.email, 'password')).rejects.toMatchObject({ kind: 'bad-response' });
   });
 
   test('maps a login 401 to invalid credentials without signing out an existing session', async () => {
-    const handler = mock(() => {});
+    const handler = vi.fn(() => {});
     setAccessToken('old-token');
     setUnauthorizedHandler(handler);
     respond({}, 401);
