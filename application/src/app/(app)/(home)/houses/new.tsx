@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
+import { addMockHouse } from '@/data/houses';
 import { Button } from '@/components/button';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
@@ -34,7 +34,24 @@ export default function AddHouseScreen() {
     floor: '',
     notes: '',
   });
+  const [error, setError] = useState<string | null>(null);
 
+  function saveHouse() {
+    if (user?.role !== 'manager') return;
+
+    try {
+      addMockHouse(values);
+    } catch (saveError) {
+      setError(
+        saveError instanceof Error
+          ? saveError.message
+          : 'Could not add the demo house.',
+      );
+      return;
+    }
+
+    router.replace('/');
+  }
   function goBack() {
     if (router.canGoBack()) {
       router.back();
@@ -71,15 +88,20 @@ export default function AddHouseScreen() {
                 ))}
               </View>
 
-              <ThemedText type="small" themeColor="textSecondary">
-                Saving is not available yet. This form is awaiting backend
-                integration.
+                            <ThemedText type="small" themeColor="textSecondary">
+                Demo only: houses are stored temporarily and disappear when
+                the app reloads. House name and address are required.
               </ThemedText>
 
+              {error && (
+                <ThemedText type="small" themeColor="danger" role="alert">
+                  {error}
+                </ThemedText>
+              )}
+
               <Button
-                title="Save house"
-                disabled
-                onPress={() => {}}
+                title="Save demo house"
+                onPress={saveHouse}
               />
             </>
           ) : (
@@ -109,4 +131,4 @@ const styles = StyleSheet.create({
   fields: {
     gap: Spacing.three,
   },
-});
+})

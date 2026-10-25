@@ -13,16 +13,21 @@ import {
   Spacing,
   TopTabInset,
 } from '@/constants/theme';
-import { HOUSES } from '@/data/houses';
+import { useHouses } from '@/data/houses';
 import { useHouseAccessRevision, userHasHouseAccess } from '@/data/house-access';
 import { useAuth } from '@/hooks/auth';
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  const allHouses = useHouses();
   useHouseAccessRevision();
+
   const houses = user?.role === 'manager'
-    ? HOUSES
-    : HOUSES.filter((house) => user && userHasHouseAccess(house.id, user.id, user.email));
+    ? allHouses
+    : allHouses.filter(
+        (house) => user && userHasHouseAccess(house.id, user.id, user.email),
+      );
+
   const isSingle = houses.length === 1;
 
   return (
