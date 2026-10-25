@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 
 import * as api from '@/services/api';
-import { canManageHouses, currentUnitIds, getHouses } from '@/services/houses';
+import { canManageHouses, currentUnitIds, createHouse, getHouses } from '@/services/houses';
 import { client, user } from './supabase-mock';
 
 const now = Date.parse('2026-10-25T12:00:00Z');
@@ -92,5 +92,31 @@ describe('houses from Supabase', () => {
     vi.spyOn(api, 'isMockApiEnabled').mockReturnValue(true);
     expect(await getHouses({ ...tenant, role }, now)).toEqual([]);
     expect(requests).toHaveLength(0);
+  });
+});
+
+describe('creating real houses after the merge', () => {
+  const values = { name: ' Maple House ', address: ' 12 Maple Street ', building: ' A ', floor: ' 2 ', notes: ' Side door ' };
+
+  test.each(['manager', 'admin'] as const)('%s saves a unit through Supabase with the signed-in creator', async role => {
+    const insert = vi.fn(async () => ({ error: null }));
+    client.from.mockReturnValue({ insert } as unknown as ReturnType<typeof client.from>);
+    await createHouse({ ...user, role }, values);
+    expect(client.from).toHaveBeenLastCalledWith('units');
+    expect(insert).toHaveBeenCalledWith({ name: 'Maple House', address: '12 Maple Street', building: 'A', floor: '2', notes: 'Side door', created_by: user.id });
+  });
+
+  test('rejects tenants, blank names and demo sessions without a database write', async () => {
+    await expect(createHouse(tenant, values)).rejects.toMatchObject({ status: 403 });
+    await expect(createHouse({ ...user, role: 'manager' }, { ...values, name: ' ' })).rejects.toThrow('Enter a house name and address.');
+    vi.spyOn(api, 'isMockApiEnabled').mockReturnValue(true);
+    await expect(createHouse({ ...user, role: 'manager' }, values)).rejects.toMatchObject({ kind: 'not-configured' });
+    expect(requests).toHaveLength(0);
+  });
+
+  test('surfaces database permission failures instead of saving a local demo house', async () => {
+    failure = 'units';
+    await expect(createHouse({ ...user, role: 'manager' }, values)).rejects.toMatchObject({ kind: 'request-failed' });
+    expect(requests[0].pathname).toBe('/rest/v1/units');
   });
 });

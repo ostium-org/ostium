@@ -10,7 +10,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
+  type TextInputInstance,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -49,8 +49,8 @@ function messageFor(error: unknown): string {
 export default function SignupScreen() {
   const { signUp } = useAuth();
 
-  const passwordRef = useRef<TextInput>(null);
-  const confirmRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
+  const confirmRef = useRef<TextInputInstance>(null);
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");

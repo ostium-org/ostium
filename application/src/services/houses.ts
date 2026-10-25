@@ -1,4 +1,4 @@
-import type { House } from '@/data/houses';
+import type { House, NewHouse } from '@/data/houses';
 import { ApiError, isMockApiEnabled, type AuthUser } from '@/services/api';
 import { getSupabase } from '@/services/supabase';
 
@@ -46,5 +46,36 @@ export async function getHouses(user: AuthUser, now = Date.now()): Promise<House
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError('network', 'Could not load your houses. Please check your connection.');
+  }
+}
+
+//added this so the new form saves real units using the signed-in client's RLS permissions.
+export async function createHouse(user: AuthUser, values: NewHouse): Promise<void> {
+  if (!canManageHouses(user.role)) {
+    throw new ApiError('request-failed', 'Only managers and admins can add houses.', 403);
+  }
+  const name = values.name.trim();
+  const address = values.address.trim();
+  if (!name || !address) {
+    throw new ApiError('request-failed', 'Enter a house name and address.');
+  }
+  if (isMockApiEnabled()) {
+    throw new ApiError('not-configured', 'Sign in with a Supabase account to add houses.');
+  }
+
+  try {
+    const client = await getSupabase();
+    const { error } = await client.from('units').insert({
+      name,
+      address,
+      building: values.building.trim(),
+      floor: values.floor.trim(),
+      notes: values.notes.trim(),
+      created_by: user.id,
+    });
+    if (error) throw new ApiError('request-failed', 'Could not save the house. Please check your permissions and try again.');
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError('network', 'Could not save the house. Please check your connection.');
   }
 }

@@ -11,7 +11,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
+  type TextInputInstance,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -49,7 +49,7 @@ export default function LoginScreen() {
   const { signIn } = useAuth();
 
   //pressing "next" on the keyboard jump from the email field to the password field.
-  const passwordRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

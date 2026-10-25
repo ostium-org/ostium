@@ -14,11 +14,14 @@ import {
   TopTabInset,
 } from '@/constants/theme';
 import { useHouses } from '@/hooks/use-houses';
+import { useAuth } from '@/hooks/auth';
+import { canManageHouses } from '@/services/houses';
 import { Button } from '@/components/button';
 
 export default function HomeScreen() {
   //replaced the local demo filter with the houses this account can actually see.
   const { houses, loading, error, reload } = useHouses();
+  const { user } = useAuth();
   const isSingle = houses.length === 1;
 
   return (
@@ -47,9 +50,15 @@ export default function HomeScreen() {
               </View>
             )}
             ListHeaderComponent={
-              <ThemedText type="title" style={styles.header}>
-                HOUSES
-              </ThemedText>
+              <View>
+                <ThemedText type="title" style={styles.header}>
+                  HOUSES
+                </ThemedText>
+                {/*added this so managers and admins can create real Supabase houses.*/}
+                {canManageHouses(user?.role) && (
+                  <Button title="Add house" onPress={() => router.push('/houses/new')} />
+                )}
+              </View>
             }
             ListEmptyComponent={
               loading ? <ActivityIndicator accessibilityLabel="Loading houses" /> : error ? (

@@ -35,3 +35,4 @@ __pycache__/
 # PlatformIO / ESP32
 .hardware/esp32/.pio/
 .pio/
+hardware/esp32/include/secrets.h

@@ -85,6 +85,10 @@ primary key makes concurrent exact retries idempotent.
 Missing/incorrect device tokens, unknown devices, and devices outside
 `active`/`offline` return `401` for both device endpoints.
 
+For the door unit's side of these routes, including the checks it applies to
+each command and how it handles each response, see the
+[lock command contract](firmware/lock-command-v0.md).
+
 ## QR credentials
 
 `POST /api/v1/houses/{houseId}/qr-credentials` uses a user bearer token and no
