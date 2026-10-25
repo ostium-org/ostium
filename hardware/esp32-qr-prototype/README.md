@@ -1,5 +1,7 @@
 # Ostium Core --- QR Access-Control Gateway
 
+> This folder is a standalone QR prototype for the Freenove ESP32-S3 WROOM. It's separate from the MVP door firmware in `hardware/esp32/`. To build it from the repository root, run `pio run -d hardware/esp32-qr-prototype`.
+
 **Firmware version:** 1.0\
 **Platform:** Freenove ESP32-S3 WROOM camera board\
 **Development environment:** Arduino IDE 2.x\
