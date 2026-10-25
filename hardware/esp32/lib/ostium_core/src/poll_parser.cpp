@@ -32,20 +32,22 @@ struct CountingReader {
 // JSON allows no raw control character (U+0000 to U+001F) inside a string, and
 // only tab, CR, and LF between tokens. ArduinoJson accepts them inside a string,
 // so this check runs first, and a response that fails it runs nothing (R16).
+// ArduinoJson also accepts single-quoted strings, so a string here ends at the
+// same quote character that opened it.
 bool hasRawControlCharacter(const std::string& body) {
-  bool inString = false;
+  char quote = '\0';
   bool escaped = false;
   for (const char c : body) {
     const bool control = static_cast<unsigned char>(c) < 0x20;
-    if (!inString) {
-      if (c == '"') inString = true;
+    if (quote == '\0') {
+      if (c == '"' || c == '\'') quote = c;
       else if (control && c != '\t' && c != '\r' && c != '\n') return true;
     } else if (escaped) {
       escaped = false;
     } else if (c == '\\') {
       escaped = true;
-    } else if (c == '"') {
-      inString = false;
+    } else if (c == quote) {
+      quote = '\0';
     } else if (control) {
       return true;
     }

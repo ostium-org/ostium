@@ -340,6 +340,13 @@ void test_bad_poll_response_runs_nothing() {
       {200, "{\"server_time\":\"" + fakes::at(20000) + "\",\"no\nte\":1,\"commands\":[" + unlock +
                 "]}"},
       {200, "{\"server_time\":\"" + fakes::at(20000) + "\",\x01\"commands\":[" + unlock + "]}"},
+      // The same in a single-quoted string, which ArduinoJson also accepts.
+      {200, "{\"server_time\":\"" + fakes::at(20000) + "\",\"note\":'a\nb',\"commands\":[" +
+                unlock + "]}"},
+      {200, "{\"server_time\":\"" + fakes::at(20000) + "\",\"note\":'a\rb',\"commands\":[" +
+                unlock + "]}"},
+      {200, "{\"server_time\":\"" + fakes::at(20000) + "\",\"note\":'a\tb',\"commands\":[" +
+                unlock + "]}"},
       {200, "{\"server_time\":\"" + fakes::at(20000) + "\",\"commands\":[" + unlock + "]}" +
                 std::string(1, '\0')},
   };
@@ -365,6 +372,13 @@ void test_bad_poll_response_runs_nothing() {
                               "\",\"note\":\"a\\nb\\t\\\"c\\\\\",\"commands\":[" + unlock + "]}";
   TEST_ASSERT_TRUE(escapedDoor.poll(escaped).ok);
   TEST_ASSERT_TRUE(escapedDoor.output.unlocked());
+
+  // A double quote inside a single-quoted string doesn't start a new string.
+  Harness quotedDoor;
+  const std::string quoted = "{\"server_time\":\"" + fakes::at(20000) +
+                             "\",\"note\":'say \"hi\"',\"commands\":[" + unlock + "]}";
+  TEST_ASSERT_TRUE(quotedDoor.poll(quoted).ok);
+  TEST_ASSERT_TRUE(quotedDoor.output.unlocked());
 }
 
 void test_checks_report_first_failure_in_contract_order() {
