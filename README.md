@@ -57,7 +57,7 @@ turning on live QR display is separate work.
 using the signed-in client and existing RLS policies. Managers and admins see
 active properties; tenants see properties with current access grants. Lists
 refresh when a screen gains focus, and the home list supports pull-to-refresh.
-Sample houses and local membership editing are restricted to explicit demo mode.
+Hardcoded placeholder houses have been removed. Demo mode shows an empty house list.
 
 **Remaining integration:** live membership administration is not connected;
 the local add/remove controls appear only in demo mode. Live
@@ -72,7 +72,7 @@ application/       Shared Expo mobile and web client
   src/app/         Screens and layouts
   src/components/  Reusable UI
   src/services/    Supabase client, auth/session storage, API and QR services
-  src/data/        Local sample houses and membership state
+  src/data/        House types and local demo membership state
 backend/
   schema/          Existing shared PostgreSQL schema reference
   supabase/        Edge Functions, configuration, Deno tests, setup guide

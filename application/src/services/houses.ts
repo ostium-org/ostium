@@ -1,6 +1,4 @@
 import type { House } from '@/data/houses';
-import { DEMO_HOUSES } from '@/data/houses';
-import { userHasHouseAccess } from '@/data/house-access';
 import { ApiError, isMockApiEnabled, type AuthUser } from '@/services/api';
 import { getSupabase } from '@/services/supabase';
 
@@ -22,8 +20,8 @@ export function currentUnitIds(grants: Grant[], now: number): string[] {
 //using the signed-in Supabase client so the database still checks permissions.
 export async function getHouses(user: AuthUser, now = Date.now()): Promise<House[]> {
   if (isMockApiEnabled()) {
-    //kept the sample houses for demo mode only, not real accounts.
-    return canManageHouses(user.role) ? DEMO_HOUSES : DEMO_HOUSES.filter(house => userHasHouseAccess(house.id, user.id, user.email));
+    //removed placeholder houses; demo accounts have no real Supabase session.
+    return [];
   }
 
   try {

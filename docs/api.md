@@ -117,8 +117,8 @@ configuration returns `503`. A missing/inactive unit returns `404`; no current
 grant returns `403`.
 
 The frontend QR placeholder remains enabled and sends no QR issuance requests.
-The house selector still uses sample IDs. This backend change does not connect
-those sample houses or enable the live QR display.
+The house selector uses real Supabase unit IDs. Hardcoded placeholder houses
+have been removed; live QR display remains separate from house loading.
 
 ## Persistence and failures
 

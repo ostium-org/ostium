@@ -30,8 +30,8 @@ SecureStore on native and sessionStorage on web. Supabase owns token refresh.
 
 The QR screen still uses a placeholder, but live house lists, details, and the
 QR selector read Supabase units. Managers/admins see active units; tenants see
-units covered by their current access grants. Local sample houses and membership
-editing are used only in explicit demo mode. Missing configuration or a
+units covered by their current access grants. There are no hardcoded placeholder
+houses or seeded memberships; demo mode shows an empty list. Missing configuration or a
 real request failure never silently enables demo mode. Intentional development demo
 mode requires an empty Supabase URL and `EXPO_PUBLIC_MOCK_API=true`.
 

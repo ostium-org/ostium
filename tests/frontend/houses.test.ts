@@ -88,10 +88,9 @@ describe('houses from Supabase', () => {
     await expect(getHouses(tenant, now)).rejects.toMatchObject({ kind: 'network' });
   });
 
-  test('uses local sample membership only in explicit demo mode', async () => {
+  test.each(['tenant', 'manager', 'admin'] as const)('shows no placeholder houses for a demo %s account', async role => {
     vi.spyOn(api, 'isMockApiEnabled').mockReturnValue(true);
-    expect(await getHouses({ ...tenant, id: 'dev-tenant', email: 'tenant@example.com' }, now)).toHaveLength(5);
-    expect(await getHouses({ ...tenant, email: 'other@example.com' }, now)).toEqual([]);
+    expect(await getHouses({ ...tenant, role }, now)).toEqual([]);
     expect(requests).toHaveLength(0);
   });
 });

@@ -4,7 +4,8 @@
 House cards open a details route using the selected house ID.
 The list and details screens share a Home navigation stack inside
 the signed-in `(app)` group. Live property information now comes from Supabase
-units through `useHouses`; sample data is used only in explicit demo mode.
+units through `useHouses`; hardcoded sample houses have been removed, including
+in demo mode.
 
 Admins and managers can list active units. Tenants need a current active grant;
 future, expired, and inactive grants are excluded. Existing Supabase RLS remains
@@ -22,7 +23,7 @@ remains a placeholder. Local membership editing is restricted to demo mode.
 | House navigation works after signing back in | Pass |
 
 ## Current automated checks
-- Frontend suite: 106 passed, including 10 house-loading tests using real SDK
+- Frontend suite: 108 passed, including 12 house-loading tests using real SDK
   query construction against a mocked HTTP transport.
 - Test TypeScript check and lint for changed house screens/services: passed.
 - Expo web export: passed.

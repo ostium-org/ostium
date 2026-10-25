@@ -36,8 +36,8 @@ has passed and whose expiry has not been reached. Null addresses display as empt
 text. Screens refresh on navigation; pull down on the home list to refresh it.
 
 Database/network errors show a retry action rather than sample houses or a false
-empty result. The local sample memberships and add/remove controls are available
-only in explicit demo mode; live membership editing is not implemented yet.
+empty result. Hardcoded houses and seeded memberships have been removed; demo
+mode shows an empty house list. Live membership editing is not implemented yet.
 
 ## Application
 
