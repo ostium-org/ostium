@@ -68,3 +68,8 @@ void test_backend_accepts_report_after_reset();
 void test_poll_interval_is_start_to_start();
 void test_poll_backoff_is_2_4_8_seconds();
 void test_poll_scheduler_survives_millis_wraparound();
+
+// test_body_reader.cpp
+void test_body_read_stops_when_server_stalls();
+void test_body_read_follows_content_length_and_chunks();
+void test_body_read_rejects_bad_or_large_bodies();

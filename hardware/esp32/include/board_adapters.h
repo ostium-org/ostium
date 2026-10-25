@@ -64,6 +64,10 @@ class SerialLog : public ostium::Log {
 class BackendClient : public ostium::PollFetcher, public ostium::EventSender {
  public:
   static constexpr uint32_t kTimeoutMs = 3000;
+  // A response body must keep arriving: no gap over kTimeoutMs, and no more
+  // than twice that for the whole body.
+  static constexpr ostium::BodyLimits kBodyLimits{ostium::kMaxPollBodyBytes, kTimeoutMs,
+                                                  2 * kTimeoutMs};
 
   BackendClient(const char* apiRoot, const char* deviceId, const char* deviceToken,
                 const char* rootCa, ostium::Log& log);
@@ -84,6 +88,7 @@ class BackendClient : public ostium::PollFetcher, public ostium::EventSender {
   const String authorization_;
   const char* rootCa_;
   ostium::Log& log_;
+  MillisClock clock_;
   WiFiClientSecure secureClient_;
   WiFiClient plainClient_;
   WiFiClient* client_ = nullptr;

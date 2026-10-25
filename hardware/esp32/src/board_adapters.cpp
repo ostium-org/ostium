@@ -3,25 +3,39 @@
 namespace board {
 namespace {
 
-// Collects a response body and refuses more than 8 KiB. When it refuses,
-// HTTPClient stops reading and closes the connection.
-class CappedBody : public Stream {
+// The response body as the WiFiClient delivers it, for ostium::readBody.
+// HTTPClient's own writeToStream waits with no deadline while the connection
+// stays open, so a stalled server would block the loop.
+class ClientSource : public ostium::ByteSource {
  public:
-  explicit CappedBody(std::string& out) : out_(out) {}
+  explicit ClientSource(WiFiClient& client) : client_(client) {}
 
-  size_t write(uint8_t c) override { return write(&c, 1); }
-  size_t write(const uint8_t* data, size_t size) override {
-    if (out_.size() + size > ostium::kMaxPollBodyBytes) return 0;
-    out_.append(reinterpret_cast<const char*>(data), size);
-    return size;
+  size_t available() override {
+    const int count = client_.available();
+    return count > 0 ? static_cast<size_t>(count) : 0;
   }
-  int available() override { return 0; }
-  int read() override { return -1; }
-  int peek() override { return -1; }
+  int read() override { return client_.read(); }
+  bool connected() override { return client_.connected(); }
+  void wait() override { delay(1); }
 
  private:
-  std::string& out_;
+  WiFiClient& client_;
 };
+
+int statusFor(ostium::BodyResult result) {
+  switch (result) {
+    case ostium::BodyResult::TimedOut:
+      return HTTPC_ERROR_READ_TIMEOUT;
+    case ostium::BodyResult::Closed:
+      return HTTPC_ERROR_CONNECTION_LOST;
+    case ostium::BodyResult::TooLarge:
+      return HTTPC_ERROR_TOO_LESS_RAM;
+    default:
+      return HTTPC_ERROR_ENCODING;
+  }
+}
+
+const char* kCollectedHeaders[] = {"Transfer-Encoding"};
 
 }  // namespace
 
@@ -117,6 +131,8 @@ int BackendClient::send(const String& url, const std::string* requestBody,
   if (!http_.begin(*client_, url)) return HTTPC_ERROR_CONNECTION_REFUSED;
   http_.setConnectTimeout(kTimeoutMs);
   http_.setTimeout(kTimeoutMs);
+  // Collecting again resets the value, so it never comes from an earlier response.
+  http_.collectHeaders(kCollectedHeaders, 1);
   http_.addHeader("Authorization", authorization_);
 
   int status;
@@ -129,26 +145,23 @@ int BackendClient::send(const String& url, const std::string* requestBody,
   }
 
   // Read every body, including event responses, so no unread bytes are left
-  // on the reused connection for the next request.
-  if (status > 0) {
+  // on the reused connection for the next request. A 204 or 304 has no body.
+  if (status > 0 && status != 204 && status != 304) {
     std::string discarded;
     std::string& body = responseBody != nullptr ? *responseBody : discarded;
-    body.clear();
-    const int size = http_.getSize();
-    if (size > static_cast<int>(ostium::kMaxPollBodyBytes)) {
-      // Don't read a body the parser would reject anyway (R16). The unread
-      // bytes go with the closed connection.
-      log_.write("response is over 8 KiB; not reading it");
+    const bool chunked = http_.header("Transfer-Encoding").equalsIgnoreCase("chunked");
+    ClientSource source(*client_);
+    const ostium::BodyResult read =
+        ostium::readBody(source, clock_, http_.getSize(), chunked, kBodyLimits, &body);
+    if (read != ostium::BodyResult::Complete) {
+      // A body over 8 KiB would fail the parser anyway (R16). Closing the
+      // connection drops any unread bytes.
+      log_.write(std::string("response body ") + ostium::describe(read) +
+                 "; closing the connection");
+      body.clear();
       client_->stop();
-    } else if (size != 0) {
-      CappedBody sink(body);
-      const int read = http_.writeToStream(&sink);
-      if (read < 0) {
-        log_.write("response body unreadable or over 8 KiB (" + std::to_string(read) + ")");
-        body.clear();
-        // A poll fails. An event keeps its status, which already says how it went.
-        if (responseBody != nullptr) status = read;
-      }
+      // A poll fails. An event keeps its status, which already says how it went.
+      if (responseBody != nullptr) status = statusFor(read);
     }
   }
   http_.end();

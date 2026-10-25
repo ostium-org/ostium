@@ -3,6 +3,7 @@
 // Door unit core logic. Implements the rules in
 // docs/firmware/lock-command-v0.md without any hardware dependency.
 
+#include "body_reader.h"
 #include "command_processor.h"
 #include "duplicate_list.h"
 #include "event.h"

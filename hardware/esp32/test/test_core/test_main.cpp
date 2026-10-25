@@ -54,6 +54,9 @@ int main(int, char**) {
   RUN_TEST(test_poll_interval_is_start_to_start);
   RUN_TEST(test_poll_backoff_is_2_4_8_seconds);
   RUN_TEST(test_poll_scheduler_survives_millis_wraparound);
+  RUN_TEST(test_body_read_stops_when_server_stalls);
+  RUN_TEST(test_body_read_follows_content_length_and_chunks);
+  RUN_TEST(test_body_read_rejects_bad_or_large_bodies);
 
   RUN_TEST(test_backend_poll_runs_unlock_then_lock);
   RUN_TEST(test_backend_accepts_firmware_event_bodies);
