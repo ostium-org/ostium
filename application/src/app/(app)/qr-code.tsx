@@ -9,9 +9,7 @@ import { ScreenTransition } from '@/components/screen-transition';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing, TopTabInset } from '@/constants/theme';
-import { HOUSES } from '@/data/houses';
-import { useHouseAccessRevision, userHasHouseAccess } from '@/data/house-access';
-import { useAuth } from '@/hooks/auth';
+import { useHouses } from '@/hooks/use-houses';
 import { useRotatingQRCode } from '@/hooks/use-rotating-qr-code';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -19,16 +17,13 @@ import { useTheme } from '@/hooks/use-theme';
 const USE_QR_PLACEHOLDER = true;
 
 export default function QRCodeScreen() {
-  const { user } = useAuth();
-  useHouseAccessRevision();
-  const houses = user?.role === 'manager'
-    ? HOUSES
-    : HOUSES.filter((item) => user && userHasHouseAccess(item.id, user.id, user.email));
+  const { houses, loading: housesLoading, error: housesError, reload: reloadHouses } = useHouses();
   const theme = useTheme();
   const [selectedHouseId, setSelectedHouseId] = useState(houses[0]?.id);
   const [expanded, setExpanded] = useState(false);
   const [cardWidth, setCardWidth] = useState(0);
   const selectedHouse = houses.find((item) => item.id === selectedHouseId);
+  //fall back to an available house if the previous selection is no longer in the list.
   const house = selectedHouse ?? houses[0];
   const { code, seconds, error, loading, refresh } = useRotatingQRCode(
     USE_QR_PLACEHOLDER ? undefined : house?.id,
@@ -40,7 +35,12 @@ export default function QRCodeScreen() {
         <ScreenTransition>
           <ScrollView contentContainerStyle={styles.container}>
             <ThemedText type="title" style={styles.centered}>QR CODE</ThemedText>
-            {house ? (
+            {housesLoading ? <ActivityIndicator accessibilityLabel="Loading houses" /> : housesError ? (
+              <>
+                <ThemedText accessibilityRole="alert">{housesError}</ThemedText>
+                <Button title="Retry houses" onPress={reloadHouses} />
+              </>
+            ) : house ? (
               <>
                 <View style={styles.selector}>
                   <ThemedText type="smallBold">SELECT HOUSE</ThemedText>

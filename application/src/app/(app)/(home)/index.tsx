@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button } from '@/components/button';
+
 import { HouseCard } from '@/components/house-card';
 import { ScreenTransition } from '@/components/screen-transition';
 import { ThemedText } from '@/components/themed-text';
@@ -13,21 +13,15 @@ import {
   Spacing,
   TopTabInset,
 } from '@/constants/theme';
-import { useHouses } from '@/data/houses';
-import { useHouseAccessRevision, userHasHouseAccess } from '@/data/house-access';
+import { useHouses } from '@/hooks/use-houses';
 import { useAuth } from '@/hooks/auth';
+import { canManageHouses } from '@/services/houses';
+import { Button } from '@/components/button';
 
 export default function HomeScreen() {
+  //replaced the local demo filter with the houses this account can actually see.
+  const { houses, loading, error, reload } = useHouses();
   const { user } = useAuth();
-  const allHouses = useHouses();
-  useHouseAccessRevision();
-
-  const houses = user?.role === 'manager'
-    ? allHouses
-    : allHouses.filter(
-        (house) => user && userHasHouseAccess(house.id, user.id, user.email),
-      );
-
   const isSingle = houses.length === 1;
 
   return (
@@ -37,6 +31,8 @@ export default function HomeScreen() {
           <FlatList
             key={isSingle ? 'single' : 'grid'}
             data={houses}
+            refreshing={loading}
+            onRefresh={reload}
             numColumns={isSingle ? 1 : 2}
             keyExtractor={(house) => house.id}
             renderItem={({ item }) => (
@@ -53,25 +49,24 @@ export default function HomeScreen() {
                   />
               </View>
             )}
-                       ListHeaderComponent={
+            ListHeaderComponent={
               <View>
                 <ThemedText type="title" style={styles.header}>
                   HOUSES
                 </ThemedText>
-
-                {user?.role === 'manager' && (
-                  <Button
-                    title="Add house"
-                    onPress={() => router.push('/houses/new')}
-                  />
+                {/*added this so managers and admins can create real Supabase houses.*/}
+                {canManageHouses(user?.role) && (
+                  <Button title="Add house" onPress={() => router.push('/houses/new')} />
                 )}
               </View>
             }
             ListEmptyComponent={
-              <ThemedText
-                type="small"
-                themeColor="textSecondary"
-                style={styles.empty}>
+              loading ? <ActivityIndicator accessibilityLabel="Loading houses" /> : error ? (
+                <View style={styles.empty}>
+                  <ThemedText type="small" accessibilityRole="alert">{error}</ThemedText>
+                  <Button title="Retry houses" onPress={reload} />
+                </View>
+              ) : <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
                 No houses yet.
               </ThemedText>
             }

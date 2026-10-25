@@ -29,7 +29,7 @@ class Store:
         self.tables = {
             "devices": [{"id": DEVICE, "device_key": "front", "unit_id": UNIT, "status": "active",
                          "credential_hash": hashlib.sha256(b"device-token").hexdigest()}],
-            "units": [{"id": UNIT, "is_active": True}], "access_events": [],
+            "units": [{"id": UNIT, "name": "Maple House", "address": None, "is_active": True}], "access_events": [],
             "access_grants": [], "credentials": [],
         }
         self.fail_write = False
@@ -51,6 +51,10 @@ class Store:
             for key, expected in params.items():
                 value = row["metadata"].get(key.split("->>")[1]) if "->>" in key else row.get(key)
                 actual = str(value).lower() if isinstance(value, bool) else str(value)
+                if expected.startswith("in.("):
+                    if actual not in expected[4:-1].split(","):
+                        return False
+                    continue
                 if actual != expected.removeprefix("eq."):
                     return False
             return True
@@ -108,6 +112,57 @@ class AccessTests(unittest.IsolatedAsyncioTestCase):
     async def request(self, method, path, token="user-token", **kwargs):
         headers = {"Authorization": f"Bearer {token}"} if token is not None else {}
         return await self.client.request(method, "/api/v1" + path, headers=headers, **kwargs)
+
+    async def test_houses_managers_and_admins_see_active_units(self):
+        self.store.tables["units"].append({"id": str(uuid4()), "name": "Inactive", "is_active": False})
+        for role in ("manager", "admin"):
+            self.store.profile["role"] = role
+            response = await self.request("GET", "/houses")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual([house["id"] for house in response.json()], [UNIT])
+            self.assertEqual(response.json()[0]["address"], "")
+
+    async def test_tenants_only_see_current_granted_units(self):
+        self.store.profile["role"] = "tenant"
+        other = str(uuid4())
+        self.store.tables["units"].append({"id": other, "name": "Other", "is_active": True})
+        grant = {"unit_id": UNIT, "grantee_id": USER, "is_active": True,
+                 "valid_from": NOW.isoformat(), "valid_until": None}
+        self.store.tables["access_grants"] = [grant, dict(grant)]
+        response = await self.request("GET", "/houses")
+        self.assertEqual([house["id"] for house in response.json()], [UNIT])
+        invalid = [dict(grant, is_active=False), dict(grant, grantee_id=str(uuid4())),
+                   dict(grant, valid_from=(NOW + timedelta(seconds=1)).isoformat()),
+                   dict(grant, valid_until=NOW.isoformat())]
+        for row in invalid:
+            self.store.tables["access_grants"] = [row]
+            response = await self.request("GET", "/houses")
+            self.assertEqual(response.json(), [])
+
+    async def test_houses_require_authentication_and_active_profile(self):
+        self.assertEqual((await self.request("GET", "/houses", None)).status_code, 401)
+        self.store.profile["is_active"] = False
+        self.assertEqual((await self.request("GET", "/houses")).status_code, 403)
+
+    async def test_create_house_persists_real_unit_and_blocks_tenants(self):
+        for role in ("manager", "admin"):
+            self.store.profile["role"] = role
+            response = await self.request("POST", "/houses", json={"name": " New House ", "address": " 1 Main St "})
+            self.assertEqual(response.status_code, 201, response.text)
+            house = response.json()
+            self.assertEqual(house["name"], "New House")
+            self.assertEqual(self.store.tables["units"][-1]["created_by"], USER)
+            self.assertIn(house["id"], [row["id"] for row in (await self.request("GET", "/houses")).json()])
+        self.store.profile["role"] = "tenant"
+        response = await self.request("POST", "/houses", json={"name": "House", "address": "Address"})
+        self.assertEqual(response.status_code, 403)
+
+    async def test_create_house_validates_fields_and_surfaces_write_failures(self):
+        for body in ({"name": " ", "address": "Street"}, {"name": "House", "address": "Street", "created_by": USER}):
+            self.assertEqual((await self.request("POST", "/houses", json=body)).status_code, 422)
+        self.store.fail_write = True
+        response = await self.request("POST", "/houses", json={"name": "House", "address": "Street"})
+        self.assertEqual(response.status_code, 502)
 
     async def issue(self, action="unlock"):
         response = await self.request("POST", "/doors/front/commands", json={"action": action})
