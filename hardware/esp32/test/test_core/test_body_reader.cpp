@@ -27,6 +27,8 @@ class ScriptedSource : public ostium::ByteSource {
     closes_ = true;
     closeAtMs_ = atMs;
   }
+  // Makes each byte read take this long, like a slow link that never pauses.
+  void costPerByte(uint32_t ms) { msPerByte_ = ms; }
 
   size_t available() override {
     refill();
@@ -34,7 +36,9 @@ class ScriptedSource : public ostium::ByteSource {
   }
   int read() override {
     refill();
-    return position_ < buffer_.size() ? static_cast<unsigned char>(buffer_[position_++]) : -1;
+    if (position_ >= buffer_.size()) return -1;
+    clock_.advance(msPerByte_);
+    return static_cast<unsigned char>(buffer_[position_++]);
   }
   bool connected() override { return !(closes_ && clock_.nowMs() >= closeAtMs_); }
   void wait() override { clock_.advance(1); }
@@ -64,6 +68,7 @@ class ScriptedSource : public ostium::ByteSource {
   size_t position_ = 0;
   bool closes_ = false;
   uint32_t closeAtMs_ = 0;
+  uint32_t msPerByte_ = 0;
 };
 
 struct Read {
@@ -118,6 +123,28 @@ void test_body_read_stops_when_server_stalls() {
     source.send(0, "{\"a\":1}");
     TEST_ASSERT_TRUE(readFrom(source, clock, -1, false).result == BodyResult::TimedOut);
   }
+  {
+    // Bytes that never stop arriving, 1 ms apart, still end at the total limit:
+    // first in an endless run of trailer lines after the last chunk, then in
+    // a long body.
+    std::string trailers = "0\r\n";
+    for (int i = 0; i < 2000; ++i) trailers += "X: y\r\n";
+    FakeClock clock;
+    ScriptedSource source(clock);
+    source.costPerByte(1);
+    source.send(0, trailers);
+    const Read read = readFrom(source, clock, -1, true);
+    TEST_ASSERT_TRUE(read.result == BodyResult::TimedOut);
+    TEST_ASSERT_EQUAL_UINT32(kLimits.totalMs, read.tookMs);
+
+    FakeClock bodyClock;
+    ScriptedSource body(bodyClock);
+    body.costPerByte(1);
+    body.send(0, std::string(8000, 'x'));
+    const Read bodyRead = readFrom(body, bodyClock, 8000, false);
+    TEST_ASSERT_TRUE(bodyRead.result == BodyResult::TimedOut);
+    TEST_ASSERT_EQUAL_UINT32(kLimits.totalMs, bodyRead.tookMs);
+  }
 }
 
 void test_body_read_follows_content_length_and_chunks() {
@@ -146,6 +173,15 @@ void test_body_read_follows_content_length_and_chunks() {
     TEST_ASSERT_TRUE(read.result == BodyResult::Complete);
     TEST_ASSERT_EQUAL_STRING("abcdefg", read.body.c_str());
     TEST_ASSERT_EQUAL_UINT32(4, source.unread());
+  }
+  {
+    // HTTP allows spaces and tabs before an extension's semicolon.
+    FakeClock clock;
+    ScriptedSource source(clock);
+    source.send(0, "4 ;name=value\r\nabcd\r\n2\t;x\r\nef\r\n0\r\n\r\n");
+    const Read read = readFrom(source, clock, -1, true);
+    TEST_ASSERT_TRUE(read.result == BodyResult::Complete);
+    TEST_ASSERT_EQUAL_STRING("abcdef", read.body.c_str());
   }
   {
     // No length: the body ends when the server closes the connection.
@@ -194,6 +230,8 @@ void test_body_read_rejects_bad_or_large_bodies() {
       "\r\nabc\r\n0\r\n\r\n",         // no size
       "123456789\r\n",                // more than 8 hex digits
       "3\r\nabcX\r\n0\r\n\r\n",       // no CRLF after the chunk data
+      "1\r\na\n0\r\n\r\n",             // LF without CR after the chunk data
+      "4 x\r\nabcd\r\n0\r\n\r\n",      // junk after the size
   };
   for (const char* body : badChunks) {
     FakeClock clock;
