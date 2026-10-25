@@ -1,10 +1,10 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, vi, test } from 'vitest';
 import { getDevLoginHint, loadProfile, login, parseAuthUser, request, signup } from '@/services/api';
 import type { Session } from '@supabase/supabase-js';
 import { client, session, state, user } from './supabase-mock';
 
 function respond(value: unknown, status = 200) {
-  const fn = mock(async () => new Response(status === 204 ? null : JSON.stringify(value), { status }));
+  const fn = vi.fn(async () => new Response(status === 204 ? null : JSON.stringify(value), { status }));
   globalThis.fetch = fn as unknown as typeof fetch;
   return fn;
 }
@@ -74,7 +74,7 @@ describe('Edge Function transport', () => {
     expect(await request('/api/v1/test')).toBeUndefined();
   });
   test('rejects invalid successful JSON', async () => {
-    globalThis.fetch = mock(async () => new Response('{')) as unknown as typeof fetch;
+    globalThis.fetch = vi.fn(async () => new Response('{')) as unknown as typeof fetch;
     await expect(request('/api/v1/test')).rejects.toMatchObject({ kind: 'bad-response' });
   });
   test.each([[401, 'unauthorized'], [403, 'request-failed'], [429, 'rate-limited'], [502, 'server']])('maps HTTP %s', async (status, kind) => {
@@ -95,7 +95,52 @@ describe('Edge Function transport', () => {
     await expect(request('/api/v1/test')).rejects.toMatchObject({ kind: 'network' });
   });
   test('maps request aborts to timeout', async () => {
-    globalThis.fetch = mock(async () => { throw new DOMException('aborted', 'AbortError'); }) as unknown as typeof fetch;
+    globalThis.fetch = vi.fn(async () => { throw new DOMException('aborted', 'AbortError'); }) as unknown as typeof fetch;
     await expect(request('/api/v1/test')).rejects.toMatchObject({ kind: 'timeout' });
   });
+});
+
+describe('Edge Function transport deadlines', () => {
+  test('maps a response-body read failure to a network error', async () => {
+    const response = new Response('{}');
+    vi.spyOn(response, 'text').mockRejectedValue(new TypeError('Connection closed'));
+    globalThis.fetch = vi.fn(async () => response) as unknown as typeof fetch;
+    await expect(request('/resource', { authenticated: false })).rejects.toMatchObject({ kind: 'network' });
+  });
+
+  test('aborts after the configured deadline and clears its timer', async () => {
+    let expire: (() => void) | undefined;
+    const timer = 123 as unknown as ReturnType<typeof setTimeout>;
+    const schedule = vi.spyOn(globalThis, 'setTimeout').mockImplementation(((handler: TimerHandler) => {
+      if (typeof handler !== 'function') throw new Error('Expected a timer callback');
+      expire = () => handler();
+      return timer;
+    }) as unknown as typeof setTimeout);
+    const cancel = vi.spyOn(globalThis, 'clearTimeout').mockImplementation(() => {});
+    let signal: AbortSignal | null | undefined;
+    globalThis.fetch = vi.fn((_url: unknown, options?: RequestInit) => {
+      signal = options?.signal;
+      return new Promise<Response>((_resolve, reject) => {
+        signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
+      });
+    }) as unknown as typeof fetch;
+
+    const pending = request('/resource', { authenticated: false });
+    expect(schedule).toHaveBeenCalledWith(expect.any(Function), 15_000);
+    expect(signal?.aborted).toBe(false);
+    expect(expire).toBeDefined();
+    expire!();
+    await expect(pending).rejects.toMatchObject({ kind: 'timeout' });
+    expect(signal?.aborted).toBe(true);
+    expect(cancel).toHaveBeenCalledWith(timer);
+  });
+
+  test.each([200, 401, 500])('clears the timeout after HTTP %i', async (status) => {
+    const schedule = vi.spyOn(globalThis, 'setTimeout');
+    const cancel = vi.spyOn(globalThis, 'clearTimeout');
+    respond({}, status);
+    await request('/resource', { authenticated: false }).catch(() => {});
+    expect(cancel).toHaveBeenCalledWith(schedule.mock.results[0].value);
+  });
+
 });

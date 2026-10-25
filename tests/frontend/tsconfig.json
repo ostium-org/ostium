@@ -10,13 +10,16 @@
       ],
       "@supabase/supabase-js": [
         "../../application/node_modules/@supabase/supabase-js"
+      ],
+      "vitest": [
+        "../../application/node_modules/vitest"
       ]
     },
     "typeRoots": [
       "../../application/node_modules/@types"
     ],
     "types": [
-      "bun"
+      "node"
     ]
   },
   "include": [

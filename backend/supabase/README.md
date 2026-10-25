@@ -19,8 +19,8 @@ EXPO_PUBLIC_MOCK_API=false
 ```
 
 Use only the publishable/anon key in the app; never a service-role or signing key.
-From `application/`, run `bun install --frozen-lockfile`, then `bun run start` for
-Expo Go or `bun run web` for the browser. Restart Expo after changing `.env`.
+From `application/`, run `npm ci`, then `npm run start` for
+Expo Go or `npm run web` for the browser. Restart Expo after changing `.env`.
 The hosted URL works across Wi-Fi networks; a local backend IP is unnecessary.
 
 Existing accounts and profile rows are reused. Profiles must be active; signup
@@ -54,7 +54,7 @@ ready**; the app's auth works without deploying them. The QR placeholder
 makes no QR endpoint requests.
 
 ```sh
-bunx supabase functions deploy ostium-api device-api --workdir backend --project-ref YOUR_PROJECT_REF --use-api
+npx supabase functions deploy ostium-api device-api --workdir backend --project-ref YOUR_PROJECT_REF --use-api
 ```
 
 `ostium-api` requires a user JWT and active profile. `device-api` accepts an opaque
@@ -78,7 +78,7 @@ deno task --config backend/supabase/deno.json lint
 ```
 
 Tests use in-memory fixtures and a Python-generated compatibility fixture; they do
-not touch Supabase. From `application/`, run `bun test`, `bun run test:typecheck`,
-`bunx tsc --noEmit`, and `bun run lint`. Existing unrelated frontend lint failures
+not touch Supabase. From `application/`, run `npm test`, `npm run test:typecheck`,
+`npx tsc --noEmit`, and `npm run lint`. Existing unrelated frontend lint failures
 remain outside this change. Firmware, manager screens, real house loading, and
 turning on live QR display are separate work.

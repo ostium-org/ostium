@@ -1,5 +1,0 @@
-[test]
-root = "../tests/frontend"
-preload = ["../tests/frontend/setup.ts"]
-coverageSkipTestFiles = true
-coveragePathIgnorePatterns = ["**/tests/frontend/**"]

@@ -1,10 +1,22 @@
 # Mobile and Web Client
 
+## Package manager
+
+Use Node.js 22.13 or newer and npm. Keep `package-lock.json` as the only
+lockfile. Use `npm ci` after cloning or pulling dependency changes, and commit
+lockfile updates with intentional dependency changes. Use `npx expo install
+<package>` for SDK-compatible Expo dependencies and `npx expo-doctor` for checks.
+
+```sh
+npm ci
+npm start
+```
+
 ## Connect to Supabase
 
 Follow [Supabase setup](../backend/supabase/README.md). Set `EXPO_PUBLIC_SUPABASE_URL` and
 `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in this directory's `.env`, then run
-`bun run start` or `bun run web`. No FastAPI server or LAN backend IP is needed.
+`npm run start` or `npm run web`. No FastAPI server or LAN backend IP is needed.
 Restart Expo after changing configuration. Use a publishable/anon key only.
 
 The existing Supabase schema and signup trigger are reused without changes.

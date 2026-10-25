@@ -1,4 +1,4 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, vi, test } from 'vitest';
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
 import { observeSession, type AuthState } from '@/services/session';
 import { session } from './supabase-mock';
@@ -7,10 +7,10 @@ const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 const user = { id: 'tenant-1', email: 'tenant@example.com', role: 'tenant' as const };
 function fixture() {
   let callback: (event: string, session: Session | null) => void;
-  const unsubscribe = mock(() => {});
-  const signOut = mock(async () => ({ error: null }));
+  const unsubscribe = vi.fn(() => {});
+  const signOut = vi.fn(async () => ({ error: null }));
   const client = { auth: {
-    getSession: mock(async () => ({ data: { session }, error: null })),
+    getSession: vi.fn(async () => ({ data: { session }, error: null })),
     onAuthStateChange: (fn: typeof callback) => { callback = fn; return { data: { subscription: { unsubscribe } } }; },
     signOut,
   } };
@@ -23,7 +23,7 @@ function fixture() {
 describe('Supabase session lifecycle', () => {
   test('restores a session through its active profile', async () => {
     const f = fixture();
-    const profile = mock(async () => user);
+    const profile = vi.fn(async () => user);
     const stop = observeSession(f.client, profile, f.emit);
     await tick();
     expect(f.states.at(-1)).toEqual({ user, isLoading: false });
@@ -50,7 +50,7 @@ describe('Supabase session lifecycle', () => {
   });
   test('loads the current profile on a refreshed session', async () => {
     const f = fixture();
-    const profile = mock(async () => user);
+    const profile = vi.fn(async () => user);
     const stop = observeSession(f.client, profile, f.emit);
     await tick();
     f.event({ ...session, access_token: 'new-token' } as Session);

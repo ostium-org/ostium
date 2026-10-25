@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { createChunkedStorage } from '@/services/chunked-storage';
 
 function fixture() {
