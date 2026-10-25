@@ -29,6 +29,30 @@ struct CountingReader {
   }
 };
 
+// JSON allows no raw control character (U+0000 to U+001F) inside a string, and
+// only tab, CR, and LF between tokens. ArduinoJson accepts them inside a string,
+// so this check runs first, and a response that fails it runs nothing (R16).
+bool hasRawControlCharacter(const std::string& body) {
+  bool inString = false;
+  bool escaped = false;
+  for (const char c : body) {
+    const bool control = static_cast<unsigned char>(c) < 0x20;
+    if (!inString) {
+      if (c == '"') inString = true;
+      else if (control && c != '\t' && c != '\r' && c != '\n') return true;
+    } else if (escaped) {
+      escaped = false;
+    } else if (c == '\\') {
+      escaped = true;
+    } else if (c == '"') {
+      inString = false;
+    } else if (control) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // Reads a JSON string. Rejects strings with an embedded NUL character, which
 // would otherwise compare as a shorter string.
 bool readString(JsonVariantConst value, std::string* out) {
@@ -110,6 +134,10 @@ PollResult parsePollResponse(int status, const std::string& body) {
   }
   if (body.size() > kMaxPollBodyBytes) {
     result.error = "poll response is over 8 KiB";
+    return result;
+  }
+  if (hasRawControlCharacter(body)) {
+    result.error = "poll response isn't valid JSON: raw control character";
     return result;
   }
 

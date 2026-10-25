@@ -331,6 +331,17 @@ void test_bad_poll_response_runs_nothing() {
       // A good response followed by anything but whitespace.
       {200, good + "x"},
       {200, good + "{\"server_time\":1}"},
+      // A raw control character makes the whole response invalid JSON, even
+      // in a field the door ignores, or next to an unlock that would run.
+      {200, "{\"server_time\":\"" + fakes::at(20000) + "\",\"note\":\"a\nb\",\"commands\":[" +
+                unlock + "]}"},
+      {200, "{\"server_time\":\"" + fakes::at(20000) + "\",\"note\":\"a\tb\",\"commands\":[" +
+                unlock + "]}"},
+      {200, "{\"server_time\":\"" + fakes::at(20000) + "\",\"no\nte\":1,\"commands\":[" + unlock +
+                "]}"},
+      {200, "{\"server_time\":\"" + fakes::at(20000) + "\",\x01\"commands\":[" + unlock + "]}"},
+      {200, "{\"server_time\":\"" + fakes::at(20000) + "\",\"commands\":[" + unlock + "]}" +
+                std::string(1, '\0')},
   };
 
   for (const Case& badCase : cases) {
@@ -347,6 +358,13 @@ void test_bad_poll_response_runs_nothing() {
   Harness door;
   TEST_ASSERT_TRUE(door.poll(good + "\r\n ").ok);
   TEST_ASSERT_TRUE(door.output.unlocked());
+
+  // Escaped control characters inside a string are valid JSON.
+  Harness escapedDoor;
+  const std::string escaped = "{\"server_time\":\"" + fakes::at(20000) +
+                              "\",\"note\":\"a\\nb\\t\\\"c\\\\\",\"commands\":[" + unlock + "]}";
+  TEST_ASSERT_TRUE(escapedDoor.poll(escaped).ok);
+  TEST_ASSERT_TRUE(escapedDoor.output.unlocked());
 }
 
 void test_checks_report_first_failure_in_contract_order() {
