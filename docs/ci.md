@@ -7,7 +7,7 @@ The workflow in `.github/workflows/ci.yml` covers Assignment 1 Part C. A push to
 | build | `firmware-build` | Compiles the ESP32-S3 firmware in both board builds (`pio run`). |
 | build | `backend-build` | Installs the backend's requirements, compiles it, and imports the FastAPI app. |
 | build | `frontend-build` | Installs the app's dependencies and type-checks the Expo app (`tsc --noEmit`). |
-| test | `firmware-test` | Runs the 54 firmware unit tests on the native platform (`pio test`). |
+| test | `firmware-test` | Runs the 57 firmware unit tests on the native platform (`pio test`). |
 | test | `backend-test` | Runs the backend's unit tests (`python -m unittest`). |
 | test | `frontend-test` | Type-checks and runs the frontend unit tests (`bun test`). |
 | merge | `auto-merge` | Runs only in a pull request into `main`. It merges the pull request (`gh pr merge`). |

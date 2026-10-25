@@ -2,7 +2,7 @@
 
 This document explains how the door unit firmware is built and why. It's the firmware part of the Assignment 1 architecture and design rationale (SCRUM-56), and it holds the firmware class diagram (SCRUM-54) and use case diagram (SCRUM-55). The [lock command contract](lock-command-v0.md) defines the door's exact behavior, with rules R1 to R16, and this document refers to those rules by number.
 
-- **Status:** the firmware compiles for the ESP32-S3, and all 54 unit tests pass on a laptop. It hasn't run on the board yet.
+- **Status:** the firmware compiles for the ESP32-S3, and all 57 unit tests pass on a laptop. It hasn't run on the board yet.
 - **Version:** October 24, 2026.
 
 ## Architecture
@@ -23,10 +23,11 @@ The firmware has three layers. The core logic doesn't know it runs on an ESP32, 
 | `Log` | The serial log | `SerialLog` | `FakeLog` |
 | `PollFetcher` | `GET /devices/{device_id}/commands` | `BackendClient` | `SlowFetcher` |
 | `EventSender` | `POST /devices/{device_id}/events` | `BackendClient` | `FakeSender`, `BlockingSender` |
+| `ByteSource` | A response body as the network delivers it | `ClientSource` (`WiFiClient`) | `ScriptedSource` |
 
 Keeping the drivers separate from the core logic has three benefits:
 
-- **The whole core runs in tests on a laptop.** The 54 Unity tests use the fakes, so they need no board, network, or backend. They run in a few seconds, so every rule can have its own test.
+- **The whole core runs in tests on a laptop.** The 57 Unity tests use the fakes, so they need no board, network, or backend. They run in a few seconds, so every rule can have its own test.
 - **The core can be checked against the real backend.** The replay tests run responses recorded from the FastAPI door routes through the same core code the board runs.
 - **Hardware changes stay in the adapters.** A different board, a motor-driven lock, or a push connection in place of polling changes an adapter, not the safety logic.
 
@@ -93,7 +94,7 @@ The lock is fail-secure: it's locked whenever the lock output is off, as in plan
 | Relock while busy (R12) | The relock fires on time even while the main loop is blocked in a network request. | The relock runs from an esp_timer callback in its own task. It shares a mutex with `unlock()` and `lock()`, because it runs on the other core. |
 | Early lock (R11) | A Lock command relocks right away and cancels the timer. | `LockController::lock()` |
 | Maximum unlock time (R10) | No unlock lasts more than 5,000 ms, and a second unlock doesn't extend the first. | The constructor clamps the unlock time, and `unlock()` does nothing while the door is already unlocked. |
-| Never unlock on an error (R12, R16) | A network error, a bad response, or a `401` runs nothing. | `parsePollResponse` marks a bad response as failed, and `handlePoll` runs no commands from it. |
+| Never unlock on an error (R12, R16) | A network error, a bad response, or a `401` runs nothing. A response body that stops arriving ends the request instead of blocking the loop. | `parsePollResponse` marks a bad response as failed, and `handlePoll` runs no commands from it. `readBody` ends a body after 3 seconds with no byte, or 6 seconds in all, and the poll counts as failed. |
 | No second unlock after a reset (R5) | A command issued before the door started is rejected. | The start time comes from the first poll's `server_time`, measured from the request start, plus a 2-second margin. |
 | No stale or repeated commands (R3, R4) | An expired command, or one already handled, never runs. | `DuplicateList` keeps each command ID until the backend's clock passes its expiry. |
 
@@ -114,7 +115,7 @@ One limit is known. A panic or watchdog reset restarts the CPUs but not the GPIO
 
 The door unit is an ESP32-S3 board with an onboard camera. For Assignment 1, it drives a relay module, or an LED in its place (SCRUM-49). The final product adds plan v2's 12 V fail-secure solenoid (section 4.1), and the safety rules assume that fail-secure lock.
 
-- **It handles TLS and JSON with room to spare.** The ESP32-S3 has built-in Wi-Fi, hardware acceleration for TLS cryptography, two cores, and 512 KB of SRAM. The current build uses 14.1% of RAM and 27.1% of flash.
+- **It handles TLS and JSON with room to spare.** The ESP32-S3 has built-in Wi-Fi, hardware acceleration for TLS cryptography, two cores, and 512 KB of SRAM. The current build uses 14.1% of RAM and 27.2% of flash.
 - **It's ready for the final product.** The onboard camera can scan QR codes when they return (SCRUM-38), on the same board.
 - **It's practical for the team.** It runs Arduino-ESP32 under PlatformIO, which builds and tests the firmware from the command line, and it's cheap and easy to get.
 
@@ -155,7 +156,7 @@ The fixed-QR proof of concept (SCRUM-59) is a bench demo only. It accepts one fi
 
 ## Testing
 
-- **Unit tests:** 54 Unity tests run on a laptop with `pio test -d hardware/esp32/native-tests`. Every rule from R1 to R16 has at least one test. For how to run them, see [Testing](../testing.md#firmware-unit-tests).
+- **Unit tests:** 57 Unity tests run on a laptop with `pio test -d hardware/esp32/native-tests`. Every rule from R1 to R16 has at least one test. For how to run them, see [Testing](../testing.md#firmware-unit-tests).
 - **Replay tests:** 9 of those tests run responses recorded from the real FastAPI door routes through the core, and check that the firmware writes the exact event bodies the backend accepted.
 - **Planted bugs:** during review, each bug planted one at a time in a copy of the core made at least one test fail.
 - **Board build:** both board builds compile with the ESP32-S3 toolchain.
@@ -164,7 +165,10 @@ The fixed-QR proof of concept (SCRUM-59) is a bench demo only. It accepts one fi
 ## Known limits
 
 - The firmware hasn't run on a board yet. The lock pin (GPIO 14) and the relay polarity are placeholders until the board model is recorded.
-- An unlock interrupted by a crash lasts until the next boot reaches `setup()`, as described in [Safety rules](#safety-rules).
+- An unlock interrupted by a crash lasts until the next boot reaches `setup()`, as described in [Safety rules](#safety-rules), so it can last longer than the 5-second maximum (R10). Firmware can't bound it, because the relock timer stops with the CPU. Only a hardware cutoff that turns the lock off without the CPU, such as a timer relay, can. That's for the final product, and the SCRUM-52 bench test measures how long it lasts today.
+- A command rejected with `duplicate_cache_full` is remembered only while its rejection event waits in the event queue. If all 32 places in the duplicate list hold unexpired commands, 9 more rejections push the first one out of the 8-event queue. If its event was never delivered, and the backend serves that command again after a place frees up, the door runs it. This needs more than 32 live commands within one 10-second expiry window, plus failed event posts. Keeping rejected IDs separate from the event queue would close it.
+- Arduino-ESP32 2.0.17 builds mbedTLS without certificate date checks (`CONFIG_MBEDTLS_HAVE_TIME_DATE` is off), and the door has no wall clock. So the door accepts an expired or not-yet-valid certificate for the backend's host if it chains to the configured root. Fixing this needs an SDK build with date checks and a trusted time source, such as SNTP, before the first HTTPS poll. The bench build uses plain HTTP, so it has no TLS at all.
+- Poll and event-retry deadlines use 32-bit `millis()` arithmetic, which is valid for about 24.8 days. If Wi-Fi stays down longer than that, an overdue poll can look as if it's due up to 24.8 days later, and polling stalls until then. A 64-bit clock, or making polls and retries due when Wi-Fi returns, would fix it.
 - Events wait in RAM, so an event that hasn't been delivered is lost if the door resets. If the backend still serves the command after the reset, the door reports it as `issued_before_boot`, which means the outcome is unknown. If the command has expired by then, the backend stops serving it, and the command has no report.
 - SCRUM-62 plans to move the backend from FastAPI to Supabase Edge Functions. If that happens, the door routes must keep the same paths, bodies, and status codes, and the functions must accept the door's own token.
 - The app doesn't have Lock and Unlock buttons yet. Until it does, you can send commands with the walkthrough in [API](../api.md#thursday-walkthrough).
