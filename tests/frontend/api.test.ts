@@ -22,6 +22,28 @@ describe('direct Supabase authentication', () => {
     await signup(user.email, 'password123', '  Tenant  ');
     expect(client.auth.signUp).toHaveBeenCalledWith({ email: user.email, password: 'password123', options: { data: { full_name: 'Tenant' } } });
   });
+  test.each(['email_exists', 'user_already_exists'])('explains duplicate registration (%s)', async (code) => {
+    client.auth.signUp.mockResolvedValue({ data: { session: null, user }, error: { code, status: 422 } });
+    await expect(signup(user.email, 'password123')).rejects.toMatchObject({
+      kind: 'signup-rejected', status: 422,
+      message: 'An account with this email already exists. Please sign in instead.',
+    });
+  });
+  test.each([
+    ['email_address_invalid', 'Supabase rejected this email address. Please check it and try again.'],
+    ['weak_password', 'This password does not meet the account security requirements. Please choose a stronger password.'],
+    ['signup_disabled', 'Account registration is disabled. Please contact your project administrator.'],
+    ['email_address_not_authorized', 'This project cannot send a confirmation email to this address. Please contact your project administrator.'],
+  ])('explains the signup rejection (%s) without raw server details', async (code, message) => {
+    client.auth.signUp.mockResolvedValue({ data: { session: null, user }, error: { code, status: 422, message: 'Private server details' } });
+    await expect(signup(user.email, 'password123')).rejects.toMatchObject({ kind: 'signup-rejected', message });
+  });
+  test('preserves rate limiting and safely handles unknown signup errors', async () => {
+    client.auth.signUp.mockResolvedValue({ data: { session: null, user }, error: { code: 'over_email_send_rate_limit', status: 429 } });
+    await expect(signup(user.email, 'password123')).rejects.toMatchObject({ kind: 'rate-limited' });
+    client.auth.signUp.mockResolvedValue({ data: { session: null, user }, error: { code: 'future_error', status: 422, message: 'Private server details' } });
+    await expect(signup(user.email, 'password123')).rejects.toMatchObject({ kind: 'request-failed', message: 'Authentication failed.' });
+  });
   test('returns confirmation-required signup without looking for a profile', async () => {
     state.session = null;
     client.from.mockClear();

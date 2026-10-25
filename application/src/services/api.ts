@@ -21,6 +21,7 @@ export type SignupResult = LoginResult | { confirmationRequired: true; email: st
 // What went wrong
 export type ApiErrorKind =
   | "invalid-credentials" // login rejected (401)
+  | "signup-rejected" // safe, actionable signup error from a known Auth code
   | "unauthorized" // token missing/expired/revoked on a signedin request (401)
   | "rate-limited" // 429
   | "server" // 5xx
@@ -87,6 +88,25 @@ function authError(error: { status?: number; name?: string; message?: string }, 
   if (status && status >= 500) return new ApiError("server", "Server error.", status);
   if (status === 400 || status === 401 || status === 403) return new ApiError(loginAttempt ? "invalid-credentials" : "unauthorized", loginAttempt ? "Incorrect email or password." : "Not authorized.", status);
   return new ApiError("request-failed", "Authentication failed.", status);
+}
+
+function signupError(error: { code?: string; status?: number; name?: string; message?: string }): ApiError {
+  // Translate known codes rather than exposing raw server error messages.
+  switch (error.code) {
+    case "email_exists":
+    case "user_already_exists":
+      return new ApiError("signup-rejected", "An account with this email already exists. Please sign in instead.", error.status);
+    case "email_address_invalid":
+      return new ApiError("signup-rejected", "Supabase rejected this email address. Please check it and try again.", error.status);
+    case "weak_password":
+      return new ApiError("signup-rejected", "This password does not meet the account security requirements. Please choose a stronger password.", error.status);
+    case "signup_disabled":
+      return new ApiError("signup-rejected", "Account registration is disabled. Please contact your project administrator.", error.status);
+    case "email_address_not_authorized":
+      return new ApiError("signup-rejected", "This project cannot send a confirmation email to this address. Please contact your project administrator.", error.status);
+    default:
+      return authError(error);
+  }
 }
 
 export async function loadProfile(session: Session): Promise<AuthUser> {
@@ -235,7 +255,10 @@ export async function signup(email: string, password: string, fullName?: string)
   configured();
   const { data, error } = await (await getSupabase()).auth.signUp({ email, password,
     options: { data: fullName?.trim() ? { full_name: fullName.trim() } : {} } });
-  if (error) throw authError(error);
+  if (error) {
+    if (__DEV__) console.warn("Supabase signup rejected", { code: error.code, status: error.status, name: error.name });
+    throw signupError(error);
+  }
   if (!data.session) return { confirmationRequired: true, email };
   return sessionResult(data.session);
 }
