@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { addMockHouse } from '@/data/houses';
+import { canManageHouses, createHouse } from '@/services/houses';
 import { Button } from '@/components/button';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
@@ -36,21 +36,27 @@ export default function AddHouseScreen() {
   });
   const [error, setError] = useState<string | null>(null);
 
-  function saveHouse() {
-    if (user?.role !== 'manager') return;
+  const [saving, setSaving] = useState(false);
+
+  async function saveHouse() {
+    if (!user || !canManageHouses(user.role) || saving) return;
+
+    //added this so repeated taps cannot submit while the house is saving.
+    setSaving(true);
+    setError(null);
 
     try {
-      addMockHouse(values);
+      await createHouse(user, values);
+      router.replace('/');
     } catch (saveError) {
       setError(
         saveError instanceof Error
           ? saveError.message
-          : 'Could not add the demo house.',
+          : 'Could not add the house.',
       );
-      return;
+    } finally {
+      setSaving(false);
     }
-
-    router.replace('/');
   }
   function goBack() {
     if (router.canGoBack()) {
@@ -68,7 +74,7 @@ export default function AddHouseScreen() {
           contentContainerStyle={styles.content}>
           <Button title="Back" variant="secondary" onPress={goBack} />
 
-          {user?.role === 'manager' ? (
+          {canManageHouses(user?.role) ? (
             <>
               <ThemedText type="title">ADD HOUSE</ThemedText>
 
@@ -88,9 +94,8 @@ export default function AddHouseScreen() {
                 ))}
               </View>
 
-                            <ThemedText type="small" themeColor="textSecondary">
-                Demo only: houses are stored temporarily and disappear when
-                the app reloads. House name and address are required.
+              <ThemedText type="small" themeColor="textSecondary">
+                House name and address are required.
               </ThemedText>
 
               {error && (
@@ -100,13 +105,14 @@ export default function AddHouseScreen() {
               )}
 
               <Button
-                title="Save demo house"
+                title="Save house"
+                loading={saving}
                 onPress={saveHouse}
               />
             </>
           ) : (
             <ThemedText>
-              Only managers can add houses.
+              Only managers and admins can add houses.
             </ThemedText>
           )}
         </ScrollView>
@@ -131,4 +137,4 @@ const styles = StyleSheet.create({
   fields: {
     gap: Spacing.three,
   },
-})
+});

@@ -14,6 +14,11 @@ describe('parseStoredSession', () => {
     expect(parseStoredSession(JSON.stringify(session), now)).toEqual(session);
   });
 
+  test('restores an admin session after restarting the app', () => {
+    const saved = { ...session, user: { ...session.user, role: 'admin' } };
+    expect(parseStoredSession(JSON.stringify(saved), now)).toEqual(saved);
+  });
+
   test('uses the current clock when no time is supplied', () => {
     vi.spyOn(Date, 'now').mockReturnValue(now);
     expect(parseStoredSession(JSON.stringify(session))).toEqual(session);
@@ -33,7 +38,7 @@ describe('parseStoredSession', () => {
     { expiresAt: 'tomorrow' },
     { expiresAt: null },
     { user: undefined },
-    { user: { ...session.user, role: 'admin' } },
+    { user: { ...session.user, role: 'unknown-role' } },
   ])('rejects invalid session fields %j', (fields) => {
     expect(parseStoredSession(JSON.stringify({ ...session, ...fields }), now)).toBeNull();
   });
