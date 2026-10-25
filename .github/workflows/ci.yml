@@ -28,7 +28,7 @@ env:
   NODE_VERSION: "22"
 
 jobs:
-  # Build: the ESP32-S3 firmware, the FastAPI backend, and the Expo app.
+  # Build: the ESP32-S3 firmware, the Supabase Edge Functions, and the Expo app.
 
   firmware-build:
     runs-on: ubuntu-latest
@@ -49,15 +49,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      #added this because the Supabase branch replaces the Python service with Edge Functions.
+      - uses: denoland/setup-deno@v2
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-          cache-dependency-path: backend/requirements.txt
-      - run: pip install -r backend/requirements.txt
-      - run: python -m compileall -q backend/app backend/tests
-      - run: python -c "import app.main"
-        working-directory: backend
+          deno-version: v2.x
+      - run: deno task --config backend/supabase/deno.json check
+      - run: deno task --config backend/supabase/deno.json lint
 
   frontend-build:
     runs-on: ubuntu-latest
@@ -106,14 +103,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      #did this so backend tests exercise the handlers deployed by this branch.
+      - uses: denoland/setup-deno@v2
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: pip
-          cache-dependency-path: backend/requirements.txt
-      - run: pip install -r backend/requirements.txt
-      - run: python -m unittest discover -s tests -v
-        working-directory: backend
+          deno-version: v2.x
+      - run: deno task --config backend/supabase/deno.json test
 
   frontend-test:
     needs: [firmware-build, backend-build, frontend-build]

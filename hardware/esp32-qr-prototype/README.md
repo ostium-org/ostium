@@ -119,7 +119,7 @@ different URL, extra whitespace, or a different string is denied.
 
   SG90 servo       V+ / red wire       External regulated Do not power
                                             servo supply, from GPIO
-                                            typically 5 V 
+                                            typically 5 V
 
   SG90 servo       GND / brown or              Common GND Connect to ESP32
                    black wire                             ground
@@ -158,9 +158,9 @@ different URL, extra whitespace, or a different string is denied.
   ------------------------------------------------------------------------
 
 **LCD contrast potentiometer:** Connect the two outer terminals to the
-3.3V V and GND for a conventional LCD1602 and the middle/wiper terminal 
-to V0. Adjust slowly until the characters are clear. Confirm that the 
-LCD and ESP32-S3 interface voltage levels are safe before connecting 
+3.3V V and GND for a conventional LCD1602 and the middle/wiper terminal
+to V0. Adjust slowly until the characters are clear. Confirm that the
+LCD and ESP32-S3 interface voltage levels are safe before connecting
 5 V LCD directly to GPIO.
 
 The firmware creates the LCD object dynamically **after**
@@ -262,7 +262,7 @@ Manager icon), search for each library, and install it.
   ---------------------------------------------------------------------------
 
 Please note that `ESP32QRCodeReader` may be unavailable in the Arduino IDE
-library manager. In that case, install by downloading the 
+library manager. In that case, install by downloading the
 ZIP file from the GitHub and installing
  with **Sketch -> Include Library -> Add .ZIP Library...**
 

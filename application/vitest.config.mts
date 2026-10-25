@@ -17,7 +17,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/services/**/*.ts', 'src/utils/**/*.ts'],
-      exclude: ['src/services/token-storage*.ts'],
+      exclude: ['src/services/auth-storage*.ts'],
     },
   },
 });

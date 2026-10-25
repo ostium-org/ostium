@@ -1,0 +1,9 @@
+project_id = "ostium"
+
+# User routes additionally validate the JWT and active profile in the handler.
+[functions.ostium-api]
+verify_jwt = true
+
+# Device tokens are opaque credentials, authenticated by the handler.
+[functions.device-api]
+verify_jwt = false

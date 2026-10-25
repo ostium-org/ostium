@@ -4,118 +4,86 @@ Ostium is a door-access and camera-doorbell project for rental properties,
 student housing, and multi-unit residences. Tenants use QR credentials for
 entry; managers administer access through a shared mobile and web application.
 
-## Current architecture
+## Current architecture on this branch
 
 ```text
 Expo application (iOS / Android / web)
-                  | JSON API + user bearer token
-                  v
-             FastAPI backend
-                  | Supabase Auth + Postgres REST API
-                  v
-                Supabase
-
-ESP32-CAM + lock relay (planned firmware integration)
-                  | Device bearer token
-                  | Poll commands / report results
-                  v
-             FastAPI backend
+    | Supabase SDK: authentication, sessions, active profiles
+    v
+Supabase Auth + PostgreSQL
+    ^
+    | Authorized database operations
+Supabase Edge Functions
+    ^                         ^
+    | User JWT                | Device bearer token
+Expo client               ESP32-CAM + lock relay
+ostium-api                device-api (planned firmware integration)
 ```
 
 - **Client:** one Expo Router application in `application/`, using React Native,
-  React Native Web, and TypeScript. Authentication and QR credential requests
-  go through FastAPI.
-- **Backend:** one FastAPI service in `backend/`. It validates users and roles,
-  issues door commands and signed QR credentials, authenticates devices, and
-  records command results. This is currently a single service, not multiple
-  independently deployed microservices.
-- **Database and identity:** Supabase provides Auth and PostgreSQL. The schema
-  defines profiles, units, devices, access grants, credentials, and access
-  events. The backend accesses Supabase using its server-side secret key.
-- **Hardware:** `hardware/` currently contains documentation for an ESP32-CAM
-  and relay. Firmware source and physical integration remain to be supplied.
+  React Native Web, and TypeScript. It authenticates directly with Supabase,
+  loads active profiles, and uses SDK-managed sessions and token refresh.
+- **Backend:** TypeScript Edge Functions in `backend/supabase/`. `ostium-api`
+  handles user commands, QR issuance, and admin role changes. `device-api`
+  authenticates device tokens, delivers commands, and records results.
+- **Database:** Supabase PostgreSQL stores profiles, units, devices, access
+  grants, credentials, and access events. The existing schema reference is in
+  `backend/schema/`; this branch does not change or automatically apply it.
+- **Hardware:** `hardware/` documents the planned ESP32-CAM and relay. Firmware
+  source and physical integration remain to be supplied.
 
-SQLite is not the current backend database. Earlier design documents may
-still describe the original architecture or planned functionality; the
-implemented routes are documented in [the API guide](docs/api.md).
+This branch explores Edge Functions in place of FastAPI. There is no Python API
+process or laptop-hosted backend to start. Deploy the functions separately when
+ready; authentication works directly with the hosted Supabase project.
 
 ## Implemented flows and integration status
 
-**Authentication:** the client calls FastAPI signup/login endpoints. FastAPI
-uses Supabase Auth and the user's profile. New accounts receive the tenant
-role; changing roles requires an admin. The backend supports tenant, manager,
-and admin roles, while the client currently parses tenant and manager roles.
+**Authentication:** signup and login use the Supabase SDK. Profiles must be
+active, and the client supports tenant, manager, and admin roles. New users
+receive the tenant role through the existing database trigger. Sessions use
+chunked SecureStore storage on native and sessionStorage on web.
 
-**Remote door commands:** a manager/admin sends `lock` or `unlock`. FastAPI
-queues a command in `access_events`; the device polls for pending commands and
-posts its result. Commands expire after 10 seconds. Accepting a command does
-not confirm that the physical lock has moved.
+**Door commands:** a manager/admin sends `lock` or `unlock` through `ostium-api`.
+Commands are stored in `access_events`, expire after 10 seconds, and are polled
+and acknowledged through `device-api`. Acceptance means queued; it does not
+confirm physical relay movement.
 
-**QR credentials:** FastAPI checks unit access and issues an Ed25519-signed
-credential valid for up to 60 seconds. Signing requires a separately configured
-private key. The client has QR fetching/display logic, but house listings and
-membership administration still use local sample data. Sample IDs such as
-`house-1` must be replaced with provisioned unit UUIDs for live QR issuance.
+**QR credentials:** the user function checks access and can issue Ed25519-signed
+credentials valid for up to 60 seconds. It requires a separately provisioned
+private signing key. The QR screen deliberately retains its placeholder;
+turning on live QR display is separate work.
 
-**Remaining integration:** local membership changes do not update Supabase.
-Firmware QR verification, relay execution, configuration/revocation syncing,
-and camera/doorbell features are not implemented in this checkout. These
-require further work before the full access flow can be demonstrated.
+**Houses:** live lists, details, and the QR selector read active Supabase units
+using the signed-in client and existing RLS policies. Managers and admins see
+active properties; tenants see properties with current access grants. Lists
+refresh when a screen gains focus, and the home list supports pull-to-refresh.
+Hardcoded placeholder houses have been removed. Demo mode shows an empty house list.
+
+**Remaining integration:** live membership administration is not connected;
+the local add/remove controls appear only in demo mode. Live
+QR issuance uses real unit UUIDs from the house list.
+Firmware verification, relay execution, configuration/revocation syncing, and
+camera/doorbell features remain future integration work.
 
 ## Repository layout
 
 ```text
 application/       Shared Expo mobile and web client
-  src/app/         Expo Router screens and layouts
+  src/app/         Screens and layouts
   src/components/  Reusable UI
-  src/services/    API requests, sessions, token storage, QR credentials
-  src/data/        Local sample houses and membership state
+  src/services/    Supabase client, auth/session storage, API and QR services
+  src/data/        House types and local demo membership state
 backend/
-  app/             FastAPI application, settings, Supabase client, routers
-  supabase/        PostgreSQL schema, RLS policies, triggers, functions
-  tests/           Backend automated tests
+  schema/          Existing shared PostgreSQL schema reference
+  supabase/        Edge Functions, configuration, Deno tests, setup guide
 hardware/          ESP32 and wiring documentation
-tests/frontend/   Client tests run with Vitest on Node.js
+tests/frontend/   Vitest tests run on Node.js
 docs/             API, design, testing, security, and operating guides
 ```
 
-## Run locally
+## Run the application
 
-### Backend
-
-From the repository root:
-
-```sh
-cd backend
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-```
-
-If `backend/.env` does not exist, copy `backend/.env.example` to it. Configure
-`SUPABASE_URL` and `SUPABASE_SECRET_KEY`, and apply
-[the database schema](backend/supabase/000_initial_schema.sql) to your Supabase
-project. Configure the QR signing key separately when testing QR issuance.
-See [backend setup](backend/readme.md) for details, including Windows setup.
-
-From `backend/`, start the server:
-
-```sh
-python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-- [Interactive API documentation](http://localhost:8000/docs)
-- [Health check](http://localhost:8000/health)
-
-The health check reports whether Supabase settings are present; it does not
-verify database connectivity. Press **Ctrl+C** to stop the server.
-
-### Mobile and web application
-
-Use Node.js 22.13 or newer and npm. Commit `application/package-lock.json`
-with dependency changes; `npm ci` installs the versions recorded there.
-
-In another terminal, from the repository root:
+Use Node.js 22.13 or newer and npm. From the repository root:
 
 ```sh
 cd application
@@ -123,79 +91,90 @@ npm ci
 ```
 
 If `application/.env` does not exist, copy `application/.env.example` to it.
-Set `EXPO_PUBLIC_API_URL` to the FastAPI address:
+Set the hosted project configuration:
 
-- Same-computer browser or iOS simulator: `http://localhost:8000`
-- Physical phone or board: `http://<laptop-LAN-IP>:8000`
-- Android emulator: `http://10.0.2.2:8000`
+```dotenv
+EXPO_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-or-legacy-anon-key
+EXPO_PUBLIC_MOCK_API=false
+```
 
-Use the same network for physical devices and allow inbound port 8000 on the
-laptop. Restart Expo after changing environment variables. Configure backend
-`CORS_ORIGINS` for the browser origin (`*` is available for local development).
-Use HTTP only for trusted local testing; deployed connections should use HTTPS.
+Use the project root URL, without `/rest/v1` or `/auth/v1`. Only a public
+publishable/anon key belongs in client configuration. Keep service-role keys
+and QR signing keys in backend secrets, out of the app and firmware.
 
 From `application/`:
 
 ```sh
-npm run start
+npm start
 ```
 
-Use `npm run web` to open the web client, or the Expo development server's
-platform options for mobile.
+Use Expo Go for mobile or `npm run web` for the browser. Restart Expo after
+changing environment variables. No LAN backend address or
+`EXPO_PUBLIC_API_URL` is needed on this branch. Confirm signup emails if the
+project requires it; existing accounts and profiles are reused, but legacy
+app sessions require signing in again.
 
-For an intentional local UI demo, leave `EXPO_PUBLIC_API_URL` empty and set
-`EXPO_PUBLIC_MOCK_API=true`. Demo authentication does not create Supabase users
-or authenticate real devices. See [client setup](application/README.md).
+Intentional local demo mode requires an empty Supabase URL and
+`EXPO_PUBLIC_MOCK_API=true`. Missing settings or real failures never silently
+enable demo mode. Demo accounts do not authenticate against Supabase or devices.
 
-## Backend endpoints
+See [client setup](application/README.md) and
+[Supabase setup and deployment](backend/supabase/README.md).
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| GET | `/health` | Liveness and settings presence |
-| POST | `/api/v1/auth/signup` | Register a tenant |
-| POST | `/api/v1/auth/login` | Sign in |
-| GET | `/api/v1/auth/me` | Validate the current user |
-| POST | `/api/v1/auth/users/{user_id}/role` | Admin-only role change |
-| POST | `/api/v1/doors/{door_id}/commands` | Manager/admin lock or unlock |
-| GET | `/api/v1/devices/{device_id}/commands` | Device command polling |
-| POST | `/api/v1/devices/{device_id}/events` | Device command-result report |
-| POST | `/api/v1/houses/{houseId}/qr-credentials` | Issue a signed QR credential |
+## Edge Function endpoints
 
-Door and device path IDs refer to `devices.device_key` (for example, `front`);
-`houseId` refers to a unit UUID. User endpoints use Supabase user bearer tokens.
-Device endpoints use separate device bearer tokens whose SHA-256 hashes are
-stored in `devices.credential_hash`. Keep Supabase secret keys and QR private
-keys on the backend, out of client configuration and firmware.
+Append the route to `https://PROJECT.supabase.co/functions/v1/FUNCTION`:
 
-See [API examples](docs/api.md) for payloads, authorization, provisioning, and
-the bench-test walkthrough.
+| Function | Method | Route | Purpose |
+| --- | --- | --- | --- |
+| `ostium-api` | POST | `/api/v1/doors/{door_id}/commands` | Manager/admin lock or unlock |
+| `ostium-api` | POST | `/api/v1/houses/{houseId}/qr-credentials` | Signed QR credential |
+| `ostium-api` | POST | `/api/v1/auth/users/{user_id}/role` | Admin-only role change |
+| `device-api` | GET | `/api/v1/devices/{device_id}/commands` | Device command polling |
+| `device-api` | POST | `/api/v1/devices/{device_id}/events` | Device command-result report |
+
+Door and device path IDs refer to `devices.device_key`, for example `front`.
+`houseId` refers to a unit UUID. User functions require a user JWT and active
+profile. Device functions verify a separate high-entropy bearer token against
+its lowercase SHA-256 hex digest in `devices.credential_hash`. Devices must
+never receive the Supabase service-role key.
+
+Signup, login, refresh, and sign-out use the SDK rather than FastAPI endpoints.
+See [API contracts](docs/api.md) for request and response details.
 
 ## Checks
 
-Backend, from `backend/` after activating its virtual environment:
+From `application/`:
 
 ```sh
-python -m unittest discover -s tests -v
-```
-
-Frontend, from `application/`:
-
-```sh
-npm run test
+npm test
+npm run test:coverage
 npm run test:typecheck
+npx tsc --noEmit
 npm run lint
 ```
 
-Backend tests use mocked Supabase transport and an in-memory stand-in; they do
-not demonstrate a live database or physical lock. No GitLab CI configuration
-is currently checked into this repository; automated builds, tests, and merging
-to main still need to be configured for the assignment.
+From the repository root, with Deno 2 installed:
+
+```sh
+deno task --config backend/supabase/deno.json check
+deno task --config backend/supabase/deno.json test
+deno task --config backend/supabase/deno.json lint
+```
+
+Frontend tests mock the SDK and network; Edge Function tests use in-memory
+fixtures. Neither suite writes to live Supabase or validates a physical lock.
+Keep `application/package-lock.json` as the only package-manager lockfile.
+No GitLab CI configuration is checked in; the assignment's automated build,
+test, and merge workflow still needs configuration.
 
 ## Further documentation
 
-- [Backend setup and key provisioning](backend/readme.md)
+- [Backend overview](backend/readme.md)
+- [Supabase setup, function deployment, and key provisioning](backend/supabase/README.md)
 - [Client setup](application/README.md)
-- [API contracts and walkthrough](docs/api.md)
+- [API contracts](docs/api.md)
 - [Testing guide](docs/testing.md)
 - [Architecture design](docs/architecture.md) and [security design](docs/security.md)
 - [Hardware documentation](hardware/README.md)

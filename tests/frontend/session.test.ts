@@ -1,66 +1,88 @@
 import { describe, expect, vi, test } from 'vitest';
+import type { Session, SupabaseClient } from '@supabase/supabase-js';
+import { observeSession, type AuthState } from '@/services/session';
+import { session } from './supabase-mock';
 
-import { parseStoredSession } from '@/services/session';
+const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+const user = { id: 'tenant-1', email: 'tenant@example.com', role: 'tenant' as const };
+function fixture() {
+  let callback: (event: string, session: Session | null) => void;
+  const unsubscribe = vi.fn(() => {});
+  const signOut = vi.fn(async () => ({ error: null }));
+  const client = { auth: {
+    getSession: vi.fn(async () => ({ data: { session }, error: null })),
+    onAuthStateChange: (fn: typeof callback) => { callback = fn; return { data: { subscription: { unsubscribe } } }; },
+    signOut,
+  } };
+  const states: AuthState[] = [];
+  return { client: client as unknown as SupabaseClient, states, unsubscribe, signOut,
+    event: (value: Session | null) => callback('TEST', value),
+    emit: (state: AuthState) => states.push(state) };
+}
 
-const now = 1_800_000_000_000;
-const session = {
-  accessToken: 'saved-token',
-  expiresAt: now + 60_000,
-  user: { id: 'tenant-1', email: 'tenant@example.com', role: 'tenant' as const },
-};
-
-describe('parseStoredSession', () => {
-  test('restores a valid saved session', () => {
-    expect(parseStoredSession(JSON.stringify(session), now)).toEqual(session);
+describe('Supabase session lifecycle', () => {
+  test('restores a session through its active profile', async () => {
+    const f = fixture();
+    const profile = vi.fn(async () => user);
+    const stop = observeSession(f.client, profile, f.emit);
+    await tick();
+    expect(f.states.at(-1)).toEqual({ user, isLoading: false });
+    expect(profile).toHaveBeenCalledTimes(1);
+    stop(); expect(f.unsubscribe).toHaveBeenCalledTimes(1);
   });
-
-  test('restores an admin session after restarting the app', () => {
-    const saved = { ...session, user: { ...session.user, role: 'admin' } };
-    expect(parseStoredSession(JSON.stringify(saved), now)).toEqual(saved);
+  //added this so main's admin restoration case still runs with SDK sessions.
+  test('restores an admin through the active Supabase profile', async () => {
+    const f = fixture();
+    const admin = { ...user, role: 'admin' as const };
+    const stop = observeSession(f.client, async () => admin, f.emit);
+    await tick();
+    expect(f.states.at(-1)).toEqual({ user: admin, isLoading: false });
+    stop();
   });
-
-  test('uses the current clock when no time is supplied', () => {
-    vi.spyOn(Date, 'now').mockReturnValue(now);
-    expect(parseStoredSession(JSON.stringify(session))).toEqual(session);
+  test('does not restore a delayed profile after sign-out', async () => {
+    const f = fixture();
+    let finish!: (value: typeof user) => void;
+    const stop = observeSession(f.client, () => new Promise((resolve) => { finish = resolve; }), f.emit);
+    await tick();
+    f.event(null);
+    finish(user);
+    await tick();
+    expect(f.states).toEqual([{ user: null, isLoading: false }]);
+    stop();
   });
-
-  test.each([null, '', '{', 'null', '[]', 'true', '42', '"text"'])(
-    'rejects missing or malformed storage %j',
-    (raw) => expect(parseStoredSession(raw, now)).toBeNull(),
-  );
-
-  test.each([
-    { accessToken: '' },
-    { accessToken: null },
-    { accessToken: 123 },
-    { accessToken: undefined },
-    { expiresAt: undefined },
-    { expiresAt: 'tomorrow' },
-    { expiresAt: null },
-    { user: undefined },
-    { user: { ...session.user, role: 'unknown-role' } },
-  ])('rejects invalid session fields %j', (fields) => {
-    expect(parseStoredSession(JSON.stringify({ ...session, ...fields }), now)).toBeNull();
+  test('ignores profile completion after unmount', async () => {
+    const f = fixture();
+    let finish!: (value: typeof user) => void;
+    const stop = observeSession(f.client, () => new Promise((resolve) => { finish = resolve; }), f.emit);
+    await tick(); stop(); finish(user); await tick();
+    expect(f.states).toEqual([]);
   });
-
-  test('rejects a non-finite expiration encoded as JSON', () => {
-    const raw = JSON.stringify(session).replace(String(session.expiresAt), '1e400');
-    expect(parseStoredSession(raw, now)).toBeNull();
+  test('loads the current profile on a refreshed session', async () => {
+    const f = fixture();
+    const profile = vi.fn(async () => user);
+    const stop = observeSession(f.client, profile, f.emit);
+    await tick();
+    f.event({ ...session, access_token: 'new-token' } as Session);
+    await tick();
+    expect(profile).toHaveBeenCalledTimes(2);
+    expect(f.states.at(-1)?.user).toEqual(user);
+    stop();
   });
-
-  test.each([-1, 0, 29_999, 30_000])('rejects expiration at now + %i ms', (offset) => {
-    expect(parseStoredSession(JSON.stringify({ ...session, expiresAt: now + offset }), now)).toBeNull();
+  test('rejects disabled profiles and clears the local session', async () => {
+    const f = fixture();
+    const error = { status: 403 };
+    const stop = observeSession(f.client, async () => { throw error; }, f.emit);
+    await tick();
+    expect(f.states.at(-1)).toEqual({ user: null, isLoading: false, error });
+    expect(f.signOut).toHaveBeenCalledWith({ scope: 'local' });
+    stop();
   });
-
-  test('accepts expiration one millisecond beyond the safety margin', () => {
-    const value = { ...session, expiresAt: now + 30_001 };
-    expect(parseStoredSession(JSON.stringify(value), now)).toEqual(value);
-  });
-
-  test('normalizes stored user data through the shared user parser', () => {
-    const user = { id: 42, email: 'manager@example.com', role: 'manager' as const, name: 'Manager' };
-    expect(parseStoredSession(JSON.stringify({ ...session, user }), now)?.user).toEqual({
-      ...user, id: '42',
-    });
+  test('reports transient profile failures without deleting refresh credentials', async () => {
+    const f = fixture();
+    const stop = observeSession(f.client, async () => { throw new Error('offline'); }, f.emit);
+    await tick();
+    expect(f.states.at(-1)?.isLoading).toBe(false);
+    expect(f.signOut).not.toHaveBeenCalled();
+    stop();
   });
 });

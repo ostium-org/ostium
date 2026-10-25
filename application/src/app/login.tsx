@@ -27,6 +27,7 @@ import { validateLoginForm, type LoginFieldErrors } from "@/utils/validation";
 
 const ERROR_MESSAGES: Record<ApiErrorKind, string> = {
   "invalid-credentials": "Incorrect email or password.",
+  "signup-rejected": "We couldn’t create that account. Please try again.",
   unauthorized: "Your session has expired. Please sign in again.",
   "rate-limited": "Too many attempts. Please wait a moment and try again.",
   server: "Something went wrong on our end. Please try again later.",

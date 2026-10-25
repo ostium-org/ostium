@@ -27,6 +27,7 @@ import { validateSignupForm, type SignupFieldErrors } from "@/utils/validation";
 
 const ERROR_MESSAGES: Record<ApiErrorKind, string> = {
   "invalid-credentials": "We couldn’t create that account. Please try again.",
+  "signup-rejected": "We couldn’t create that account. Please try again.",
   unauthorized: "That email may already be registered.",
   "rate-limited": "Too many attempts. Please wait a moment and try again.",
   server: "Something went wrong on our end. Please try again later.",
@@ -39,6 +40,7 @@ const ERROR_MESSAGES: Record<ApiErrorKind, string> = {
 };
 
 function messageFor(error: unknown): string {
+  if (error instanceof ApiError && error.kind === "signup-rejected") return error.message;
   if (error instanceof ApiError) return ERROR_MESSAGES[error.kind];
   if (error instanceof Error) return error.message;
   return "Something went wrong. Please try again.";

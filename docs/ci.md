@@ -5,10 +5,10 @@ The workflow in `.github/workflows/ci.yml` covers Assignment 1 Part C. A push to
 | Stage | Job | What it runs |
 |---|---|---|
 | build | `firmware-build` | Compiles the ESP32-S3 firmware in both board builds (`pio run`). |
-| build | `backend-build` | Installs the backend's requirements, compiles it, and imports the FastAPI app. |
+| build | `backend-build` | Type-checks and lints the Supabase Edge Functions with Deno 2. |
 | build | `frontend-build` | Installs the app's dependencies and type-checks the Expo app (`tsc --noEmit`). |
 | test | `firmware-test` | Runs the 57 firmware unit tests on the native platform (`pio test`). |
-| test | `backend-test` | Runs the backend's unit tests (`python -m unittest`). |
+| test | `backend-test` | Runs the Edge Function handler tests (`deno test`). |
 | test | `frontend-test` | Type-checks and runs the frontend unit tests (`vitest run`). |
 | merge | `auto-merge` | Runs only in a pull request into `main`. It merges the pull request (`gh pr merge`). |
 
@@ -74,7 +74,7 @@ docker run --rm -v "$PWD":/repo -v ostium-platformio:/root/.platformio -v ostium
 To run the backend build and tests:
 
 ```sh
-docker run --rm -v "$PWD":/repo -w /repo/backend python:3.12.14-bookworm sh -c 'pip install -q -r requirements.txt && python -c "import app.main" && python -m unittest discover -s tests'
+docker run --rm -v "$PWD":/repo -w /repo denoland/deno:2 sh -c 'deno task --config backend/supabase/deno.json check && deno task --config backend/supabase/deno.json lint && deno task --config backend/supabase/deno.json test'
 ```
 
 To run the frontend build and tests:
@@ -87,5 +87,5 @@ docker run --rm -v "$PWD":/repo -v ostium-node-modules:/repo/application/node_mo
 
 - **The frontend build is a type check.** The Expo app has no separate compile step in CI. Device builds through EAS are outside this workflow.
 - **The `frontend-build` job writes `expo-env.d.ts`.** `expo start` normally writes this file, and `.gitignore` leaves it out. It loads Expo's types, which declare the app's CSS imports, so `tsc` fails on a clean checkout without it. The test type check uses `tests/frontend/tsconfig.json`, which leaves this file out, so `frontend-test` doesn't need it.
-- **The workflow caches downloads.** The firmware jobs cache PlatformIO's toolchains, the backend jobs cache pip downloads, and the frontend jobs cache npm's package downloads. The first firmware build downloads the ESP32-S3 toolchain, about 1 GB. GitHub keeps a cache that a pull request saves for that pull request only. Later runs of the same pull request restore it, but a new pull request can restore only the caches saved on `main` or on its base branch. A merge by `auto-merge` doesn't start a run on `main`, so run the workflow on `main` by hand, as in step 7. Do it again after `hardware/esp32/platformio.ini` or `application/package-lock.json` changes, or after the caches go 7 days without use.
+- **The workflow caches downloads.** The firmware jobs cache PlatformIO's toolchains, the frontend jobs cache npm's package downloads. The first firmware build downloads the ESP32-S3 toolchain, about 1 GB. GitHub keeps a cache that a pull request saves for that pull request only. Later runs of the same pull request restore it, but a new pull request can restore only the caches saved on `main` or on its base branch. A merge by `auto-merge` doesn't start a run on `main`, so run the workflow on `main` by hand, as in step 7. Do it again after `hardware/esp32/platformio.ini` or `application/package-lock.json` changes, or after the caches go 7 days without use.
 - **The repository is public,** so GitHub Actions minutes are free.
