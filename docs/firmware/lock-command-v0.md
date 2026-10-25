@@ -64,7 +64,7 @@ sequenceDiagram
 
 ## Configuration
 
-The firmware build reads these values from `hardware/esp32/include/secrets.h`, which Git ignores. When the firmware code lands, it includes `hardware/esp32/include/secrets.example.h` with placeholders. To configure a door unit, copy that file to `secrets.h` in the same folder, and then replace the placeholders with the bench values.
+The firmware build reads these values from `hardware/esp32/include/secrets.h`, which Git ignores. To configure a door unit, copy `hardware/esp32/include/secrets.example.h` to `secrets.h` in the same folder, and then replace the placeholders with the bench values. Settings that aren't secret, such as the lock GPIO and the unlock time, are in `hardware/esp32/include/board_config.h`.
 
 | Setting | Meaning | Example |
 |---|---|---|
@@ -74,7 +74,7 @@ The firmware build reads these values from `hardware/esp32/include/secrets.h`, w
 | `OSTIUM_ROOT_CA` | PEM root certificate of the backend host | The CA for the deployed host |
 | `OSTIUM_WIFI_SSID`, `OSTIUM_WIFI_PASSWORD` | Wi-Fi network | Bench network |
 | `OSTIUM_QR_ACCESS_VALUE` | Text the fixed-QR proof of concept accepts. If it's empty, QR unlock is off. | The value in the app's placeholder QR |
-| `OSTIUM_ALLOW_PLAIN_HTTP` | Build flag that allows an `http://` API root. Define it only in a bench build that talks to the local mock or to FastAPI on a laptop. | Not defined |
+| `OSTIUM_ALLOW_PLAIN_HTTP` | Build flag that allows an `http://` API root. The `esp32s3-bench` environment defines it, for the local mock or FastAPI on a laptop. | Not defined |
 
 These are the `OSTIUM_API_ROOT` forms:
 
@@ -144,7 +144,7 @@ Each rule has unit tests in `hardware/esp32/test/test_core/` (SCRUM-51), with th
 
 | # | Rule | Tests |
 |---|---|---|
-| R1 | The lock stays locked through power-on, reset, and a crash. The first statement of `setup()` writes the locked level, before Serial, the camera, or Wi-Fi start. Before `setup()` runs, the wiring keeps the lock locked: the lock output uses a GPIO that isn't a strapping pin (0, 3, 45, or 46) and isn't used by the camera or PSRAM, with a pull resistor that keeps the relay off while the pin floats. | `test_lock_is_locked_after_startup` |
+| R1 | The lock starts locked. The first statement of `setup()` writes the locked level, before Serial, the camera, or Wi-Fi start. A power-on or brownout reset resets the GPIO, and until `setup()` runs, the wiring keeps the lock locked: the lock output uses a GPIO that isn't a strapping pin (0, 3, 45, or 46) and isn't used by the camera or PSRAM, with a pull resistor toward the locked level. A panic or watchdog reset restarts only the CPUs, not the GPIO, so an unlock that a crash interrupts lasts its elapsed time plus the panic handler, the core dump, and the boot, until `setup()` writes the locked level. | `test_lock_is_locked_after_startup` |
 | R2 | The door runs every command in response order and doesn't skip an earlier command because a later one is queued. A Lock still ends an unlock in progress (R11). So `[unlock, lock]` in one response ends locked, and `[lock, unlock]` ends unlocked until the relock. | `test_commands_run_in_response_order`, `test_unlock_then_lock_in_one_poll_ends_locked` |
 | R3 | The door doesn't run a `command_id` it has already run or rejected, and a redelivered unlock doesn't restart the relock timer. It keeps each ID, in a list of 32, until a poll's `server_time` reaches that command's `expires_at`. It uses `server_time` rather than the R4 estimate, because the estimate can run ahead of the backend's clock, and the backend serves a command until its own clock passes `expires_at`. It never removes an unexpired ID. If the list is full of unexpired IDs, the door rejects the new command with `duplicate_cache_full`. | `test_duplicate_command_is_not_run_again`, `test_redelivered_unlock_does_not_restart_timer`, `test_duplicate_list_never_drops_unexpired_id`, `test_duplicate_id_kept_while_backend_still_serves` |
 | R4 | The door estimates the current time as `server_time` plus the time elapsed since the poll request started. `runPoll()` records the request start before it sends the request. If `expires_at` is at or before that time when the command would run, the door rejects it with `expired` and doesn't move the lock. | `test_expired_command_is_rejected` |
@@ -300,7 +300,7 @@ Before a bench run, someone with database access creates the door unit's `device
 - **Integration with the real backend:** run FastAPI on a laptop as [backend setup](../../backend/readme.md) describes, and follow the walkthrough in [API](../api.md#thursday-walkthrough) with the door unit as the device.
 - **Certificates:** before integration, run the mock over HTTPS at least once, with a self-signed CA loaded as `OSTIUM_ROOT_CA`. Then load a different CA, and confirm that every request fails and the door stays locked.
 - **Bench tests (SCRUM-52):**
-  - Boot and reset behavior, including a reset and a forced crash during an unlock.
+  - Boot and reset behavior, including a reset and a forced crash during an unlock. For the crash, measure how long the relay stays on.
   - Unlock timing over at least 20 unlocks, and the time for Lock to end an unlock.
   - An unlock while the backend host is unreachable, and again with the access point off. The lock output turns off at 3,000 ms in every run.
 

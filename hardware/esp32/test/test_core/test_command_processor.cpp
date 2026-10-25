@@ -16,6 +16,8 @@ void test_commands_run_in_response_order() {
 
   // A later unlock doesn't cancel the earlier lock: both run, in order.
   TEST_ASSERT_TRUE(door.output.unlocked());
+  TEST_ASSERT_TRUE(door.log.contains("ran command cmd-lock: lock"));
+  TEST_ASSERT_TRUE(door.log.contains("ran command cmd-unlock: unlock"));
   const auto events = door.flushEvents();
   TEST_ASSERT_EQUAL_UINT32(2, events.size());
   TEST_ASSERT_EQUAL_STRING("cmd-lock", events[0].commandId.c_str());
