@@ -41,14 +41,14 @@ The source is [`diagrams/class-diagram.puml`](diagrams/class-diagram.puml), and 
 |---|---|
 | Lock controller | `LockController` |
 | Relay | `LockOutput`, `GpioLockOutput` |
-| Command client | `BackendClient` (as `PollFetcher`), `runPoll()` in `poll_service.h` |
+| Command client | `BackendClient` (as `PollFetcher`), `runPoll()` in `poll_service.h`, and `readBody()` in `body_reader.h` with `ClientSource` (as `ByteSource`) |
 | Command validator | `parsePollResponse()` in `poll_parser.h`, `CommandProcessor` |
 | Event reporter | `EventOutbox`, `EventSender` |
 | Clock | `Clock`, `MillisClock`, `OneShotTimer` |
 | Wi-Fi manager | `WifiLink` |
 | QR scanner, credential verifier (future scope) | `QrScanner`, `CredentialVerifier` |
 
-`runPoll()`, `parsePollResponse()`, `parseTimestamp()`, `formatTimestamp()`, `serializeEvent()`, and `eventIdFor()` are free functions in the code. The diagram draws each header's free functions as a `<<utility>>` box named after the header, so their dependencies are visible.
+`runPoll()`, `readBody()`, `parsePollResponse()`, `parseTimestamp()`, `formatTimestamp()`, `serializeEvent()`, and `eventIdFor()` are free functions in the code. The diagram draws each header's free functions as a `<<utility>>` box named after the header, so their dependencies are visible.
 
 SCRUM-54 also asks for the firmware classes in the team's class diagram. The repository doesn't have a team class diagram yet, so the firmware classes are only in this one. If the team assembles a combined diagram for the report, `firmware-class-diagram.png` is ready to include.
 
