@@ -9,7 +9,7 @@ The workflow in `.github/workflows/ci.yml` covers Assignment 1 Part C. A push to
 | build | `frontend-build` | Installs the app's dependencies and type-checks the Expo app (`tsc --noEmit`). |
 | test | `firmware-test` | Runs the 57 firmware unit tests on the native platform (`pio test`). |
 | test | `backend-test` | Runs the backend's unit tests (`python -m unittest`). |
-| test | `frontend-test` | Type-checks and runs the frontend unit tests (`bun test`). |
+| test | `frontend-test` | Type-checks and runs the frontend unit tests (`vitest run`). |
 | merge | `auto-merge` | Runs only in a pull request into `main`. It merges the pull request (`gh pr merge`). |
 
 GitHub Actions has no stages, so each test job lists the three build jobs in `needs`, and `auto-merge` lists the three test jobs. The graph on the run's **Summary** page shows the three stages as three columns.
@@ -31,37 +31,31 @@ The `auto-merge` job runs `gh pr merge --merge --auto --match-head-commit <sha>`
 - A draft pull request, or a pull request from a fork, isn't merged.
 - The workflow's token can't get the `workflows` permission. GitHub lets it merge a change to a file in `.github/workflows/` only if a file with the same path and the same contents already exists on another branch. The CI pull request meets this rule, because its branch holds the same `ci.yml`. If a later pull request changes `ci.yml` after `main` has changed it too, the job fails with `refusing to allow a GitHub App to create or update workflow`. To fix it, merge `main` into the branch and push, or merge the pull request yourself.
 
-## Set up GitHub and merge the CI pull request
+## Set up GitHub and get the workflow onto `main`
 
 A repository admin does these steps once, in this order, on the `ostium-org/ostium` repository:
 
 1. **Allow auto-merge.** Go to **Settings** > **General** > **Pull Requests**, and select **Allow auto-merge**. Keep **Allow merge commits** selected, because the job merges with a merge commit. If auto-merge isn't allowed, the job fails whenever a pull request has to wait for something, such as a review.
-2. **Push the CI branch.** Commit the workflow and this page on `scrum-53-github-actions`, and then push the branch:
+2. **Open the firmware pull request into `main`.** On October 25, pull request #9 merged into `main`, but pull requests #11, #12, #14, and #15 merged into each other's branches, so the core library, the board firmware, the firmware docs, and this workflow never reached `main`. The `scrum-58-firmware-fixes` branch holds all of that work, merged with `main`. Push it, and open a pull request into `main`:
 
    ```sh
-   git push -u origin scrum-53-github-actions
+   git push -u origin scrum-58-firmware-fixes
    ```
-
-3. **Open the CI pull request.** To show only the CI changes, open the pull request with base `scrum-54-firmware-design`:
 
    ```sh
-   gh pr create --base scrum-54-firmware-design --head scrum-53-github-actions
+   gh pr create --base main --head scrum-58-firmware-fixes
    ```
 
-   The build and test jobs run, and `auto-merge` is skipped, because the base isn't `main`. The CI branch is stacked on the firmware branches, so this run also builds and tests the code in pull requests #9, #11, #12, and #14.
-4. **Merge the firmware pull requests.** Merge pull requests #9, #11, #12, and #14, in that order. After each merge, change the next pull request's base to `main`. These pull requests don't run the workflow, because neither their branches nor `main` contain `ci.yml`.
-5. **Merge the CI pull request.** Change the CI pull request's base to `main`. Changing the base doesn't start a run, so click **Close pull request**, and then click **Reopen pull request**. The new run builds, tests, and merges the CI pull request.
-6. **Protect `main`.** Go to **Settings**. In the sidebar, under **Code, planning, and automation**, click **Rulesets**, and then click **Rulesets** again. Click **New ruleset** > **New branch ruleset**:
+   Its run builds and tests all three modules, and then `auto-merge` merges it, because it targets `main`. The workflow's token may add `ci.yml` to `main`, because the same file is already on the pull request's branch.
+3. **Protect `main`.** After the pull request from step 2 merges, go to **Settings**. In the sidebar, under **Code, planning, and automation**, click **Rulesets**, and then click **Rulesets** again. Click **New ruleset** > **New branch ruleset**:
    - Set **Ruleset Name** to `main` and **Enforcement status** to **Active**.
    - Under **Target branches**, click **Add target** > **Include default branch**.
    - Select **Require a pull request before merging**. If you want a teammate's review before each merge, set **Required approvals** to `1`, and auto-merge waits for the approval. Also select **Dismiss stale pull request approvals when new commits are pushed**. Otherwise, an approval of an older commit still counts after a push.
    - Select **Require status checks to pass**. Click **Add checks**, and add `firmware-build`, `backend-build`, `frontend-build`, `firmware-test`, `backend-test`, and `frontend-test`. If GitHub doesn't suggest a check, type its exact name, and click **+**.
    - Click **Create**.
 
-   With this ruleset, nobody can merge a pull request into `main` until all six checks pass, even by hand. Don't create it before step 5. Pull requests #9, #11, #12, and #14 never report these checks, so an active ruleset stops them from merging, and a ruleset has no bypass unless you add one.
-7. **Fill the caches on `main`.** On the **Actions** tab, click **CI** > **Run workflow**, keep `main` as the branch, and click **Run workflow**. Every pull request can restore the caches that this run saves. For details, see [Notes](#notes).
-
-If your team can't review the firmware pull requests before the deadline, open the CI pull request with base `main` in step 3 instead, and skip steps 4 and 5. That pull request carries every firmware commit, so its run builds, tests, and merges all of them into `main` at once. Afterward, close any of pull requests #9, #11, #12, and #14 that GitHub doesn't mark as merged.
+   With this ruleset, nobody can merge a pull request into `main` until all six checks pass, even by hand. Don't create it before step 2's pull request merges. A pull request whose branch and base both lack `ci.yml` never reports these checks, so the ruleset would stop it from merging, and a ruleset has no bypass unless you add one.
+4. **Fill the caches on `main`.** On the **Actions** tab, click **CI** > **Run workflow**, keep `main` as the branch, and click **Run workflow**. Every pull request can restore the caches that this run saves. For details, see [Notes](#notes).
 
 You don't need to change **Settings** > **Actions** > **General** > **Workflow permissions**. The `auto-merge` job asks for the write permissions it needs in the workflow file.
 
@@ -86,12 +80,12 @@ docker run --rm -v "$PWD":/repo -w /repo/backend python:3.12.14-bookworm sh -c '
 To run the frontend build and tests:
 
 ```sh
-docker run --rm -v "$PWD":/repo -v ostium-node-modules:/repo/application/node_modules -w /repo/application oven/bun:1.3.14 sh -c 'bun install --frozen-lockfile && printf "/// <reference types=\"expo/types\" />\n" > expo-env.d.ts && bunx tsc --noEmit && bun run test:typecheck && bun test'
+docker run --rm -v "$PWD":/repo -v ostium-node-modules:/repo/application/node_modules -w /repo/application node:22-bookworm sh -c 'npm ci && printf "/// <reference types=\"expo/types\" />\n" > expo-env.d.ts && npx tsc --noEmit && npm run test:typecheck && npm run test'
 ```
 
 ## Notes
 
 - **The frontend build is a type check.** The Expo app has no separate compile step in CI. Device builds through EAS are outside this workflow.
 - **The `frontend-build` job writes `expo-env.d.ts`.** `expo start` normally writes this file, and `.gitignore` leaves it out. It loads Expo's types, which declare the app's CSS imports, so `tsc` fails on a clean checkout without it. The test type check uses `tests/frontend/tsconfig.json`, which leaves this file out, so `frontend-test` doesn't need it.
-- **The workflow caches downloads.** The firmware jobs cache PlatformIO's toolchains, the backend jobs cache pip downloads, and the frontend jobs cache Bun's package downloads. The first firmware build downloads the ESP32-S3 toolchain, about 1 GB. GitHub keeps a cache that a pull request saves for that pull request only. Later runs of the same pull request restore it, but a new pull request can restore only the caches saved on `main` or on its base branch. A merge by `auto-merge` doesn't start a run on `main`, so run the workflow on `main` by hand, as in step 7. Do it again after `hardware/esp32/platformio.ini` or `application/bun.lock` changes, or after the caches go 7 days without use.
+- **The workflow caches downloads.** The firmware jobs cache PlatformIO's toolchains, the backend jobs cache pip downloads, and the frontend jobs cache npm's package downloads. The first firmware build downloads the ESP32-S3 toolchain, about 1 GB. GitHub keeps a cache that a pull request saves for that pull request only. Later runs of the same pull request restore it, but a new pull request can restore only the caches saved on `main` or on its base branch. A merge by `auto-merge` doesn't start a run on `main`, so run the workflow on `main` by hand, as in step 7. Do it again after `hardware/esp32/platformio.ini` or `application/package-lock.json` changes, or after the caches go 7 days without use.
 - **The repository is public,** so GitHub Actions minutes are free.
