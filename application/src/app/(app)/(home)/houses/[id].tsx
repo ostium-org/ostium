@@ -1,8 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/hooks/auth';
@@ -11,8 +12,6 @@ import {
   getHouseMembers,
   grantHouseAccess,
   revokeHouseAccess,
-  useHouseAccessRevision,
-  userHasHouseAccess,
 } from '@/data/house-access';
 import {
   BottomTabInset,
@@ -20,20 +19,21 @@ import {
   Spacing,
   TopTabInset,
 } from '@/constants/theme';
-import { HOUSES } from '@/data/houses';
+import { useHouses } from '@/hooks/use-houses';
+import { isMockApiEnabled } from '@/services/api';
+import { canManageHouses } from '@/services/houses';
 
 export default function HouseDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const house = HOUSES.find((item) => item.id === id);
+  const { houses, loading, error, reload } = useHouses();
+  const house = houses.find((item) => item.id === id);
+  const demo = isMockApiEnabled();
   const { user } = useAuth();
   const theme = useTheme();
-  useHouseAccessRevision();
-  const members = house ? getHouseMembers(house.id) : [];
+  const members = demo && house ? getHouseMembers(house.id) : [];
+  const canManage = canManageHouses(user?.role);
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
-  const hasAccess = user?.role === 'manager' || Boolean(
-    house && user && userHasHouseAccess(house.id, user.id, user.email),
-  );
 
   function returnToHouses() {
     if (router.canGoBack()) {
@@ -44,6 +44,8 @@ export default function HouseDetailsScreen() {
   }
 
   function addMember() {
+    //kept this demo-only because this form does not save access changes to Supabase yet.
+    if (!demo || !canManage) return;
     const normalizedEmail = email.trim().toLowerCase();
     if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
       setMessage('Enter a valid email address.');
@@ -79,11 +81,16 @@ export default function HouseDetailsScreen() {
             <ThemedText type="smallBold">Back to houses</ThemedText>
           </Pressable>
 
-          {house ? (
-            hasAccess ? <>
+          {loading ? <ActivityIndicator accessibilityLabel="Loading house" /> : error ? (
+            <>
+              <ThemedText accessibilityRole="alert">{error}</ThemedText>
+              <Button title="Retry houses" onPress={reload} />
+            </>
+          ) : house ? (
+            <>
               <View style={styles.heading}>
                 <ThemedText type="smallBold" themeColor="textSecondary">
-                  {user?.role === 'manager' ? 'PROPERTY MANAGER' : 'HOUSE DETAILS'}
+                  {canManage ? 'PROPERTY MANAGER' : 'HOUSE DETAILS'}
                 </ThemedText>
                 <ThemedText type="title">{house.name}</ThemedText>
                 <ThemedText themeColor="textSecondary">{house.address}</ThemedText>
@@ -94,15 +101,15 @@ export default function HouseDetailsScreen() {
                 <View style={styles.statusGrid}>
                   <ThemedView type="backgroundElement" style={styles.statusItem}>
                     <ThemedText type="small" themeColor="textSecondary">DOOR LOCK</ThemedText>
-                    <ThemedText type="smallBold">Locked</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">Device offline</ThemedText>
+                    <ThemedText type="smallBold">{demo ? 'Locked' : 'Status unavailable'}</ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary">{demo ? 'Device offline (demo)' : 'Live status not connected'}</ThemedText>
                   </ThemedView>
                   <ThemedView type="backgroundElement" style={styles.statusItem}>
                     <ThemedText type="small" themeColor="textSecondary">TEMPERATURE</ThemedText>
                     <ThemedText style={styles.metric}>21.5 C</ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">Sample reading</ThemedText>
                   </ThemedView>
-                  {user?.role === 'manager' && (
+                  {demo && canManage && (
                     <ThemedView type="backgroundElement" style={styles.statusItem}>
                       <ThemedText type="small" themeColor="textSecondary">ACCESS</ThemedText>
                       <ThemedText style={styles.metric}>{members.length}</ThemedText>
@@ -112,7 +119,7 @@ export default function HouseDetailsScreen() {
                 </View>
               </View>
 
-              {user?.role === 'manager' && <View style={styles.section}>
+              {demo && canManage && <View style={styles.section}>
                 <View style={styles.sectionHeading}>
                   <ThemedText type="subtitle">House access</ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">{members.length} users</ThemedText>
@@ -166,18 +173,17 @@ export default function HouseDetailsScreen() {
                     {message !== '' && <ThemedText type="small" accessibilityRole="alert">{message}</ThemedText>}
                 </ThemedView>
               </View>}
-            </>
-            : <>
-              <ThemedText type="title">House access removed</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                You no longer have access to this house.
-              </ThemedText>
+              {!demo && canManage && (
+                <ThemedText type="small" themeColor="textSecondary">
+                  House access changes are not available in the app yet.
+                </ThemedText>
+              )}
             </>
           ) : (
             <>
               <ThemedText type="title">House not found</ThemedText>
               <ThemedText>
-                This house could not be found. Return to the house list
+                This house could not be found or you no longer have access. Return to the house list
                 and select another property.
               </ThemedText>
             </>

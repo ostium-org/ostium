@@ -5,6 +5,29 @@ Supabase bearer token and require an active `profiles` row. Manager/admin
 roles may command every door. The role-change route requires an authenticated,
 active admin. Device bearer tokens are independent of user tokens.
 
+## Houses
+
+`GET /api/v1/houses` requires a user bearer token and an active profile. It
+returns active rows from `units`, sorted by name and ID. Managers and admins
+see all active units. Tenants see only units with an active grant belonging
+to them whose start time has arrived and whose end time has not passed.
+An account without current grants receives `[]`; demo houses are not returned.
+
+Each house contains `id`, `name`, `address`, `building`, `floor`, and `notes`.
+Missing optional text values are returned as empty strings.
+
+`POST /api/v1/houses` requires a manager/admin bearer token and accepts:
+
+```json
+{"name":"Maple House","address":"12 Maple Street","building":"A","floor":"2","notes":"Side entrance"}
+```
+
+Name and address are required and trimmed. The other three fields are optional.
+Unknown fields are rejected. The backend assigns the UUID and `created_by`,
+persists an active unit, and returns the house with `201`. Tenants receive `403`.
+The frontend uses these routes for home, house details, QR house selection,
+and the add-house form, using the existing FastAPI login token.
+
 ## Door commands
 
 `POST /api/v1/doors/{door_id}/commands`, with a manager/admin bearer token:

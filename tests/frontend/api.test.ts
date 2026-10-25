@@ -49,7 +49,7 @@ afterEach(() => {
 });
 
 describe('parseAuthUser', () => {
-  test.each(['tenant', 'manager'])('accepts the %s role', (role) => {
+  test.each(['tenant', 'manager', 'admin'])('accepts the %s role', (role) => {
     expect(parseAuthUser({ ...user, role })).toEqual({ ...user, role });
   });
 
@@ -69,7 +69,7 @@ describe('parseAuthUser', () => {
     { ...user, id: null },
     { ...user, email: '' },
     { ...user, email: 42 },
-    { ...user, role: 'admin' },
+    { ...user, role: 'unknown-role' },
     { ...user, name: 42 },
   ])('rejects malformed user %j', (value) => {
     expect(parseAuthUser(value)).toBeNull();
@@ -227,6 +227,14 @@ describe('login', () => {
     }));
   });
 
+  test('accepts a successful FastAPI login for an admin account', async () => {
+    const admin = { ...user, role: 'admin', name: null };
+    respond({ ...response, user: admin });
+    await expect(login(user.email, 'password')).resolves.toEqual({
+      accessToken: 'new-token', expiresIn: 3600, user: { ...user, role: 'admin' },
+    });
+  });
+
   test.each([
     null, {},
     { ...response, access_token: '' },
@@ -236,7 +244,7 @@ describe('login', () => {
     { ...response, expires_in: '3600' },
     { ...response, expires_in: null },
     { ...response, user: null },
-    { ...response, user: { ...user, role: 'admin' } },
+    { ...response, user: { ...user, role: 'unknown-role' } },
   ])('rejects an invalid login response %j', async (body) => {
     respond(body);
     await expect(login(user.email, 'password')).rejects.toMatchObject({ kind: 'bad-response' });

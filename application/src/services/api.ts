@@ -1,4 +1,5 @@
-export type UserRole = "tenant" | "manager";
+//added admin because FastAPI returns this role for administrator accounts too.
+export type UserRole = "tenant" | "manager" | "admin";
 
 export type AuthUser = {
   id: string;
@@ -174,7 +175,7 @@ export function parseAuthUser(value: unknown): AuthUser | null {
   const id = typeof v.id === "number" ? String(v.id) : v.id; // SQLite ids are often integers
   if (typeof id !== "string" || id === "") return null;
   if (typeof v.email !== "string" || v.email === "") return null;
-  if (v.role !== "tenant" && v.role !== "manager") return null;
+  if (v.role !== "tenant" && v.role !== "manager" && v.role !== "admin") return null;
   if (v.name !== undefined && v.name !== null && typeof v.name !== "string")
     return null;
 

@@ -59,6 +59,49 @@ async def device_auth(device_id: str, authorization: str | None = Header(default
     return device
 
 
+class HouseRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    name: str = Field(min_length=1, max_length=200)
+    address: str = Field(min_length=1, max_length=1000)
+    building: str = Field(default="", max_length=200)
+    floor: str = Field(default="", max_length=200)
+    notes: str = Field(default="", max_length=5000)
+
+
+@router.get("/houses")
+async def list_houses(user: AuthUser = Depends(me)):
+    client = get_supabase()
+    unit_ids = None
+    if user.role not in ("manager", "admin"):
+        #added this because service-role reads bypass RLS; enforce the same grants as the Supabase branch.
+        grants = await client.rows("access_grants", {
+            "grantee_id": f"eq.{user.id}", "is_active": "eq.true",
+        })
+        now = utcnow()
+        unit_ids = {g["unit_id"] for g in grants if parse(g["valid_from"]) <= now and
+                    (g.get("valid_until") is None or parse(g["valid_until"]) > now)}
+        if not unit_ids:
+            return []
+    params = {"is_active": "eq.true"}
+    if unit_ids is not None:
+        #did this so tenants only query units their current grants allow.
+        params["id"] = "in.(" + ",".join(sorted(str(UUID(value)) for value in unit_ids)) + ")"
+    rows = await client.rows("units", params)
+    houses = [{"id": row["id"], "name": row["name"], "address": row.get("address") or "",
+               **{key: row.get(key) or "" for key in ("building", "floor", "notes")}} for row in rows]
+    return sorted(houses, key=lambda house: (house["name"], house["id"]))
+
+
+@router.post("/houses", status_code=201)
+async def create_house(body: HouseRequest, user: AuthUser = Depends(me)):
+    if user.role not in ("manager", "admin"):
+        raise HTTPException(403, "Manager or admin access required.")
+    #added the creator server-side so callers cannot impersonate another profile.
+    house = {"id": str(uuid4()), **body.model_dump()}
+    await get_supabase().insert("units", {**house, "created_by": user.id, "is_active": True})
+    return house
+
+
 @router.post("/doors/{door_id}/commands", status_code=201)
 async def issue_command(door_id: str, body: CommandRequest, user: AuthUser = Depends(me)):
     if user.role not in ("manager", "admin"):
