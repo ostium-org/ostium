@@ -1,6 +1,12 @@
 
 import { useState, type ReactNode, type Ref } from 'react';
-import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import {
+  StyleSheet,
+  TextInput,
+  View,
+  type TextInputProps,
+  type TextInputInstance,
+} from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -11,7 +17,7 @@ type TextFieldProps = Omit<TextInputProps, 'style'> & {
   label: string;
   error?: string | null; 
   right?: ReactNode; 
-  ref?: Ref<TextInput>; 
+  ref?: Ref<TextInputInstance>;
 };
 
 export function TextField({ label, error, right, ref, onFocus, onBlur, ...inputProps }: TextFieldProps) {

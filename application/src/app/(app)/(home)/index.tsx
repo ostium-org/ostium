@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
+import { Button } from '@/components/button';
 import { HouseCard } from '@/components/house-card';
 import { ScreenTransition } from '@/components/screen-transition';
 import { ThemedText } from '@/components/themed-text';
@@ -13,16 +13,21 @@ import {
   Spacing,
   TopTabInset,
 } from '@/constants/theme';
-import { HOUSES } from '@/data/houses';
+import { useHouses } from '@/data/houses';
 import { useHouseAccessRevision, userHasHouseAccess } from '@/data/house-access';
 import { useAuth } from '@/hooks/auth';
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  const allHouses = useHouses();
   useHouseAccessRevision();
+
   const houses = user?.role === 'manager'
-    ? HOUSES
-    : HOUSES.filter((house) => user && userHasHouseAccess(house.id, user.id, user.email));
+    ? allHouses
+    : allHouses.filter(
+        (house) => user && userHasHouseAccess(house.id, user.id, user.email),
+      );
+
   const isSingle = houses.length === 1;
 
   return (
@@ -48,13 +53,25 @@ export default function HomeScreen() {
                   />
               </View>
             )}
-            ListHeaderComponent={
-              <ThemedText type="title" style={styles.header}>
-                HOUSES
-              </ThemedText>
+                       ListHeaderComponent={
+              <View>
+                <ThemedText type="title" style={styles.header}>
+                  HOUSES
+                </ThemedText>
+
+                {user?.role === 'manager' && (
+                  <Button
+                    title="Add house"
+                    onPress={() => router.push('/houses/new')}
+                  />
+                )}
+              </View>
             }
             ListEmptyComponent={
-              <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
+              <ThemedText
+                type="small"
+                themeColor="textSecondary"
+                style={styles.empty}>
                 No houses yet.
               </ThemedText>
             }
