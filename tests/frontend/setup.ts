@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeEach, mock } from 'bun:test';
+import { afterAll, afterEach, beforeEach, vi } from 'vitest';
 
 const originalDev = Object.getOwnPropertyDescriptor(globalThis, '__DEV__');
 const originalUrl = process.env.EXPO_PUBLIC_API_URL;
@@ -10,13 +10,13 @@ process.env.EXPO_PUBLIC_API_URL = 'https://api.ostium.test';
 
 beforeEach(() => {
   // An unmocked request must fail locally instead of reaching any network.
-  globalThis.fetch = mock(() => {
+  globalThis.fetch = vi.fn(() => {
     throw new Error('Unexpected fetch: mock the response in this test.');
   }) as unknown as typeof fetch;
 });
 
 afterEach(() => {
-  mock.restore();
+  vi.restoreAllMocks();
   globalThis.fetch = originalFetch;
 });
 
