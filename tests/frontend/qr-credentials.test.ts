@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test';
+import { afterEach, describe, expect, vi, test } from 'vitest';
 
 import { setAccessToken, setUnauthorizedHandler } from '@/services/api';
 import { getQRCredential, parseQRCredential } from '@/services/qr-credentials';
@@ -30,7 +30,7 @@ describe('QR credential responses', () => {
 
   test('posts to the selected house endpoint with the existing bearer token', async () => {
     const data = { ...response, house_id: 'house /2', expires_at: new Date(Date.now() + 90000).toISOString() };
-    const fetchMock = mock(async () => new Response(JSON.stringify(data), { status: 200 }));
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify(data), { status: 200 }));
     globalThis.fetch = fetchMock as unknown as typeof fetch;
     setAccessToken('access-token');
     const result = await getQRCredential('house /2');
@@ -42,51 +42,55 @@ describe('QR credential responses', () => {
   });
 
   test.each([404, 500])('does not fall back to demo data after HTTP %i', async (status) => {
-    globalThis.fetch = mock(async () => new Response('{}', { status })) as unknown as typeof fetch;
+    globalThis.fetch = vi.fn(async () => new Response('{}', { status })) as unknown as typeof fetch;
     await expect(getQRCredential('house-1')).rejects.toMatchObject({ status });
   });
 
   test('uses existing sign-out handling when the credential request is unauthorized', async () => {
-    const signOut = mock(() => {});
+    const signOut = vi.fn(() => {});
     setAccessToken('access-token');
     setUnauthorizedHandler(signOut);
-    globalThis.fetch = mock(async () => new Response('{}', { status: 401 })) as unknown as typeof fetch;
+    globalThis.fetch = vi.fn(async () => new Response('{}', { status: 401 })) as unknown as typeof fetch;
     await expect(getQRCredential('house-1')).rejects.toMatchObject({ kind: 'unauthorized' });
     expect(signOut).toHaveBeenCalledTimes(1);
   });
 });
 
-// Isolate module-level API configuration and the native UUID stub from other test files.
+// Reload module-level configuration for each case without a separate runtime.
 test.each([
   [true, '', '', false],
   [true, '', 'true', true],
   [true, 'https://api.ostium.test', 'true', false],
   [false, '', 'true', false],
-] as const)('QR mock mode follows development=%s, API URL=%s, and opt-in=%s', (dev, url, optIn, expectedMock) => {
-  const script = `
-    import { mock } from 'bun:test';
-    globalThis.__DEV__ = ${dev};
-    process.env.EXPO_PUBLIC_API_URL = ${JSON.stringify(url)};
-    process.env.EXPO_PUBLIC_MOCK_API = ${JSON.stringify(optIn)};
-    mock.module('expo-crypto', () => ({ randomUUID: () => 'demo-unique-id' }));
-    globalThis.fetch = async () => { throw new Error('API request attempted'); };
-    const { isMockApiEnabled, signup } = await import('./src/services/api');
-    const { getQRCredential } = await import('./src/services/qr-credentials');
-    if (isMockApiEnabled() !== ${expectedMock}) throw new Error('Incorrect mock mode');
-    if (${expectedMock}) {
+] as const)('QR mock mode follows development=%s, API URL=%s, and opt-in=%s', async (dev, url, optIn, expectedMock) => {
+  vi.resetModules();
+  vi.stubGlobal('__DEV__', dev);
+  vi.stubEnv('EXPO_PUBLIC_API_URL', url);
+  vi.stubEnv('EXPO_PUBLIC_MOCK_API', optIn);
+  vi.doMock('expo-crypto', () => ({ randomUUID: () => 'demo-unique-id' }));
+  globalThis.fetch = vi.fn(async () => { throw new Error('API request attempted'); });
+  try {
+    const { isMockApiEnabled, signup } = await import('@/services/api');
+    const { getQRCredential: getConfiguredCredential } = await import('@/services/qr-credentials');
+    expect(isMockApiEnabled()).toBe(expectedMock);
+    if (expectedMock) {
       const before = Date.now();
-      const result = await getQRCredential('house-1');
+      const result = await getConfiguredCredential('house-1');
       const payload = JSON.parse(result.payload);
-      if (!result.isDemo || payload.houseId !== 'house-1' || payload.id !== 'demo-unique-id' ||
-          result.expiresAt !== payload.issuedAt + 60000 || payload.issuedAt < before) throw new Error('Invalid demo');
+      expect(result.isDemo).toBe(true);
+      expect(payload.houseId).toBe('house-1');
+      expect(payload.id).toBe('demo-unique-id');
+      expect(result.expiresAt).toBe(payload.issuedAt + 60000);
+      expect(payload.issuedAt).toBeGreaterThanOrEqual(before);
     } else {
-      try { await getQRCredential('house-1'); throw new Error('Unexpected success'); }
-      catch (error) { if (!['network', 'not-configured'].includes(error.kind)) throw error; }
-      try { await signup('tenant@example.com', 'password123'); throw new Error('Fake signup succeeded'); }
-      catch (error) { if (!['network', 'not-configured'].includes(error.kind)) throw error; }
+      const kind = url ? 'network' : 'not-configured';
+      await expect(getConfiguredCredential('house-1')).rejects.toMatchObject({ kind });
+      await expect(signup('tenant@example.com', 'password123')).rejects.toMatchObject({ kind });
     }
-  `;
-  const result = Bun.spawnSync([process.execPath, '-e', script], { cwd: `${import.meta.dir}/../../application` });
-  expect(result.stderr.toString()).toBe('');
-  expect(result.exitCode).toBe(0);
+  } finally {
+    vi.doUnmock('expo-crypto');
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  }
 });
