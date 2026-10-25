@@ -3,6 +3,7 @@
 ' Door unit firmware classes (SCRUM-54). Drawn by hand from the headers in
 ' hardware/esp32/lib/ostium_core/src/ and hardware/esp32/include/.
 ' To render: java -jar plantuml.jar -tsvg docs/firmware/diagrams/class-diagram.puml
+' Run it again with -tpng for the report image. PlantUML uses only the last -t flag.
 
 title Door unit firmware: class diagram (Assignment 1 MVP)
 
@@ -75,6 +76,24 @@ package "ostium_core: core logic (plain C++, no hardware)" as core {
 
   class "poll_parser.h" as PollParser <<utility>> {
     + {static} parsePollResponse(status : int, body : string) : PollResult
+  }
+
+  class "body_reader.h" as BodyReader <<utility>> {
+    + {static} readBody(source : ByteSource, clock : Clock, contentLength : int64_t, chunked : bool, limits : BodyLimits, out : string*) : BodyResult
+  }
+
+  class BodyLimits <<struct>> {
+    + maxBytes : size_t
+    + idleMs : uint32_t
+    + totalMs : uint32_t
+  }
+
+  enum BodyResult {
+    Complete
+    TooLarge
+    TimedOut
+    Closed
+    Malformed
   }
 
   class "timestamp.h" as Timestamp <<utility>> {
@@ -158,6 +177,13 @@ package "ostium_core: interfaces to the hardware" as ports {
   interface EventSender {
     + post(body : string) : int
   }
+
+  interface ByteSource {
+    + available() : size_t
+    + read() : int
+    + connected() : bool
+    + wait() : void
+  }
 }
 
 package "Board adapters (Arduino-ESP32, src/ and include/)" as board {
@@ -183,8 +209,18 @@ package "Board adapters (Arduino-ESP32, src/ and include/)" as board {
     + write(message : string) : void
   }
 
+  class ClientSource {
+    - client_ : WiFiClient&
+    + available() : size_t
+    + read() : int
+    + connected() : bool
+    + wait() : void
+  }
+
   class BackendClient {
     + {static} kTimeoutMs : uint32_t = 3000
+    + {static} kBodyLimits : BodyLimits = 8 KiB, 3000, 6000
+    - clock_ : MillisClock
     - commandsUrl_ : String
     - eventsUrl_ : String
     - authorization_ : String
@@ -242,6 +278,9 @@ MillisClock ..|> Clock
 SerialLog ..|> Log
 BackendClient ..|> PollFetcher
 BackendClient ..|> EventSender
+ClientSource ..|> ByteSource
+BackendClient ..> BodyReader : reads each response body with
+BodyReader ..> ByteSource : reads from
 WifiLink "1" --> "1" Log
 BackendClient "1" --> "1" Log
 
@@ -253,7 +292,8 @@ legend right
   Assignment 1 classes, by the names in SCRUM-54:
   lock controller = LockController
   relay = LockOutput, GpioLockOutput
-  command client = BackendClient (PollFetcher), runPoll() in poll_service.h
+  command client = BackendClient (PollFetcher), runPoll() in poll_service.h,
+    readBody() in body_reader.h (size cap and time limits)
   command validator = parsePollResponse() in poll_parser.h, CommandProcessor
   event reporter = EventOutbox, EventSender
   clock = Clock, MillisClock, OneShotTimer
