@@ -1,0 +1,97 @@
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { createClient } from '@supabase/supabase-js';
+
+import * as api from '@/services/api';
+import { canManageHouses, currentUnitIds, getHouses } from '@/services/houses';
+import { client, user } from './supabase-mock';
+
+const now = Date.parse('2026-10-25T12:00:00Z');
+const tenant = { ...user, role: 'tenant' as const };
+const unitId = '81cb8a12-f50f-497d-9f63-2d9b875ca2fb';
+const grant = { unit_id: unitId, is_active: true, valid_from: '2026-10-24T12:00:00Z', valid_until: null };
+let grants: object[];
+let units: object[];
+let failure: string | undefined;
+let requests: URL[];
+
+beforeEach(() => {
+  grants = [{ ...grant }];
+  units = [{ id: unitId, name: 'Maple House', address: null }];
+  failure = undefined;
+  requests = [];
+  // Exercise real SDK query construction, without calling a live database.
+  const database = createClient('https://houses.ostium.test', 'publishable-test', {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: { fetch: async input => {
+      const url = new URL(input instanceof Request ? input.url : String(input));
+      requests.push(url);
+      const table = url.pathname.split('/').at(-1);
+      if (table !== 'units' && table !== 'access_grants') throw new Error('Unexpected table');
+      return new Response(JSON.stringify(failure === table ? { message: 'Permission denied' } : table === 'units' ? units : grants), {
+        status: failure === table ? 403 : 200, headers: { 'Content-Type': 'application/json' },
+      });
+    } },
+  });
+  client.from.mockImplementation((...args: unknown[]) => database.from(String(args[0])) as unknown as ReturnType<typeof client.from>);
+});
+
+describe('houses from Supabase', () => {
+  test.each(['admin', 'manager'] as const)('%s can list active units without an individual grant', async role => {
+    grants = [];
+    expect(canManageHouses(role)).toBe(true);
+    expect(await getHouses({ ...user, role }, now)).toEqual([{ id: unitId, name: 'Maple House', address: '' }]);
+    expect(requests).toHaveLength(1);
+    expect(requests[0].pathname).toBe('/rest/v1/units');
+    expect(requests[0].searchParams.get('is_active')).toBe('eq.true');
+    expect(requests[0].searchParams.get('order')).toBe('name.asc,id.asc');
+  });
+
+  test('loads tenant grants and queries real unit IDs instead of demo memberships', async () => {
+    expect(canManageHouses('tenant')).toBe(false);
+    expect(await getHouses(tenant, now)).toEqual([{ id: unitId, name: 'Maple House', address: '' }]);
+    expect(requests[0].searchParams.get('grantee_id')).toBe(`eq.${user.id}`);
+    expect(requests[0].searchParams.get('is_active')).toBe('eq.true');
+    expect(requests[1].searchParams.get('id')).toBe(`in.(${unitId})`);
+    expect(requests[1].searchParams.get('is_active')).toBe('eq.true');
+  });
+
+  test('excludes inactive, expired, future, and invalid grants, including exact expiry', async () => {
+    grants = [
+      { ...grant, is_active: false },
+      { ...grant, valid_until: '2026-10-25T12:00:00Z' },
+      { ...grant, valid_from: '2026-10-26T12:00:00Z' },
+      { ...grant, valid_from: 'invalid' },
+    ];
+    expect(await getHouses(tenant, now)).toEqual([]);
+    expect(requests).toHaveLength(1);
+  });
+
+  test('includes the start boundary and deduplicates multiple grants for a unit', () => {
+    expect(currentUnitIds([
+      { ...grant, valid_from: '2026-10-25T12:00:00Z' },
+      { ...grant, valid_until: '2026-10-26T12:00:00Z' },
+    ], now)).toEqual([unitId]);
+  });
+
+  test('returns a real empty result rather than sample houses', async () => {
+    units = [];
+    expect(await getHouses({ ...user, role: 'admin' }, now)).toEqual([]);
+  });
+
+  test.each(['access_grants', 'units'])('surfaces a %s failure without falling back to demo data', async table => {
+    failure = table;
+    await expect(getHouses(tenant, now)).rejects.toMatchObject({ kind: 'server' });
+  });
+
+  test('does not expose demo houses after an unexpected SDK/network failure', async () => {
+    client.from.mockImplementation(() => { throw new TypeError('Offline'); });
+    await expect(getHouses(tenant, now)).rejects.toMatchObject({ kind: 'network' });
+  });
+
+  test('uses local sample membership only in explicit demo mode', async () => {
+    vi.spyOn(api, 'isMockApiEnabled').mockReturnValue(true);
+    expect(await getHouses({ ...tenant, id: 'dev-tenant', email: 'tenant@example.com' }, now)).toHaveLength(5);
+    expect(await getHouses({ ...tenant, email: 'other@example.com' }, now)).toEqual([]);
+    expect(requests).toHaveLength(0);
+  });
+});

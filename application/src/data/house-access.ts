@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-import { HOUSES } from '@/data/houses';
+import { DEMO_HOUSES } from '@/data/houses';
 
 export type HouseMember = {
   id: string;
@@ -17,7 +17,7 @@ const tenantMember: HouseMember = {
 };
 
 const membersByHouse = new Map<string, HouseMember[]>(
-  HOUSES.map((house) => [house.id, [{ ...tenantMember }]]),
+  DEMO_HOUSES.map((house) => [house.id, [{ ...tenantMember }]]),
 );
 const listeners = new Set<() => void>();
 let revision = 0;

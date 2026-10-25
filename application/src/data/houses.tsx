@@ -4,8 +4,8 @@ export type House = {
   address: string;
 };
 
-// Placeholder data until the backend exists. Replace with a fetch from the API.
-export const HOUSES: House[] = [
+// Used only when explicit local demo mode is enabled.
+export const DEMO_HOUSES: House[] = [
   { id: 'house-1', name: 'Maple House', address: '12 Maple Street' },
   { id: 'house-2', name: 'Harbour View', address: '48 Water Street, Unit 3' },
   { id: 'house-3', name: 'Cedar Lodge', address: '7 Cedar Crescent' },

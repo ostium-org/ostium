@@ -27,6 +27,18 @@ persistence and refresh. The QR screen remains a placeholder.
 Explicit demo mode requires an empty Supabase URL and `EXPO_PUBLIC_MOCK_API=true`.
 Real failures never fall back to demo data.
 
+## Houses
+
+House lists, details, and the QR selector load active units from Supabase using
+the signed-in session and existing RLS policies. Both admins and managers see
+active properties. Tenants see units with active access grants whose start time
+has passed and whose expiry has not been reached. Null addresses display as empty
+text. Screens refresh on navigation; pull down on the home list to refresh it.
+
+Database/network errors show a retry action rather than sample houses or a false
+empty result. The local sample memberships and add/remove controls are available
+only in explicit demo mode; live membership editing is not implemented yet.
+
 ## Application
 
 Build one Expo Router application with React Native, React Native Web, and TypeScript. It is the source of truth for both native tenant use and the responsive browser experience.

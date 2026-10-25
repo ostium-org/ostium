@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HouseCard } from '@/components/house-card';
@@ -13,16 +13,12 @@ import {
   Spacing,
   TopTabInset,
 } from '@/constants/theme';
-import { HOUSES } from '@/data/houses';
-import { useHouseAccessRevision, userHasHouseAccess } from '@/data/house-access';
-import { useAuth } from '@/hooks/auth';
+import { useHouses } from '@/hooks/use-houses';
+import { Button } from '@/components/button';
 
 export default function HomeScreen() {
-  const { user } = useAuth();
-  useHouseAccessRevision();
-  const houses = user?.role === 'manager'
-    ? HOUSES
-    : HOUSES.filter((house) => user && userHasHouseAccess(house.id, user.id, user.email));
+  //replaced the local demo filter with the houses this account can actually see.
+  const { houses, loading, error, reload } = useHouses();
   const isSingle = houses.length === 1;
 
   return (
@@ -32,6 +28,8 @@ export default function HomeScreen() {
           <FlatList
             key={isSingle ? 'single' : 'grid'}
             data={houses}
+            refreshing={loading}
+            onRefresh={reload}
             numColumns={isSingle ? 1 : 2}
             keyExtractor={(house) => house.id}
             renderItem={({ item }) => (
@@ -54,7 +52,12 @@ export default function HomeScreen() {
               </ThemedText>
             }
             ListEmptyComponent={
-              <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
+              loading ? <ActivityIndicator accessibilityLabel="Loading houses" /> : error ? (
+                <View style={styles.empty}>
+                  <ThemedText type="small" accessibilityRole="alert">{error}</ThemedText>
+                  <Button title="Retry houses" onPress={reload} />
+                </View>
+              ) : <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
                 No houses yet.
               </ThemedText>
             }

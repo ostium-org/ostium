@@ -53,9 +53,15 @@ credentials valid for up to 60 seconds. It requires a separately provisioned
 private signing key. The QR screen deliberately retains its placeholder;
 turning on live QR display is separate work.
 
-**Remaining integration:** house listings and membership administration still
-use local sample data. Local membership changes do not update Supabase. Live
-QR issuance requires real unit UUIDs rather than sample IDs such as `house-1`.
+**Houses:** live lists, details, and the QR selector read active Supabase units
+using the signed-in client and existing RLS policies. Managers and admins see
+active properties; tenants see properties with current access grants. Lists
+refresh when a screen gains focus, and the home list supports pull-to-refresh.
+Sample houses and local membership editing are restricted to explicit demo mode.
+
+**Remaining integration:** live membership administration is not connected;
+the local add/remove controls appear only in demo mode. Live
+QR issuance uses real unit UUIDs from the house list.
 Firmware verification, relay execution, configuration/revocation syncing, and
 camera/doorbell features remain future integration work.
 

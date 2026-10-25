@@ -28,7 +28,10 @@ continues to default to tenant using the project's existing trigger. If email
 confirmation is enabled, confirm the email and then sign in. Session storage uses
 SecureStore on native and sessionStorage on web. Supabase owns token refresh.
 
-The QR placeholder and sample houses remain unchanged. Missing configuration or a
+The QR screen still uses a placeholder, but live house lists, details, and the
+QR selector read Supabase units. Managers/admins see active units; tenants see
+units covered by their current access grants. Local sample houses and membership
+editing are used only in explicit demo mode. Missing configuration or a
 real request failure never silently enables demo mode. Intentional development demo
 mode requires an empty Supabase URL and `EXPO_PUBLIC_MOCK_API=true`.
 
@@ -80,5 +83,5 @@ deno task --config backend/supabase/deno.json lint
 Tests use in-memory fixtures and a Python-generated compatibility fixture; they do
 not touch Supabase. From `application/`, run `npm test`, `npm run test:typecheck`,
 `npx tsc --noEmit`, and `npm run lint`. Existing unrelated frontend lint failures
-remain outside this change. Firmware, manager screens, real house loading, and
+remain outside this change. Firmware, live membership administration, and
 turning on live QR display are separate work.
