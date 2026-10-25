@@ -68,12 +68,38 @@ describe('direct Supabase authentication', () => {
   test('does not expose demo hints in a configured application', () => expect(getDevLoginHint()).toBeNull());
 });
 
-describe('user profile parsing', () => {
-  test.each(['tenant', 'manager', 'admin'])('supports %s', (role) => {
+//kept these validation cases because profile parsing is shared across both backends.
+describe('parseAuthUser', () => {
+  //added the profile role because the SDK auth user only carries identity fields.
+  const user = { id: 'tenant-1', email: 'tenant@example.com', role: 'tenant' as const };
+  test.each(['tenant', 'manager', 'admin'])('accepts the %s role', (role) => {
     expect(parseAuthUser({ ...user, role })).toEqual({ ...user, role });
   });
-  test.each([null, [], {}, { ...user, role: 'owner' }, { ...user, role: 'tenant', email: '' }].map(value => ({ value })))('rejects malformed profile %j', ({ value }) => {
+
+  test('normalizes numeric IDs and preserves a name', () => {
+    expect(parseAuthUser({ ...user, id: 42, name: 'Tenant' })).toEqual({
+      ...user, id: '42', name: 'Tenant',
+    });
+  });
+
+  test('omits a null optional name and unknown fields', () => {
+    expect(parseAuthUser({ ...user, name: null, extra: true })).toEqual(user);
+  });
+
+  test.each([
+    null, 'user', 42, {},
+    { ...user, id: '' },
+    { ...user, id: null },
+    { ...user, email: '' },
+    { ...user, email: 42 },
+    { ...user, role: 'unknown-role' },
+    { ...user, name: 42 },
+  ])('rejects malformed user %j', (value) => {
     expect(parseAuthUser(value)).toBeNull();
+  });
+
+  test('rejects an array', () => {
+    expect(parseAuthUser([])).toBeNull();
   });
 });
 

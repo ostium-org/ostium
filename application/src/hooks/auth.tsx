@@ -28,7 +28,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (stopped) return;
         unsubscribe = observeSession(client, loadProfile, setState);
         if (Platform.OS !== 'web') {
-          const refresh = (value: string) => {
+          //added this because native app state can be unknown during startup.
+          const refresh = (value: string | null | undefined) => {
             if (value === 'active') client.auth.startAutoRefresh();
             else client.auth.stopAutoRefresh();
           };

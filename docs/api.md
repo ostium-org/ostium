@@ -5,6 +5,21 @@ Supabase bearer token and require an active `profiles` row. Manager/admin
 roles may command every door. The role-change route requires an authenticated,
 active admin. Device bearer tokens are independent of user tokens.
 
+## Houses
+
+House loading and creation use the signed-in Supabase SDK directly, with
+PostgreSQL row-level security enforcing permissions. There are no
+`GET /api/v1/houses` or `POST /api/v1/houses` Edge Function routes.
+
+Managers and admins load all active units. Tenants load only active units covered
+by their current access grants. Results are sorted by name and ID and contain
+`id`, `name`, and `address`; missing addresses become empty strings. Accounts
+without current grants receive an empty list, with no demo-house fallback.
+
+Only managers and admins can create houses. The add-house form requires a trimmed
+name and address and also saves building, floor, notes, and the signed-in user's
+ID as `created_by`. Database defaults assign the UUID and active status.
+
 ## Door commands
 
 `POST /api/v1/doors/{door_id}/commands`, with a manager/admin bearer token:

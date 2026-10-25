@@ -1,6 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { getSupabase, supabaseUrl, supabaseKey } from "@/services/supabase";
 
+//added this because active Supabase profiles can also belong to admins.
 export type UserRole = "tenant" | "manager" | "admin";
 
 export type AuthUser = {

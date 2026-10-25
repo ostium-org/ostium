@@ -30,6 +30,15 @@ describe('Supabase session lifecycle', () => {
     expect(profile).toHaveBeenCalledTimes(1);
     stop(); expect(f.unsubscribe).toHaveBeenCalledTimes(1);
   });
+  //added this so main's admin restoration case still runs with SDK sessions.
+  test('restores an admin through the active Supabase profile', async () => {
+    const f = fixture();
+    const admin = { ...user, role: 'admin' as const };
+    const stop = observeSession(f.client, async () => admin, f.emit);
+    await tick();
+    expect(f.states.at(-1)).toEqual({ user: admin, isLoading: false });
+    stop();
+  });
   test('does not restore a delayed profile after sign-out', async () => {
     const f = fixture();
     let finish!: (value: typeof user) => void;
