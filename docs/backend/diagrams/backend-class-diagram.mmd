@@ -1,0 +1,91 @@
+%% Backend class diagram (Supabase Edge Functions), for Fig 2.1 of the Assignment 1 report.
+%% Drawn by hand from backend/supabase/functions/ and backend/supabase/tests/ on main after PR #24.
+%% To render: npx -p @mermaid-js/mermaid-cli mmdc -i backend-class-diagram.mmd -o backend-class-diagram.png -c mermaid-config.json -b "#232323" -w 1800
+
+classDiagram
+  direction TB
+
+  class OstiumApi["ostium-api"] {
+    <<Edge Function>>
+    POST /api/v1/doors/:door_id/commands
+    POST /api/v1/houses/:house_id/qr-credentials
+    POST /api/v1/auth/users/:user_id/role
+  }
+  class DeviceApi["device-api"] {
+    <<Edge Function>>
+    GET /api/v1/devices/:device_key/commands
+    POST /api/v1/devices/:device_key/events
+  }
+  class Api["api.ts"] {
+    <<module _shared>>
+    +createHandler(mode, store, options, now) Handler
+    +signJWT(claims, settings) Promise~string~
+    +reportId(deviceId, eventId) Promise~string~
+    +timestamp(value) bigint
+    +stamp(value) string
+    -bearer(request) string
+    -body(request, fields) Promise~Row~
+    -activeUser(request, store) Promise~Row~
+    -device(request, store, key) Promise~Row~
+  }
+  class Rest["rest.ts"] {
+    <<module _shared>>
+    +environment() store and settings
+  }
+  class Store {
+    <<interface>>
+    +rows(table, filters) Promise~Row[]~
+    +insert(table, row) Promise~void~
+    +user(token) Promise~Row~
+    +role(userId, role) Promise~void~
+  }
+  class RestStore {
+    -string url
+    -string secret
+    -call(path, init, token) Promise~Response~
+    +rows(table, filters) Promise~Row[]~
+    +insert(table, row) Promise~void~
+    +user(token) Promise~Row~
+    +role(userId, role) Promise~void~
+  }
+  class Memory {
+    <<test double>>
+  }
+  class Settings {
+    <<interface>>
+    +string privateKey
+    +string issuer
+    +string audience
+    +string keyId
+    +string origins
+  }
+  class ApiError {
+    +number status
+    +ApiError(status, message)
+  }
+  class Error {
+    <<builtin>>
+  }
+  class Supabase["Supabase project"] {
+    <<external>>
+    Auth /auth/v1/user
+    PostgREST /rest/v1/table
+    RPC set_user_role
+  }
+
+  OstiumApi --> Api : user mode
+  DeviceApi --> Api : device mode
+  OstiumApi ..> Rest : environment()
+  DeviceApi ..> Rest : environment()
+  Rest ..> RestStore : creates
+  Api --> Store : reads and writes
+  Api --> Settings : QR signing, CORS
+  Api ..> ApiError : throws
+  RestStore ..> ApiError : throws
+  Error <|-- ApiError
+  Store <|.. RestStore
+  Store <|.. Memory
+  RestStore --> Supabase : HTTPS fetch
+
+  note for Api "One handler serves both functions.<br>User mode checks the bearer token<br>and the active profile role.<br>Device mode checks the device token hash."
+  note for Supabase "Sign-up and login go from the app<br>straight to Supabase Auth."
