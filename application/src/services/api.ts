@@ -196,7 +196,26 @@ export async function request<T = unknown>(
   }
   if (status === 429)
     throw new ApiError("rate-limited", "Too many requests.", status);
-  if (status >= 500) throw new ApiError("server", "Server error.", status);
+  if (status >= 500) {
+    //added this so setup failures explain the problem without exposing raw server details.
+    const messages: Record<string, string> = {
+      "QR signing is not configured.": "QR access is not configured yet. Contact your property manager.",
+      "QR signing is not configured correctly.": "QR access configuration needs attention. Contact your property manager.",
+      "Supabase is not configured.": "The access service is not configured yet. Contact your property manager.",
+      "Database read failed.": "The access service could not load its data. Please try again.",
+      "Database write failed.": "The access service could not save your request. Please try again.",
+      "Could not reach Supabase.": "The access service could not reach its database. Please try again.",
+    };
+    let message = `The access service returned an error (HTTP ${status}). Please try again.`;
+    try {
+      const data: unknown = JSON.parse(text);
+      if (data && typeof data === "object" && "detail" in data && typeof data.detail === "string" &&
+        Object.hasOwn(messages, data.detail)) message = messages[data.detail];
+    } catch {
+      //added this because gateways can return HTML instead of the function's JSON error.
+    }
+    throw new ApiError("server", message, status);
+  }
   throw new ApiError("request-failed", `Request failed (${status}).`, status);
 }
 

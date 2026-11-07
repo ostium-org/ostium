@@ -192,3 +192,35 @@ describe('Edge Function transport deadlines', () => {
   });
 
 });
+
+describe('actionable access service errors', () => {
+  test.each([
+    ['QR signing is not configured.', 'QR access is not configured yet. Contact your property manager.'],
+    ['QR signing is not configured correctly.', 'QR access configuration needs attention. Contact your property manager.'],
+    ['Supabase is not configured.', 'The access service is not configured yet. Contact your property manager.'],
+    ['Database write failed.', 'The access service could not save your request. Please try again.'],
+  ])('explains the recognized backend failure: %s', async (detail, message) => {
+    respond({ detail }, 503);
+    await expect(request('/api/v1/houses/unit/qr-credentials', { method: 'POST' }))
+      .rejects.toMatchObject({ kind: 'server', status: 503, message });
+    expect(client.auth.signOut).not.toHaveBeenCalled();
+  });
+
+  test.each([null, {}, { detail: 'Private database credentials and stack trace' },
+    { detail: 'constructor' }, { detail: { secret: 'private' } },
+  ])('keeps unknown server details private: %j', async data => {
+    respond(data, 502);
+    await expect(request('/api/v1/test')).rejects.toMatchObject({
+      kind: 'server', status: 502,
+      message: 'The access service returned an error (HTTP 502). Please try again.',
+    });
+  });
+
+  test('handles a gateway HTML response without losing its HTTP status', async () => {
+    globalThis.fetch = vi.fn(async () => new Response('<html>upstream error</html>', { status: 503 }));
+    await expect(request('/api/v1/test')).rejects.toMatchObject({
+      kind: 'server', status: 503,
+      message: 'The access service returned an error (HTTP 503). Please try again.',
+    });
+  });
+});

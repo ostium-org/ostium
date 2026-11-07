@@ -87,3 +87,28 @@ not touch Supabase. From `application/`, run `npm test`, `npm run test:typecheck
 `npx tsc --noEmit`, and `npm run lint`. Existing unrelated frontend lint failures
 remain outside this change. Physical QR reader firmware and live membership
 administration remain separate work.
+
+## QR screen shows a server error for every house
+
+House lists use database reads directly; QR issuance calls `ostium-api` and also
+requires its own Ed25519 signing secret. A working house list does not establish
+that QR signing is configured. A key in a local env file is not automatically
+uploaded to hosted Edge Functions. Check the failed request's status/response in
+`ostium-api` invocation logs to distinguish missing signing configuration (503)
+from database/service failures (502) or a function startup failure.
+
+If `backend/supabase/.env.local` contains your provisioned signing configuration,
+upload it from the repository root, replacing `YOUR_PROJECT_REF` with the project
+used by the app:
+
+```sh
+npx supabase secrets set --env-file backend/supabase/.env.local --project-ref YOUR_PROJECT_REF
+npx supabase functions deploy ostium-api device-api --workdir backend --project-ref YOUR_PROJECT_REF --use-api
+```
+
+Keep that file private and use your existing key; generating a replacement would
+also require updating the public key provisioned on readers. Never put the private
+key in an `EXPO_PUBLIC_` variable. Secret updates apply without redeployment; the
+deploy command ensures the rotating-QR/status endpoints match the application.
+After setup, tap **Retry QR code**. The app distinguishes known setup errors from
+other HTTP errors without displaying arbitrary backend details.
