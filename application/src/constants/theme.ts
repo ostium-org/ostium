@@ -16,6 +16,9 @@ export const Colors = {
     textSecondary: '#5C5F77',
     accent: '#8839EF',
     danger: '#D20F39',
+    //added this so scan success has readable colors in both themes.
+    success: '#216B3A',
+    successBackground: '#D5EADC',
   },
   dark: {
     text: '#CDD6F4',
@@ -25,6 +28,8 @@ export const Colors = {
     textSecondary: '#BAC2DE',
     accent: '#CBA6F7',
     danger: '#F38BA8',
+    success: '#A6E3A1',
+    successBackground: '#243C32',
   },
 } as const;
 

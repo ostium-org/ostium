@@ -28,7 +28,7 @@ continues to default to tenant using the project's existing trigger. If email
 confirmation is enabled, confirm the email and then sign in. Session storage uses
 SecureStore on native and sessionStorage on web. Supabase owns token refresh.
 
-The QR screen still uses a placeholder, but live house lists, details, and the
+The QR screen displays rotating signed credentials. Live house lists, details, and the
 QR selector read Supabase units. Managers/admins see active units; tenants see
 units covered by their current access grants. There are no hardcoded placeholder
 houses or seeded memberships; demo mode shows an empty list. Missing configuration or a
@@ -41,9 +41,11 @@ mode requires an empty Supabase URL and `EXPO_PUBLIC_MOCK_API=true`.
 | --- | --- |
 | `ostium-api` | `POST /api/v1/doors/{door_id}/commands` |
 | `ostium-api` | `POST /api/v1/houses/{houseId}/qr-credentials` |
+| `ostium-api` | `GET /api/v1/houses/{houseId}/qr-credentials/{credentialId}/status` |
 | `ostium-api` | `POST /api/v1/auth/users/{user_id}/role` |
 | `device-api` | `GET /api/v1/devices/{device_id}/commands` |
 | `device-api` | `POST /api/v1/devices/{device_id}/events` |
+| `device-api` | `POST /api/v1/devices/{device_id}/qr-events` |
 
 Append the route to `https://PROJECT.supabase.co/functions/v1/FUNCTION`.
 Signup/login use the Supabase SDK rather than replacement HTTP endpoints.
@@ -53,8 +55,8 @@ SHA-256 hex digests of high-entropy bearer tokens. Devices receive only their ow
 token, never the Supabase service key.
 
 The functions are supplied as code for this branch. **Deploy them separately when
-ready**; the app's auth works without deploying them. The QR placeholder
-makes no QR endpoint requests.
+ready**; deploy the updated functions before enabling the app's live QR flow.
+The app's auth works independently of QR signing configuration.
 
 ```sh
 npx supabase functions deploy ostium-api device-api --workdir backend --project-ref YOUR_PROJECT_REF --use-api
@@ -83,5 +85,5 @@ deno task --config backend/supabase/deno.json lint
 Tests use in-memory fixtures and a Python-generated compatibility fixture; they do
 not touch Supabase. From `application/`, run `npm test`, `npm run test:typecheck`,
 `npx tsc --noEmit`, and `npm run lint`. Existing unrelated frontend lint failures
-remain outside this change. Firmware, live membership administration, and
-turning on live QR display are separate work.
+remain outside this change. Physical QR reader firmware and live membership
+administration remain separate work.

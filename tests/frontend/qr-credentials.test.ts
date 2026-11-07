@@ -1,15 +1,15 @@
 import { describe, expect, vi, test } from 'vitest';
 
 import { client } from './supabase-mock';
-import { getQRCredential, parseQRCredential } from '@/services/qr-credentials';
+import { getQRAccessStatus, getQRCredential, parseQRCredential } from '@/services/qr-credentials';
 
 const now = Date.parse('2026-10-20T12:00:00Z');
-const response = { house_id: 'house-1', payload: ' exact.signed.payload\n', expires_at: '2026-10-20T12:02:00Z' };
+const response = { credential_id: '44444444-4444-4444-8444-444444444444', house_id: 'house-1', payload: ' exact.signed.payload\n', expires_at: '2026-10-20T12:02:00Z' };
 
 describe('QR credential responses', () => {
   test('preserves the opaque payload and converts the returned expiry to milliseconds', () => {
     expect(parseQRCredential(response, 'house-1', now)).toEqual({
-      houseId: 'house-1', payload: response.payload, expiresAt: now + 120000, isDemo: false,
+      id: response.credential_id, houseId: 'house-1', payload: response.payload, expiresAt: now + 120000, isDemo: false,
     });
   });
   test('accepts an ISO timestamp with a timezone offset', () => {
@@ -17,7 +17,7 @@ describe('QR credential responses', () => {
       .toBe(now + 120000);
   });
   test.each([
-    null, [], {}, { ...response, house_id: 'house-2' }, { ...response, payload: '' },
+    null, [], {}, { ...response, credential_id: null }, { ...response, credential_id: 'invalid' }, { ...response, house_id: 'house-2' }, { ...response, payload: '' },
     { ...response, payload: '   ' }, { ...response, payload: {} },
     { ...response, expires_at: 'invalid' }, { ...response, expires_at: 123 },
     { ...response, expires_at: '2026-10-20T12:02:00' },
@@ -91,4 +91,26 @@ test.each([
     vi.unstubAllGlobals();
     vi.resetModules();
   }
+});
+
+describe('QR confirmation responses', () => {
+  const status = { credential_id: response.credential_id, house_id: 'house-1', status: 'granted',
+    event: { id: 'scan-1', occurred_at: '2026-10-20T12:00:00Z' } };
+  test.each([
+    { ...status, status: 'pending', event: null }, status,
+  ])('parses pending and granted responses', async (data) => {
+    globalThis.fetch = vi.fn(async () => Response.json(data));
+    const result = await getQRAccessStatus('house-1', response.credential_id);
+    expect(result).toEqual(data.status === 'pending' ? null : {
+      id: 'scan-1', credentialId: response.credential_id, houseId: 'house-1', occurredAt: now,
+    });
+  });
+  test.each([null, {}, { ...status, house_id: 'house-2' }, { ...status, credential_id: 'other' },
+    { ...status, status: 'denied' }, { ...status, event: null },
+    { ...status, event: { id: '', occurred_at: 'invalid' } },
+    { ...status, event: { id: 'scan-1', occurred_at: '2026-10-20T12:00:00' } },
+  ])('rejects malformed or unrelated confirmations %j', async (data) => {
+    globalThis.fetch = vi.fn(async () => Response.json(data));
+    await expect(getQRAccessStatus('house-1', response.credential_id)).rejects.toMatchObject({ kind: 'bad-response' });
+  });
 });

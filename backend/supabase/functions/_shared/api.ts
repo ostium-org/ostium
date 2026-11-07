@@ -207,6 +207,7 @@ export function createHandler(
   return async (request) => {
     const headers = new Headers({
       "Content-Type": "application/json",
+      "Cache-Control": "no-store",
       "Vary": "Origin",
     });
     const origin = request.headers.get("origin");
@@ -327,10 +328,49 @@ export function createHandler(
             payload: { claims, token: payload },
           });
           return response({
+            credential_id: jti,
             house_id: unitId,
             payload,
             expires_at: stamp(expires),
           }, 201);
+        }
+        if (
+          (match =
+            /^\/api\/v1\/houses\/([^/]+)\/qr-credentials\/([^/]+)\/status$/
+              .exec(route)) &&
+          request.method === "GET"
+        ) {
+          //added this because even managers should only confirm their own QR scans.
+          const unitId = uuid(match[1]);
+          const credentialId = uuid(match[2]);
+          const credentials = await store.rows("credentials", {
+            id: `eq.${credentialId}`,
+            unit_id: `eq.${unitId}`,
+            issued_to: `eq.${user.id}`,
+          });
+          if (!credentials.length) {
+            throw new ApiError(404, "Unknown credential.");
+          }
+          const events = await store.rows("access_events", {
+            credential_id: `eq.${credentialId}`,
+            unit_id: `eq.${unitId}`,
+            user_id: `eq.${user.id}`,
+            event_type: "eq.access_granted",
+            result: "eq.granted",
+            "metadata->>kind": "eq.qr_scan",
+          });
+          events.sort((a, b) =>
+            timestamp(a.occurred_at) < timestamp(b.occurred_at) ? -1 : 1
+          );
+          const event = events[0];
+          return response({
+            credential_id: credentialId,
+            house_id: unitId,
+            status: event ? "granted" : "pending",
+            event: event
+              ? { id: event.id, occurred_at: event.occurred_at }
+              : null,
+          });
         }
         if (
           (match = /^\/api\/v1\/auth\/users\/([^/]+)\/role$/.exec(route)) &&
@@ -348,13 +388,115 @@ export function createHandler(
           return response({ detail: `Role for ${id} set to ${input.role}.` });
         }
       } else if (
-        (match = /^\/api\/v1\/devices\/([^/]+)\/(commands|events)$/.exec(route))
+        (match = /^\/api\/v1\/devices\/([^/]+)\/(commands|events|qr-events)$/
+          .exec(route))
       ) {
         const target = await device(
           request,
           store,
           decodeURIComponent(match[1]),
         );
+        if (match[2] === "qr-events" && request.method === "POST") {
+          const input = await body(request, [
+            "event_id",
+            "credential_id",
+            "result",
+            "reason",
+            "occurred_at",
+          ]);
+          if (
+            typeof input.event_id !== "string" || !input.event_id.trim() ||
+            Array.from(input.event_id).length > 200 ||
+            !["granted", "denied"].includes(input.result) ||
+            (input.reason !== null && typeof input.reason !== "string") ||
+            typeof input.occurred_at !== "string"
+          ) {
+            throw new ApiError(422, "Invalid QR report.");
+          }
+          const report: Row = {
+            ...input,
+            credential_id: uuid(input.credential_id),
+            occurred_at: stamp(timestamp(input.occurred_at)),
+          };
+          const id = await reportId(target.id, report.event_id);
+          const metadata = { kind: "qr_scan", ...report };
+          //added this so device retries are safe without mixing QR and command reports.
+          const checkExisting = async () => {
+            const rows = await store.rows("access_events", { id: `eq.${id}` });
+            if (!rows.length) return false;
+            const old = rows[0];
+            if (
+              old.device_id !== target.id ||
+              !sameReport(old.metadata, metadata) ||
+              old.metadata.credential_id !== report.credential_id
+            ) {
+              throw new ApiError(
+                409,
+                "Event ID already used for a different report.",
+              );
+            }
+            return true;
+          };
+          const result = {
+            event_id: report.event_id,
+            credential_id: report.credential_id,
+            recorded: true,
+          };
+          if (await checkExisting()) return response(result);
+          const credentials = await store.rows("credentials", {
+            id: `eq.${report.credential_id}`,
+          });
+          const credential = credentials[0];
+          if (!credential) throw new ApiError(404, "Unknown credential.");
+          if (
+            !target.unit_id || credential.unit_id !== target.unit_id ||
+            (credential.device_id && credential.device_id !== target.id)
+          ) {
+            throw new ApiError(
+              403,
+              "Credential does not belong to this device.",
+            );
+          }
+          const occurred = timestamp(report.occurred_at);
+          if (occurred > now()) {
+            throw new ApiError(422, "Scan time is in the future.");
+          }
+          //added this because delayed delivery is allowed, but granted scans must have been valid then.
+          if (
+            report.result === "granted" &&
+            (occurred < timestamp(credential.issued_at) ||
+              occurred >= timestamp(credential.expires_at) ||
+              (credential.is_revoked &&
+                (!credential.revoked_at ||
+                  occurred >= timestamp(credential.revoked_at))))
+          ) {
+            throw new ApiError(422, "Credential was not valid at scan time.");
+          }
+          try {
+            await store.insert("access_events", {
+              id,
+              device_id: target.id,
+              unit_id: credential.unit_id,
+              credential_id: credential.id,
+              user_id: credential.issued_to,
+              event_type: report.result === "granted"
+                ? "access_granted"
+                : "access_denied",
+              result: report.result,
+              reason: report.reason,
+              occurred_at: report.occurred_at,
+              metadata,
+            });
+          } catch (error) {
+            if (!(error instanceof ApiError) || error.status !== 409) {
+              throw error;
+            }
+            if (!await checkExisting()) {
+              throw new ApiError(409, "Report collision; retry delivery.");
+            }
+          }
+          return response(result);
+        }
         if (match[2] === "commands" && request.method === "GET") {
           const time = now();
           const rows = await store.rows("access_events", {
