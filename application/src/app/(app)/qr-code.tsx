@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
 import QRCode from 'react-native-qrcode-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,9 +12,6 @@ import { useHouses } from '@/hooks/use-houses';
 import { useRotatingQRCode } from '@/hooks/use-rotating-qr-code';
 import { useTheme } from '@/hooks/use-theme';
 
-// Set to false when the live QR endpoint is ready. Placeholder mode makes no requests.
-const USE_QR_PLACEHOLDER = true;
-
 export default function QRCodeScreen() {
   const { houses, loading: housesLoading, error: housesError, reload: reloadHouses } = useHouses();
   const theme = useTheme();
@@ -25,15 +21,30 @@ export default function QRCodeScreen() {
   const selectedHouse = houses.find((item) => item.id === selectedHouseId);
   //fall back to an available house if the previous selection is no longer in the list.
   const house = selectedHouse ?? houses[0];
-  const { code, seconds, error, loading, refresh } = useRotatingQRCode(
-    USE_QR_PLACEHOLDER ? undefined : house?.id,
-  );
+  //added this so the screen follows signed credential expiry and confirmed door scans.
+  const { code, seconds, error, loading, refresh, confirmation, confirmationError,
+    retryConfirmation, returnToCode } = useRotatingQRCode(house?.id);
 
   return (
     <ThemedView style={styles.page}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScreenTransition>
-          <ScrollView contentContainerStyle={styles.container}>
+          {confirmation && house ? (
+            <ScrollView contentContainerStyle={[styles.container, styles.success]}>
+              <View style={[styles.successBadge, { backgroundColor: theme.successBackground }]} accessible={false}>
+                <ThemedText style={[styles.checkmark, { color: theme.success }]}>✓</ThemedText>
+              </View>
+              <View accessibilityLiveRegion="polite" accessibilityRole="alert" style={styles.successCopy}>
+                <ThemedText type="title" style={styles.centered}>Access granted</ThemedText>
+                <ThemedText type="subtitle" style={styles.centered}>{house.name}</ThemedText>
+                <ThemedText themeColor="textSecondary" style={styles.centered}>{house.address}</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary" style={styles.centered}>
+                  Scan confirmed at {new Date(confirmation.occurredAt).toLocaleTimeString()}
+                </ThemedText>
+              </View>
+              <Button title="Back to QR code" onPress={returnToCode} />
+            </ScrollView>
+          ) : <ScrollView contentContainerStyle={styles.container}>
             <ThemedText type="title" style={styles.centered}>QR CODE</ThemedText>
             {housesLoading ? <ActivityIndicator accessibilityLabel="Loading houses" /> : housesError ? (
               <>
@@ -90,16 +101,10 @@ export default function QRCodeScreen() {
                   onLayout={(event) => setCardWidth(event.nativeEvent.layout.width)}>
                   <ThemedText type="subtitle" style={styles.centered}>{house.name}</ThemedText>
                   <View
-                    accessible={!USE_QR_PLACEHOLDER && Boolean(code)}
-                    accessibilityLabel={!USE_QR_PLACEHOLDER && code ? `${code.isDemo ? 'Demo QR code' : 'QR code'} for ${house.name}` : undefined}
+                    accessible={Boolean(code)}
+                    accessibilityLabel={code ? `${code.isDemo ? 'Demo QR code' : 'QR code'} for ${house.name}` : undefined}
                     style={styles.qrBackground}>
-                    {USE_QR_PLACEHOLDER ? <Image
-                      source={require('../../../assets/images/qr-placeholder.png')}
-                      style={styles.qrImage}
-                      contentFit="contain"
-                      accessible
-                      accessibilityLabel="Placeholder QR code"
-                    /> : error ? (
+                    {error ? (
                       <ThemedText accessibilityRole="alert" style={styles.error}>{error}</ThemedText>
                     ) : code && cardWidth > 0 ? (
                       <QRCode
@@ -112,23 +117,27 @@ export default function QRCodeScreen() {
                       />
                     ) : <ActivityIndicator color="#000000" />}
                   </View>
-                  {!USE_QR_PLACEHOLDER && code && !error && (
+                  {code && !error && (
                     <ThemedText type="smallBold" style={styles.countdown}>
                       Refreshes in {Math.floor(seconds / 60).toString().padStart(2, '0')}:{(seconds % 60).toString().padStart(2, '0')}
                     </ThemedText>
                   )}
-                  {(USE_QR_PLACEHOLDER || code) && (
+                  {code && (
                     <ThemedText type="small" themeColor="textSecondary" style={styles.centered}>
-                      {USE_QR_PLACEHOLDER ? 'Placeholder QR code' : code?.isDemo ? 'Demo code — door unlocking is not connected.' : 'Hold this code in front of the door camera.'}
+                      {code.isDemo ? 'Demo code — door unlocking is not connected.' : 'Hold this code in front of the door camera.'}
                     </ThemedText>
                   )}
                 </ThemedView>
-                {!USE_QR_PLACEHOLDER && (
-                  <Button
-                    title={error ? 'Retry QR code' : 'Refresh QR code'}
-                    onPress={refresh}
-                    loading={loading}
-                  />
+                <Button
+                  title={error ? 'Retry QR code' : 'Refresh QR code'}
+                  onPress={refresh}
+                  loading={loading}
+                />
+                {confirmationError && (
+                  <View style={styles.successCopy}>
+                    <ThemedText type="small" accessibilityRole="alert" style={styles.centered}>{confirmationError}</ThemedText>
+                    <Button title="Retry confirmation" variant="secondary" onPress={retryConfirmation} />
+                  </View>
                 )}
               </>
             ) : (
@@ -136,7 +145,7 @@ export default function QRCodeScreen() {
                 No houses available.
               </ThemedText>
             )}
-          </ScrollView>
+          </ScrollView>}
         </ScreenTransition>
       </SafeAreaView>
     </ThemedView>
@@ -190,7 +199,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  qrImage: { width: '100%', aspectRatio: 1 },
+  success: { flexGrow: 1, justifyContent: 'center', paddingVertical: Spacing.six },
+  successCopy: { gap: Spacing.three },
+  successBadge: { width: 112, height: 112, borderRadius: 56, alignSelf: 'center', alignItems: 'center', justifyContent: 'center' },
+  checkmark: { fontSize: 64, lineHeight: 80 },
   countdown: { fontVariant: ['tabular-nums'] },
   error: { color: '#000000', textAlign: 'center', padding: Spacing.three },
 });

@@ -22,7 +22,13 @@ Restart Expo after changing configuration. Use a publishable/anon key only.
 The existing Supabase schema and signup trigger are reused without changes.
 Confirm signup email before signing in if confirmation is enabled. Existing
 legacy app sessions are not reused; sign in again. Supabase manages session
-persistence and refresh. The QR screen remains a placeholder.
+persistence and refresh. The QR screen shows rotating credentials with the server's
+expiry (normally 60 seconds), retry, and manual refresh. Status polling runs every
+two seconds while active; replaced credentials remain tracked for 15 seconds.
+Confirmed scans show “Access granted” with the house and scan time. Returning
+requests a fresh code. Demo credentials are labeled and never confirm access.
+Deploy the updated backend and configure QR signing before using live QR access;
+physical reader reporting is a separate firmware integration.
 
 Explicit demo mode requires an empty Supabase URL and `EXPO_PUBLIC_MOCK_API=true`.
 Real failures never fall back to demo data.

@@ -135,9 +135,9 @@ No credential is returned on a persistence failure. Missing or invalid signing
 configuration returns `503`. A missing/inactive unit returns `404`; no current
 grant returns `403`.
 
-The frontend QR placeholder remains enabled and sends no QR issuance requests.
-The house selector uses real Supabase unit IDs. Hardcoded placeholder houses
-have been removed; live QR display remains separate from house loading.
+The frontend displays rotating credentials for real Supabase unit IDs and follows
+the returned expiry. See the access confirmation contract below for scan reporting
+and the confirmed “Access granted” state.
 
 ## Persistence and failures
 
@@ -193,3 +193,61 @@ If the command expired during the walkthrough, reports still succeed. Repeat
 with a fresh command to demonstrate disappearance due to acknowledgement
 before its ten-second expiry. QR issuance can be checked separately with an
 active unit UUID and user bearer token; firmware verification is separate work.
+
+## Rotating QR access confirmation
+
+QR issuance additionally returns `credential_id`, the UUID stored in `credentials.id`
+and signed as `jti`. The payload remains opaque to the app. Expiry remains server-owned,
+normally 60 seconds and capped by a tenant's access grant.
+
+`GET /api/v1/houses/{houseId}/qr-credentials/{credentialId}/status` on `ostium-api`
+requires a user JWT and active profile. Only the credential's owner may query it,
+including managers/admins; an unknown, other-house, or other-owner credential returns
+404. Responses are uncached:
+
+```json
+{
+  "house_id": "UNIT_UUID",
+  "credential_id": "CREDENTIAL_UUID",
+  "status": "granted",
+  "event": { "id": "EVENT_UUID", "occurred_at": "2026-11-06T12:00:00Z" }
+}
+```
+
+Without a confirmed granted QR scan, `status` is `pending` and `event` is null.
+Denied scans and remote command reports do not produce success.
+
+`POST /api/v1/devices/{device_id}/qr-events` on `device-api` requires the existing
+opaque device bearer token (`device_id` is the provisioned device key, as for commands).
+All five fields are required; unexpected fields are rejected:
+
+```json
+{
+  "event_id": "stable-device-scan-id",
+  "credential_id": "CREDENTIAL_UUID",
+  "result": "granted",
+  "reason": null,
+  "occurred_at": "2026-11-06T12:00:00Z"
+}
+```
+
+`result` accepts `granted` or `denied`; `reason` is text or null. The event ID must
+contain 1–200 Unicode characters and cannot be whitespace-only. Occurrence time must
+include a timezone and cannot be in the server's future. Granted scans must fall
+within credential issuance/expiry and precede any recorded revocation. Late delivery
+is allowed. Unknown credentials return 404; mismatched device/unit bindings return
+403. User/unit identity comes from the stored credential, never from the report.
+
+A successful report returns `{ "event_id": "stable-device-scan-id",
+"credential_id": "CREDENTIAL_UUID", "recorded": true }`. Exact retries, including
+concurrent retries and timezone-equivalent timestamps, return 200 without duplicate
+rows; reusing an event ID with different content returns 409. Device event IDs share
+a namespace with command reports, so use distinct IDs for separate events.
+
+The app polls every two seconds while its QR screen is active, tracks replaced codes
+for 15 seconds after replacement or expiry, and stops on confirmed success. Network
+errors never imply access. No database migration is required. Deploy both functions
+and configure signing secrets before distributing the updated app. Existing firmware
+does not yet validate/report QR scans: the reader must verify the signed token and
+confirm access locally before sending a granted report. Test fixtures exercise the
+contract without claiming physical door operation.

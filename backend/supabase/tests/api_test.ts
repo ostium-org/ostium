@@ -605,3 +605,170 @@ Deno.test("REST pagination, filters, user token and unique violation handling", 
     globalThis.fetch = original;
   }
 });
+
+Deno.test("QR scan reports confirm the exact credential and survive delayed delivery", async () => {
+  const f = fixture();
+  const qr = await (await f.qr()).json();
+  equal(qr.credential_id, f.store.tables.credentials[0].id);
+  const path = `/houses/${UNIT}/qr-credentials/${qr.credential_id}/status`;
+  equal(await (await f.call("user", path)).json(), {
+    credential_id: qr.credential_id,
+    house_id: UNIT,
+    status: "pending",
+    event: null,
+  });
+  const report = {
+    event_id: "scan-1",
+    credential_id: qr.credential_id,
+    result: "granted",
+    reason: null,
+    occurred_at: stamp(NOW + 1000000n),
+  };
+  f.clock.now = NOW + 65000000n;
+  const results = await Promise.all(
+    Array.from(
+      { length: 5 },
+      () => f.call("device", "/devices/front/qr-events", report),
+    ),
+  );
+  equal(results.map((r) => r.status), [200, 200, 200, 200, 200]);
+  equal(f.store.tables.access_events.length, 1);
+  const event = f.store.tables.access_events[0];
+  equal(event.user_id, USER);
+  equal(event.unit_id, UNIT);
+  equal(event.credential_id, qr.credential_id);
+  equal(await (await f.call("user", path)).json(), {
+    credential_id: qr.credential_id,
+    house_id: UNIT,
+    status: "granted",
+    event: { id: event.id, occurred_at: report.occurred_at },
+  });
+  for (
+    const extra of [{ result: "denied" }, { reason: "changed" }, {
+      occurred_at: stamp(NOW + 2000000n),
+    }, { credential_id: crypto.randomUUID() }]
+  ) {
+    equal(
+      (await f.call("device", "/devices/front/qr-events", {
+        ...report,
+        ...extra,
+      })).status,
+      409,
+    );
+  }
+  const other = await (await f.qr()).json();
+  equal(
+    (await (await f.call(
+      "user",
+      `/houses/${UNIT}/qr-credentials/${other.credential_id}/status`,
+    )).json()).status,
+    "pending",
+  );
+});
+
+Deno.test("QR status enforces ownership for every role and requires user authentication", async () => {
+  const f = fixture();
+  const qr = await (await f.qr()).json();
+  const path = `/houses/${UNIT}/qr-credentials/${qr.credential_id}/status`;
+  equal((await f.call("user", path, undefined, null)).status, 401);
+  equal((await f.call("user", path, undefined, "device-token")).status, 401);
+  equal(
+    (await f.call("user", path.replace(UNIT, crypto.randomUUID()))).status,
+    404,
+  );
+  f.store.tables.credentials[0].issued_to = crypto.randomUUID();
+  for (const role of ["tenant", "manager", "admin"]) {
+    f.store.roleName = role;
+    equal((await f.call("user", path)).status, 404);
+  }
+});
+
+Deno.test("QR reports authenticate devices, isolate units, validate scan time and keep denial pending", async () => {
+  const f = fixture();
+  const qr = await (await f.qr()).json();
+  const report = {
+    event_id: "scan-1",
+    credential_id: qr.credential_id,
+    result: "granted",
+    reason: null,
+    occurred_at: stamp(NOW),
+  };
+  for (const token of [null, "wrong", "user-token"]) {
+    equal(
+      (await f.call("device", "/devices/front/qr-events", report, token))
+        .status,
+      401,
+    );
+  }
+  for (
+    const extra of [
+      { result: "done" },
+      { reason: 4 },
+      { event_id: "" },
+      { event_id: "a".repeat(201) },
+      { credential_id: "bad" },
+      { extra: true },
+      { occurred_at: "2026-10-22T12:00:00" },
+      { occurred_at: "2026-02-30T12:00:00Z" },
+      { occurred_at: stamp(NOW - 1n) },
+      { occurred_at: stamp(NOW + 1n) },
+    ]
+  ) {
+    equal(
+      (await f.call("device", "/devices/front/qr-events", {
+        ...report,
+        ...extra,
+      })).status,
+      422,
+    );
+  }
+  equal((await f.call("device", "/devices/front/qr-events", {})).status, 422);
+  equal(
+    (await f.call("device", "/devices/front/qr-events", {
+      ...report,
+      credential_id: crypto.randomUUID(),
+    })).status,
+    404,
+  );
+  f.store.tables.devices[0].unit_id = crypto.randomUUID();
+  equal(
+    (await f.call("device", "/devices/front/qr-events", report)).status,
+    403,
+  );
+  f.store.tables.devices[0].unit_id = UNIT;
+  f.store.tables.credentials[0].device_id = crypto.randomUUID();
+  equal(
+    (await f.call("device", "/devices/front/qr-events", report)).status,
+    403,
+  );
+  f.store.tables.credentials[0].device_id = null;
+  f.clock.now = NOW + 60000000n;
+  equal(
+    (await f.call("device", "/devices/front/qr-events", {
+      ...report,
+      occurred_at: stamp(f.clock.now),
+    })).status,
+    422,
+  );
+  f.store.tables.credentials[0].is_revoked = true;
+  f.store.tables.credentials[0].revoked_at = stamp(NOW);
+  equal(
+    (await f.call("device", "/devices/front/qr-events", report)).status,
+    422,
+  );
+  equal(
+    (await f.call("device", "/devices/front/qr-events", {
+      ...report,
+      result: "denied",
+      reason: "revoked",
+    })).status,
+    200,
+  );
+  equal(
+    (await (await f.call(
+      "user",
+      `/houses/${UNIT}/qr-credentials/${qr.credential_id}/status`,
+    )).json()).status,
+    "pending",
+  );
+});

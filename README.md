@@ -50,8 +50,10 @@ confirm physical relay movement.
 
 **QR credentials:** the user function checks access and can issue Ed25519-signed
 credentials valid for up to 60 seconds. It requires a separately provisioned
-private signing key. The QR screen deliberately retains its placeholder;
-turning on live QR display is separate work.
+private signing key. The QR screen displays the signed payload, counts down to
+expiry, and automatically requests a replacement. “Access granted” appears only
+for an authenticated device report matching the user's credential. Physical
+QR reader verification and reporting still require firmware integration.
 
 **Houses:** live lists, details, and the QR selector read active Supabase units
 using the signed-in client and existing RLS policies. Managers and admins see
@@ -130,9 +132,11 @@ Append the route to `https://PROJECT.supabase.co/functions/v1/FUNCTION`:
 | --- | --- | --- | --- |
 | `ostium-api` | POST | `/api/v1/doors/{door_id}/commands` | Manager/admin lock or unlock |
 | `ostium-api` | POST | `/api/v1/houses/{houseId}/qr-credentials` | Signed QR credential |
+| `ostium-api` | GET | `/api/v1/houses/{houseId}/qr-credentials/{credentialId}/status` | Confirm own QR scan |
 | `ostium-api` | POST | `/api/v1/auth/users/{user_id}/role` | Admin-only role change |
 | `device-api` | GET | `/api/v1/devices/{device_id}/commands` | Device command polling |
 | `device-api` | POST | `/api/v1/devices/{device_id}/events` | Device command-result report |
+| `device-api` | POST | `/api/v1/devices/{device_id}/qr-events` | Device QR scan report |
 
 Door and device path IDs refer to `devices.device_key`, for example `front`.
 `houseId` refers to a unit UUID. User functions require a user JWT and active
