@@ -185,11 +185,56 @@ async function device(
   return row;
 }
 function sameReport(left: Row, right: Row): boolean {
-  return ["kind", "event_id", "command_id", "action", "result", "reason"].every(
+  return [
+    "kind",
+    "event_id",
+    "command_id",
+    "credential_id",
+    "action",
+    "result",
+    "reason",
+  ].every(
     (key) => left[key] === right[key],
   ) &&
     typeof left.occurred_at === "string" &&
     timestamp(left.occurred_at) === timestamp(right.occurred_at);
+}
+
+//added this so QR and command reports share the same retry and collision handling.
+async function recordDeviceReport(
+  store: Store,
+  deviceId: string,
+  metadata: Row,
+  buildEvent: () => Promise<Row>,
+): Promise<void> {
+  const id = await reportId(deviceId, metadata.event_id);
+  const alreadyRecorded = async () => {
+    const rows = await store.rows("access_events", { id: `eq.${id}` });
+    if (!rows.length) return false;
+    if (
+      rows[0].device_id !== deviceId || !sameReport(rows[0].metadata, metadata)
+    ) {
+      throw new ApiError(409, "Event ID already used for a different report.");
+    }
+    return true;
+  };
+  if (await alreadyRecorded()) return;
+  //did this so exact retries still work after the original command or credential changes.
+  const event = await buildEvent();
+  try {
+    await store.insert("access_events", {
+      ...event,
+      id,
+      device_id: deviceId,
+      occurred_at: metadata.occurred_at,
+      metadata,
+    });
+  } catch (error) {
+    if (!(error instanceof ApiError) || error.status !== 409) throw error;
+    if (!await alreadyRecorded()) {
+      throw new ApiError(409, "Report collision; retry delivery.");
+    }
+  }
 }
 
 export function createHandler(
@@ -418,64 +463,40 @@ export function createHandler(
             credential_id: uuid(input.credential_id),
             occurred_at: stamp(timestamp(input.occurred_at)),
           };
-          const id = await reportId(target.id, report.event_id);
-          const metadata = { kind: "qr_scan", ...report };
-          //added this so device retries are safe without mixing QR and command reports.
-          const checkExisting = async () => {
-            const rows = await store.rows("access_events", { id: `eq.${id}` });
-            if (!rows.length) return false;
-            const old = rows[0];
+          await recordDeviceReport(store, target.id, {
+            kind: "qr_scan",
+            ...report,
+          }, async () => {
+            const credentials = await store.rows("credentials", {
+              id: `eq.${report.credential_id}`,
+            });
+            const credential = credentials[0];
+            if (!credential) throw new ApiError(404, "Unknown credential.");
             if (
-              old.device_id !== target.id ||
-              !sameReport(old.metadata, metadata) ||
-              old.metadata.credential_id !== report.credential_id
+              !target.unit_id || credential.unit_id !== target.unit_id ||
+              (credential.device_id && credential.device_id !== target.id)
             ) {
               throw new ApiError(
-                409,
-                "Event ID already used for a different report.",
+                403,
+                "Credential does not belong to this device.",
               );
             }
-            return true;
-          };
-          const result = {
-            event_id: report.event_id,
-            credential_id: report.credential_id,
-            recorded: true,
-          };
-          if (await checkExisting()) return response(result);
-          const credentials = await store.rows("credentials", {
-            id: `eq.${report.credential_id}`,
-          });
-          const credential = credentials[0];
-          if (!credential) throw new ApiError(404, "Unknown credential.");
-          if (
-            !target.unit_id || credential.unit_id !== target.unit_id ||
-            (credential.device_id && credential.device_id !== target.id)
-          ) {
-            throw new ApiError(
-              403,
-              "Credential does not belong to this device.",
-            );
-          }
-          const occurred = timestamp(report.occurred_at);
-          if (occurred > now()) {
-            throw new ApiError(422, "Scan time is in the future.");
-          }
-          //added this because delayed delivery is allowed, but granted scans must have been valid then.
-          if (
-            report.result === "granted" &&
-            (occurred < timestamp(credential.issued_at) ||
-              occurred >= timestamp(credential.expires_at) ||
-              (credential.is_revoked &&
-                (!credential.revoked_at ||
-                  occurred >= timestamp(credential.revoked_at))))
-          ) {
-            throw new ApiError(422, "Credential was not valid at scan time.");
-          }
-          try {
-            await store.insert("access_events", {
-              id,
-              device_id: target.id,
+            const occurred = timestamp(report.occurred_at);
+            if (occurred > now()) {
+              throw new ApiError(422, "Scan time is in the future.");
+            }
+            //added this because delayed delivery is allowed, but granted scans must have been valid then.
+            if (
+              report.result === "granted" &&
+              (occurred < timestamp(credential.issued_at) ||
+                occurred >= timestamp(credential.expires_at) ||
+                (credential.is_revoked &&
+                  (!credential.revoked_at ||
+                    occurred >= timestamp(credential.revoked_at))))
+            ) {
+              throw new ApiError(422, "Credential was not valid at scan time.");
+            }
+            return {
               unit_id: credential.unit_id,
               credential_id: credential.id,
               user_id: credential.issued_to,
@@ -484,18 +505,13 @@ export function createHandler(
                 : "access_denied",
               result: report.result,
               reason: report.reason,
-              occurred_at: report.occurred_at,
-              metadata,
-            });
-          } catch (error) {
-            if (!(error instanceof ApiError) || error.status !== 409) {
-              throw error;
-            }
-            if (!await checkExisting()) {
-              throw new ApiError(409, "Report collision; retry delivery.");
-            }
-          }
-          return response(result);
+            };
+          });
+          return response({
+            event_id: report.event_id,
+            credential_id: report.credential_id,
+            recorded: true,
+          });
         }
         if (match[2] === "commands" && request.method === "GET") {
           const time = now();
@@ -556,58 +572,32 @@ export function createHandler(
             command_id: uuid(input.command_id),
             occurred_at: stamp(timestamp(input.occurred_at)),
           };
-          const id = await reportId(target.id, report.event_id);
-          const metadata = { kind: "command_result", ...report };
-          const checkExisting = async () => {
-            const rows = await store.rows("access_events", { id: `eq.${id}` });
-            if (!rows.length) return false;
-            if (
-              rows[0].device_id !== target.id ||
-              !sameReport(rows[0].metadata, metadata)
-            ) {
-              throw new ApiError(
-                409,
-                "Event ID already used for a different report.",
-              );
+          await recordDeviceReport(store, target.id, {
+            kind: "command_result",
+            ...report,
+          }, async () => {
+            const commands = await store.rows("access_events", {
+              id: `eq.${report.command_id}`,
+              device_id: `eq.${target.id}`,
+              event_type: "eq.config_sync",
+              "metadata->>kind": "eq.door_command",
+            });
+            if (!commands.length) {
+              throw new ApiError(404, "Unknown command for this device.");
             }
-            return true;
-          };
-          const result = {
+            if (commands[0].metadata.action !== report.action) {
+              throw new ApiError(409, "Command action does not match.");
+            }
+            return {
+              unit_id: target.unit_id ?? null,
+              event_type: "config_sync",
+            };
+          });
+          return response({
             event_id: report.event_id,
             command_id: report.command_id,
             recorded: true,
-          };
-          if (await checkExisting()) return response(result);
-          const commands = await store.rows("access_events", {
-            id: `eq.${report.command_id}`,
-            device_id: `eq.${target.id}`,
-            event_type: "eq.config_sync",
-            "metadata->>kind": "eq.door_command",
           });
-          if (!commands.length) {
-            throw new ApiError(404, "Unknown command for this device.");
-          }
-          if (commands[0].metadata.action !== report.action) {
-            throw new ApiError(409, "Command action does not match.");
-          }
-          try {
-            await store.insert("access_events", {
-              id,
-              device_id: target.id,
-              unit_id: target.unit_id ?? null,
-              event_type: "config_sync",
-              occurred_at: report.occurred_at,
-              metadata,
-            });
-          } catch (error) {
-            if (!(error instanceof ApiError) || error.status !== 409) {
-              throw error;
-            }
-            if (!await checkExisting()) {
-              throw new ApiError(409, "Report collision; retry delivery.");
-            }
-          }
-          return response(result);
         }
       }
       throw new ApiError(404, "Unknown endpoint.");
