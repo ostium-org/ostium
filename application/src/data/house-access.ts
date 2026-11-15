@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
+import { DEMO_HOUSES } from '@/data/houses';
+
 export type HouseMember = {
   id: string;
   name: string;
@@ -7,8 +9,15 @@ export type HouseMember = {
   role: 'Tenant';
 };
 
-//removed the seeded memberships along with the placeholder houses.
-const membersByHouse = new Map<string, HouseMember[]>();
+const demoTenant: HouseMember = {
+  id: 'dev-tenant',
+  name: 'Dev Tenant',
+  email: 'tenant@example.com',
+  role: 'Tenant',
+};
+const membersByHouse = new Map<string, HouseMember[]>(
+  DEMO_HOUSES.map((house) => [house.id, [{ ...demoTenant }]]),
+);
 const listeners = new Set<() => void>();
 let revision = 0;
 

@@ -1,0 +1,73 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+actor Tenant
+actor Manager
+
+rectangle "Ostium Front End" {
+  usecase "Sign in" as UC_SignIn
+  usecase "Create tenant account" as UC_SignUp
+  usecase "View accessible houses" as UC_TenantHouses
+  usecase "View all houses" as UC_AllHouses
+  usecase "View house details and status" as UC_HouseDetails
+  usecase "View house access list" as UC_ViewAccess
+  usecase "Grant house access" as UC_GrantAccess
+  usecase "Revoke house access" as UC_RevokeAccess
+  usecase "View QR code for a house" as UC_QR
+  usecase "Choose house for QR code" as UC_ChooseHouse
+  usecase "Change appearance theme" as UC_Theme
+  usecase "Sign out" as UC_SignOut
+}
+
+Tenant --> UC_SignIn
+Tenant --> UC_SignUp
+Tenant --> UC_TenantHouses
+Tenant --> UC_HouseDetails
+Tenant --> UC_QR
+Tenant --> UC_ChooseHouse
+Tenant --> UC_Theme
+Tenant --> UC_SignOut
+
+Manager --> UC_SignIn
+Manager --> UC_AllHouses
+Manager --> UC_HouseDetails
+Manager --> UC_ViewAccess
+Manager --> UC_GrantAccess
+Manager --> UC_RevokeAccess
+Manager --> UC_QR
+Manager --> UC_ChooseHouse
+Manager --> UC_Theme
+Manager --> UC_SignOut
+
+UC_SignIn --> UC_TenantHouses : then
+UC_SignIn --> UC_AllHouses : then
+UC_SignIn --> UC_HouseDetails : then
+UC_SignIn --> UC_ViewAccess : then
+UC_SignIn --> UC_GrantAccess : then
+UC_SignIn --> UC_RevokeAccess : then
+UC_SignIn --> UC_QR : then
+UC_SignIn --> UC_ChooseHouse : then
+UC_SignIn --> UC_Theme : then
+UC_SignIn --> UC_SignOut : then
+
+note bottom of UC_SignUp
+  The front-end signup flow creates tenant accounts.
+  Manager accounts sign in; the UI has no manager signup flow.
+end note
+
+note bottom of UC_SignIn
+  Precondition for all other actions: the user has signed in.
+  Create tenant account is the only unauthenticated action.
+end note
+
+note bottom of UC_QR
+  QR presentation is currently a placeholder in the UI.
+  Door unlocking is outside this front-end use-case scope.
+end note
+
+note bottom of UC_HouseDetails
+  House status values are currently sample/demo readings.
+end note
+@enduml

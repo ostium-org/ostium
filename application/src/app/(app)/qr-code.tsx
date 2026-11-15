@@ -1,3 +1,4 @@
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
@@ -13,14 +14,17 @@ import { useRotatingQRCode } from '@/hooks/use-rotating-qr-code';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function QRCodeScreen() {
+  const { houseId: requestedHouseId } = useLocalSearchParams<{ houseId?: string }>();
   const { houses, loading: housesLoading, error: housesError, reload: reloadHouses } = useHouses();
   const theme = useTheme();
-  const [selectedHouseId, setSelectedHouseId] = useState(houses[0]?.id);
+  const [selection, setSelection] = useState<{ requestedId?: string; selectedId?: string }>({});
   const [expanded, setExpanded] = useState(false);
   const [cardWidth, setCardWidth] = useState(0);
+  const selectedHouseId = selection.requestedId === requestedHouseId
+    ? selection.selectedId ?? requestedHouseId ?? houses[0]?.id
+    : requestedHouseId ?? houses[0]?.id;
   const selectedHouse = houses.find((item) => item.id === selectedHouseId);
-  //fall back to an available house if the previous selection is no longer in the list.
-  const house = selectedHouse ?? houses[0];
+  const house = requestedHouseId ? selectedHouse : selectedHouse ?? houses[0];
   //added this so the screen follows signed credential expiry and confirmed door scans.
   const { code, seconds, error, loading, refresh, confirmation, confirmationError,
     retryConfirmation, returnToCode } = useRotatingQRCode(house?.id);
@@ -78,7 +82,7 @@ export default function QRCodeScreen() {
                           accessibilityState={{ selected: item.id === house.id }}
                           accessibilityLabel={`${item.name}, ${item.address}`}
                           onPress={() => {
-                            setSelectedHouseId(item.id);
+                            setSelection({ requestedId: requestedHouseId, selectedId: item.id });
                             setExpanded(false);
                           }}
                           style={[
@@ -142,7 +146,7 @@ export default function QRCodeScreen() {
               </>
             ) : (
               <ThemedText themeColor="textSecondary" style={styles.centered}>
-                No houses available.
+                {requestedHouseId ? 'This house is no longer available.' : 'No houses available.'}
               </ThemedText>
             )}
           </ScrollView>}

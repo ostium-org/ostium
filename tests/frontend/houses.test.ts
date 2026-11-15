@@ -88,9 +88,22 @@ describe('houses from Supabase', () => {
     await expect(getHouses(tenant, now)).rejects.toMatchObject({ kind: 'network' });
   });
 
-  test.each(['tenant', 'manager', 'admin'] as const)('shows no placeholder houses for a demo %s account', async role => {
+  test('shows seeded example houses to a demo manager', async () => {
     vi.spyOn(api, 'isMockApiEnabled').mockReturnValue(true);
-    expect(await getHouses({ ...tenant, role }, now)).toEqual([]);
+    expect(await getHouses({ ...tenant, role: 'manager' }, now)).toEqual([
+      { id: 'house-1', name: 'Maple House', address: '12 Maple Street' },
+      { id: 'house-2', name: 'Harbour View', address: '48 Water Street, Unit 3' },
+      { id: 'house-3', name: 'Cedar Lodge', address: '7 Cedar Crescent' },
+      { id: 'house-4', name: 'Birch Court', address: '103 Birch Avenue' },
+      { id: 'house-5', name: 'Willow Flats', address: '29 Willow Road, Unit 12' },
+    ]);
+    expect(requests).toHaveLength(0);
+  });
+
+  test('limits demo tenant houses to seeded local memberships', async () => {
+    vi.spyOn(api, 'isMockApiEnabled').mockReturnValue(true);
+    expect(await getHouses({ ...tenant, id: 'dev-tenant', email: 'tenant@example.com' }, now)).toHaveLength(5);
+    expect(await getHouses({ ...tenant, id: 'other-tenant', email: 'other@example.com' }, now)).toEqual([]);
     expect(requests).toHaveLength(0);
   });
 });

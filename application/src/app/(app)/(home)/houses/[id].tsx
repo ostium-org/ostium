@@ -96,6 +96,14 @@ export default function HouseDetailsScreen() {
                 <ThemedText themeColor="textSecondary">{house.address}</ThemedText>
               </View>
 
+              <Button
+                title={`Unlock ${house.name}`}
+                onPress={() => router.push({
+                  pathname: '/qr-code',
+                  params: { houseId: house.id },
+                })}
+              />
+
               <View style={styles.section}>
                 <ThemedText type="subtitle">Property status</ThemedText>
                 <View style={styles.statusGrid}>
