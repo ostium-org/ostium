@@ -1,5 +1,12 @@
 import { router } from 'expo-router';
-import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HouseCard } from '@/components/house-card';
@@ -8,6 +15,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import {
   BottomTabInset,
+  DesktopContentWidth,
   MaxContentWidth,
   PageTitleSize,
   Spacing,
@@ -23,30 +31,32 @@ export default function HomeScreen() {
   const { houses, loading, error, reload } = useHouses();
   const { user } = useAuth();
   const isSingle = houses.length === 1;
+  const { width } = useWindowDimensions();
+  const columns = isSingle
+    ? 1
+    : Math.min(3, Math.max(2, Math.floor((width - Spacing.four) / 280)));
 
   return (
     <ThemedView style={styles.page}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScreenTransition>
           <FlatList
-            key={isSingle ? 'single' : 'grid'}
+            key={`${columns}-${isSingle ? 'single' : 'grid'}`}
             data={houses}
             refreshing={loading}
             onRefresh={reload}
-            numColumns={isSingle ? 1 : 2}
+            numColumns={columns}
             keyExtractor={(house) => house.id}
             renderItem={({ item }) => (
-              <View style={isSingle ? styles.cellFull : styles.cellHalf}>
+              <View style={[styles.cell, { width: `${100 / columns}%` }]}>
                 <HouseCard
                   house={item}
                   large={isSingle}
-                  onPress={(house) =>
-                  router.push({
-                  pathname: '/houses/[id]',
-                  params: { id: house.id },
-                  })
-                  }
-                  />
+                  onPress={(house) => router.push({
+                    pathname: '/houses/[id]',
+                    params: { id: house.id },
+                  })}
+                />
               </View>
             )}
             ListHeaderComponent={
@@ -54,7 +64,7 @@ export default function HomeScreen() {
                 <ThemedText type="title" style={styles.header}>
                   HOUSES
                 </ThemedText>
-                {/*added this so managers and admins can create real Supabase houses.*/}
+                {/* Managers and admins can create real Supabase houses. */}
                 {canManageHouses(user?.role) && (
                   <Button title="Add house" onPress={() => router.push('/houses/new')} />
                 )}
@@ -87,7 +97,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     width: '100%',
-    maxWidth: MaxContentWidth,
+    maxWidth: Platform.OS === 'web' ? DesktopContentWidth : MaxContentWidth,
     alignSelf: 'center',
   },
   listContent: {
@@ -101,13 +111,9 @@ const styles = StyleSheet.create({
     marginTop: Spacing.one,
     marginBottom: Spacing.three,
   },
-  cellHalf: {
-    width: '50%',
+  cell: {
     padding: Spacing.two,
-  },
-  cellFull: {
-    width: '100%',
-    padding: Spacing.two,
+    gap: Spacing.two,
   },
   empty: {
     textAlign: 'center',
