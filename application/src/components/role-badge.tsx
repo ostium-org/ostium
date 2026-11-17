@@ -1,5 +1,6 @@
 // A small pill that shows the signed-in user's role (tenant / manager / admin) using the
 // translated label. Kept as its own component so the settings screen stays readable.
+import { StyleSheet } from "react-native";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Spacing } from "@/constants/theme";
@@ -28,11 +29,11 @@ export function RoleBadge({ role }: { role: UserRole }) {
   );
 }
 
-const styles = {
+const styles = StyleSheet.create({
   badge: {
-    alignSelf: "flex-start",
+    alignSelf: "flex-start" as const,
     borderRadius: Spacing.two,
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.half,
   },
-};
+});

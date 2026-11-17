@@ -93,7 +93,7 @@ export function ChangePassword({ onDone }: ChangePasswordProps) {
         autoCapitalize="none"
         autoCorrect={false}
         autoComplete="new-password"
-        textContentType="new-password"
+        textContentType="newPassword"
         editable={!submitting}
         right={
           <Pressable
@@ -120,7 +120,7 @@ export function ChangePassword({ onDone }: ChangePasswordProps) {
         autoCapitalize="none"
         autoCorrect={false}
         autoComplete="new-password"
-        textContentType="new-password"
+        textContentType="newPassword"
         editable={!submitting}
       />
 

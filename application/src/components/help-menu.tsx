@@ -54,7 +54,7 @@ export function HelpMenu() {
           <Pressable
             key={item.key}
             accessibilityRole="button"
-            onPress={() => void open(item.url)}
+            onPress={() => void open(item.url!)}
             style={({ pressed }) => [styles.row, pressed && styles.pressed]}
           >
             <ThemedView type="backgroundElement" style={styles.rowInner}>
