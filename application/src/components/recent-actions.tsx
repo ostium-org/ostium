@@ -1,24 +1,28 @@
 // Recent activity list for the settings screen. Reads the action log from the i18n provider
 // (which owns persistence) and renders each entry with a translated label and a relative time.
+import { useMemo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { Spacing } from "@/constants/theme";
 import { useI18n, type RecentAction } from "@/i18n/i18n";
 
-function relativeTime(at: number, now: number): string {
-  const seconds = Math.max(0, Math.floor((now - at) / 1000));
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.floor(hours / 24);
-  return `${days}d`;
+// Format a stored timestamp as a short, deterministic time-of-day label (e.g. "14:32").
+// Derived purely from the stored `at` value so it is stable across re-renders (react-hooks/purity).
+function formatTime(at: number): string {
+  const date = new Date(at);
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  return `${hours}:${minutes}`;
 }
 
-function ActionRow({ action, now }: { action: RecentAction; now: number }) {
+function ActionRow({
+  action,
+  timeLabel: label,
+}: {
+  action: RecentAction;
+  timeLabel: string;
+}) {
   const { t } = useI18n();
   return (
     <View style={styles.row}>
@@ -31,7 +35,7 @@ function ActionRow({ action, now }: { action: RecentAction; now: number }) {
         ) : null}
       </View>
       <ThemedText type="small" themeColor="textSecondary">
-        {relativeTime(action.at, now)}
+        {label}
       </ThemedText>
     </View>
   );
@@ -39,7 +43,16 @@ function ActionRow({ action, now }: { action: RecentAction; now: number }) {
 
 export function RecentActions() {
   const { t, recentActions, clearActions } = useI18n();
-  const now = Date.now();
+
+  // Format each row's time label deterministically from its stored timestamp.
+  const rows = useMemo(
+    () =>
+      recentActions.map((action) => ({
+        ...action,
+        timeLabel: formatTime(action.at),
+      })),
+    [recentActions],
+  );
 
   return (
     <View style={styles.container}>
@@ -54,8 +67,8 @@ export function RecentActions() {
       ) : (
         <>
           <View style={styles.list}>
-            {recentActions.map((action) => (
-              <ActionRow key={action.id} action={action} now={now} />
+            {rows.map((row) => (
+              <ActionRow key={row.id} action={row} timeLabel={row.timeLabel} />
             ))}
           </View>
           <Pressable
