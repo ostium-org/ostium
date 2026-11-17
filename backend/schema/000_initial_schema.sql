@@ -455,6 +455,13 @@ create policy "devices_delete" on public.devices
   for delete
   using (public.is_manager());
 
+-- Sensitive column: the device credential hash must never be readable or
+-- writable by ordinary application users (the `authenticated` role). RLS is
+-- row-level, so we additionally revoke column-level privileges. The service
+-- role (used by the Edge Functions to verify device auth) is unaffected.
+revoke select (credential_hash) on public.devices from authenticated;
+revoke update (credential_hash) on public.devices from authenticated;
+
 -- ----------------------------------------------------------------------------
 -- access_grants
 -- ----------------------------------------------------------------------------
