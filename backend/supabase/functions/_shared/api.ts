@@ -5,6 +5,11 @@ export type Row = Record<string, any>; // Database JSON rows; validated at route
 export interface Store {
   rows(table: string, filters: Record<string, string>): Promise<Row[]>;
   insert(table: string, row: Row): Promise<void>;
+  update(
+    table: string,
+    filters: Record<string, string>,
+    row: Row,
+  ): Promise<void>;
   user(token: string): Promise<Row>;
   role(userId: string, role: string): Promise<void>;
 }
@@ -16,7 +21,10 @@ export interface Settings {
   origins?: string;
 }
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
     super(message);
   }
 }
@@ -25,43 +33,51 @@ export const REPORT_NAMESPACE = "8fc7b31b-f08a-4d13-8b61-899f720f3278";
 
 export function timestamp(value: string): bigint {
   const match =
-    /^(\d{4}-\d{2}-\d{2})[Tt ](\d{2}:\d{2}:\d{2})(?:\.(\d+))?([Zz]|[+-]\d{2}:\d{2})$/
-      .exec(value);
+    /^(\d{4}-\d{2}-\d{2})[Tt ](\d{2}:\d{2}:\d{2})(?:\.(\d+))?([Zz]|[+-]\d{2}:\d{2})$/.exec(
+      value,
+    );
   if (!match) {
     throw new ApiError(422, "A timezone-aware ISO timestamp is required.");
   }
   const milliseconds = Date.parse(`${match[1]}T${match[2]}${match[4]}`);
   const local = new Date(`${match[1]}T${match[2]}Z`);
   if (
-    !Number.isFinite(milliseconds) || !Number.isFinite(local.getTime()) ||
+    !Number.isFinite(milliseconds) ||
+    !Number.isFinite(local.getTime()) ||
     local.toISOString().slice(0, 19) !== `${match[1]}T${match[2]}`
   ) {
     throw new ApiError(422, "Invalid timestamp.");
   }
-  return BigInt(milliseconds) * 1000n +
-    BigInt((match[3] ?? "").padEnd(6, "0").slice(0, 6));
+  return (
+    BigInt(milliseconds) * 1000n +
+    BigInt((match[3] ?? "").padEnd(6, "0").slice(0, 6))
+  );
 }
 export function stamp(value: bigint): string {
   const fraction = ((value % 1000000n) + 1000000n) % 1000000n;
   const seconds = (value - fraction) / 1000000n;
-  return new Date(Number(seconds) * 1000).toISOString().slice(0, 19) +
-    (fraction ? `.${fraction.toString().padStart(6, "0")}` : "") + "Z";
+  return (
+    new Date(Number(seconds) * 1000).toISOString().slice(0, 19) +
+    (fraction ? `.${fraction.toString().padStart(6, "0")}` : "") +
+    "Z"
+  );
 }
 function uuid(value: unknown): string {
   if (typeof value !== "string") throw new ApiError(422, "A UUID is required.");
   const hex = value.replaceAll("-", "").toLowerCase();
   if (!/^[0-9a-f]{32}$/.test(hex)) throw new ApiError(422, "Invalid UUID.");
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${
-    hex.slice(16, 20)
-  }-${hex.slice(20)}`;
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(
+    16,
+    20,
+  )}-${hex.slice(20)}`;
 }
 export async function reportId(
   deviceId: string,
   eventId: string,
 ): Promise<string> {
   // Match Python json.dumps([device_id, event_id]): comma-space and ensure_ascii=True.
-  const pythonJSON = `[${JSON.stringify(deviceId)}, ${JSON.stringify(eventId)}]`
-    .replace(
+  const pythonJSON =
+    `[${JSON.stringify(deviceId)}, ${JSON.stringify(eventId)}]`.replace(
       /[\u007f-\uffff]/g,
       (char) => `\\u${char.charCodeAt(0).toString(16).padStart(4, "0")}`,
     );
@@ -73,8 +89,9 @@ export async function reportId(
   const input = new Uint8Array(bytes.length + name.length);
   input.set(bytes);
   input.set(name, bytes.length);
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-1", input))
-    .slice(0, 16);
+  const digest = new Uint8Array(
+    await crypto.subtle.digest("SHA-1", input),
+  ).slice(0, 16);
   digest[6] = (digest[6] & 15) | 80;
   digest[8] = (digest[8] & 63) | 128;
   return uuid(
@@ -82,17 +99,19 @@ export async function reportId(
   );
 }
 function base64url(bytes: Uint8Array): string {
-  return btoa(String.fromCharCode(...bytes)).replaceAll("+", "-").replaceAll(
-    "/",
-    "_",
-  ).replace(/=+$/, "");
+  return btoa(String.fromCharCode(...bytes))
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replace(/=+$/, "");
 }
 export async function signJWT(
   claims: Row,
   settings: Settings,
 ): Promise<string> {
   if (
-    !settings.privateKey || !settings.issuer || !settings.audience ||
+    !settings.privateKey ||
+    !settings.issuer ||
+    !settings.audience ||
     !settings.keyId
   ) {
     throw new ApiError(503, "QR signing is not configured.");
@@ -112,9 +131,9 @@ export async function signJWT(
       ["sign"],
     );
     const header = { alg: "EdDSA", typ: "JWT", kid: settings.keyId };
-    const content = [header, claims].map((part) =>
-      base64url(encoder.encode(JSON.stringify(part)))
-    ).join(".");
+    const content = [header, claims]
+      .map((part) => base64url(encoder.encode(JSON.stringify(part))))
+      .join(".");
     const signature = await crypto.subtle.sign(
       "Ed25519",
       key,
@@ -126,9 +145,9 @@ export async function signJWT(
   }
 }
 function bearer(request: Request): string {
-  const parts = (request.headers.get("authorization") ?? "").trim().split(
-    /\s+/,
-  );
+  const parts = (request.headers.get("authorization") ?? "")
+    .trim()
+    .split(/\s+/);
   if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer" || !parts[1]) {
     throw new ApiError(401, "Missing or invalid bearer token.");
   }
@@ -142,9 +161,36 @@ async function body(request: Request, fields: string[]): Promise<Row> {
     throw new ApiError(422, "Invalid JSON body.");
   }
   if (
-    !value || typeof value !== "object" || Array.isArray(value) ||
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value) ||
     Object.keys(value).some((key) => !fields.includes(key)) ||
     fields.some((key) => !(key in value))
+  ) {
+    throw new ApiError(422, "Missing or unexpected request fields.");
+  }
+  return value;
+}
+// Like body(), but `optional` fields may be omitted. Required fields must be
+// present; any field outside the two lists is rejected.
+async function bodyFields(
+  request: Request,
+  required: string[],
+  optional: string[] = [],
+): Promise<Row> {
+  let value;
+  try {
+    value = await request.json();
+  } catch {
+    throw new ApiError(422, "Invalid JSON body.");
+  }
+  const allowed = [...required, ...optional];
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value) ||
+    Object.keys(value).some((key) => !allowed.includes(key)) ||
+    required.some((key) => !(key in value))
   ) {
     throw new ApiError(422, "Missing or unexpected request fields.");
   }
@@ -167,6 +213,7 @@ async function device(
   request: Request,
   store: Store,
   key: string,
+  now: bigint,
 ): Promise<Row> {
   const token = bearer(request);
   const rows = await store.rows("devices", { device_key: `eq.${key}` });
@@ -175,29 +222,38 @@ async function device(
     await crypto.subtle.digest("SHA-256", encoder.encode(token)),
   );
   const hash = row?.credential_hash;
-  const expected = typeof hash === "string" && /^[a-f0-9]{64}$/.test(hash)
-    ? Uint8Array.from(hash.match(/../g)!, (part) => parseInt(part, 16))
-    : new Uint8Array(32);
+  const expected =
+    typeof hash === "string" && /^[a-f0-9]{64}$/.test(hash)
+      ? Uint8Array.from(hash.match(/../g)!, (part) => parseInt(part, 16))
+      : new Uint8Array(32);
   const matches = timingSafeEqual(actual, expected);
+  // Disabled or not-yet-provisioned devices are never permitted to operate,
+  // regardless of whether their credential hash matches.
   if (!matches || !row || !["active", "offline"].includes(row.status)) {
     throw new ApiError(401, "Invalid device credentials.");
   }
-  return row;
+  // A successful authenticated request proves the device is reachable: record
+  // the heartbeat and promote an offline device back to active.
+  const seenAt = stamp(now);
+  const patch: Row = { last_seen_at: seenAt };
+  if (row.status === "offline") patch.status = "active";
+  await store.update("devices", { id: `eq.${row.id}` }, patch);
+  return { ...row, ...patch };
 }
 function sameReport(left: Row, right: Row): boolean {
-  return [
-    "kind",
-    "event_id",
-    "command_id",
-    "credential_id",
-    "action",
-    "result",
-    "reason",
-  ].every(
-    (key) => left[key] === right[key],
-  ) &&
+  return (
+    [
+      "kind",
+      "event_id",
+      "command_id",
+      "credential_id",
+      "action",
+      "result",
+      "reason",
+    ].every((key) => left[key] === right[key]) &&
     typeof left.occurred_at === "string" &&
-    timestamp(left.occurred_at) === timestamp(right.occurred_at);
+    timestamp(left.occurred_at) === timestamp(right.occurred_at)
+  );
 }
 
 //added this so QR and command reports share the same retry and collision handling.
@@ -212,7 +268,8 @@ async function recordDeviceReport(
     const rows = await store.rows("access_events", { id: `eq.${id}` });
     if (!rows.length) return false;
     if (
-      rows[0].device_id !== deviceId || !sameReport(rows[0].metadata, metadata)
+      rows[0].device_id !== deviceId ||
+      !sameReport(rows[0].metadata, metadata)
     ) {
       throw new ApiError(409, "Event ID already used for a different report.");
     }
@@ -231,7 +288,7 @@ async function recordDeviceReport(
     });
   } catch (error) {
     if (!(error instanceof ApiError) || error.status !== 409) throw error;
-    if (!await alreadyRecorded()) {
+    if (!(await alreadyRecorded())) {
       throw new ApiError(409, "Report collision; retry delivery.");
     }
   }
@@ -253,12 +310,12 @@ export function createHandler(
     const headers = new Headers({
       "Content-Type": "application/json",
       "Cache-Control": "no-store",
-      "Vary": "Origin",
+      Vary: "Origin",
     });
     const origin = request.headers.get("origin");
-    const origins = (settings.origins ?? "*").split(",").map((value) =>
-      value.trim()
-    );
+    const origins = (settings.origins ?? "*")
+      .split(",")
+      .map((value) => value.trim());
     if (origin && (origins.includes("*") || origins.includes(origin))) {
       headers.set(
         "Access-Control-Allow-Origin",
@@ -322,7 +379,8 @@ export function createHandler(
         if (
           (match = /^\/api\/v1\/houses\/([^/]+)\/qr-credentials$/.exec(
             route,
-          )) && request.method === "POST"
+          )) &&
+          request.method === "POST"
         ) {
           const unitId = uuid(match[1]);
           const units = await store.rows("units", {
@@ -341,9 +399,10 @@ export function createHandler(
               grantee_id: `eq.${user.id}`,
               is_active: "eq.true",
             });
-            grant = grants.find((g) =>
-              timestamp(g.valid_from) <= issued &&
-              (!g.valid_until || timestamp(g.valid_until) > issued)
+            grant = grants.find(
+              (g) =>
+                timestamp(g.valid_from) <= issued &&
+                (!g.valid_until || timestamp(g.valid_until) > issued),
             );
             if (!grant) throw new ApiError(403, "No current access grant.");
             if (grant.valid_until && timestamp(grant.valid_until) < expires) {
@@ -372,17 +431,21 @@ export function createHandler(
             expires_at: stamp(expires),
             payload: { claims, token: payload },
           });
-          return response({
-            credential_id: jti,
-            house_id: unitId,
-            payload,
-            expires_at: stamp(expires),
-          }, 201);
+          return response(
+            {
+              credential_id: jti,
+              house_id: unitId,
+              payload,
+              expires_at: stamp(expires),
+            },
+            201,
+          );
         }
         if (
           (match =
-            /^\/api\/v1\/houses\/([^/]+)\/qr-credentials\/([^/]+)\/status$/
-              .exec(route)) &&
+            /^\/api\/v1\/houses\/([^/]+)\/qr-credentials\/([^/]+)\/status$/.exec(
+              route,
+            )) &&
           request.method === "GET"
         ) {
           //added this because even managers should only confirm their own QR scans.
@@ -405,7 +468,7 @@ export function createHandler(
             "metadata->>kind": "eq.qr_scan",
           });
           events.sort((a, b) =>
-            timestamp(a.occurred_at) < timestamp(b.occurred_at) ? -1 : 1
+            timestamp(a.occurred_at) < timestamp(b.occurred_at) ? -1 : 1,
           );
           const event = events[0];
           return response({
@@ -433,13 +496,16 @@ export function createHandler(
           return response({ detail: `Role for ${id} set to ${input.role}.` });
         }
       } else if (
-        (match = /^\/api\/v1\/devices\/([^/]+)\/(commands|events|qr-events)$/
-          .exec(route))
+        (match =
+          /^\/api\/v1\/devices\/([^/]+)\/(commands|events|qr-events)$/.exec(
+            route,
+          ))
       ) {
         const target = await device(
           request,
           store,
           decodeURIComponent(match[1]),
+          now(),
         );
         if (match[2] === "qr-events" && request.method === "POST") {
           const input = await body(request, [
@@ -450,7 +516,8 @@ export function createHandler(
             "occurred_at",
           ]);
           if (
-            typeof input.event_id !== "string" || !input.event_id.trim() ||
+            typeof input.event_id !== "string" ||
+            !input.event_id.trim() ||
             Array.from(input.event_id).length > 200 ||
             !["granted", "denied"].includes(input.result) ||
             (input.reason !== null && typeof input.reason !== "string") ||
@@ -463,50 +530,60 @@ export function createHandler(
             credential_id: uuid(input.credential_id),
             occurred_at: stamp(timestamp(input.occurred_at)),
           };
-          await recordDeviceReport(store, target.id, {
-            kind: "qr_scan",
-            ...report,
-          }, async () => {
-            const credentials = await store.rows("credentials", {
-              id: `eq.${report.credential_id}`,
-            });
-            const credential = credentials[0];
-            if (!credential) throw new ApiError(404, "Unknown credential.");
-            if (
-              !target.unit_id || credential.unit_id !== target.unit_id ||
-              (credential.device_id && credential.device_id !== target.id)
-            ) {
-              throw new ApiError(
-                403,
-                "Credential does not belong to this device.",
-              );
-            }
-            const occurred = timestamp(report.occurred_at);
-            if (occurred > now()) {
-              throw new ApiError(422, "Scan time is in the future.");
-            }
-            //added this because delayed delivery is allowed, but granted scans must have been valid then.
-            if (
-              report.result === "granted" &&
-              (occurred < timestamp(credential.issued_at) ||
-                occurred >= timestamp(credential.expires_at) ||
-                (credential.is_revoked &&
-                  (!credential.revoked_at ||
-                    occurred >= timestamp(credential.revoked_at))))
-            ) {
-              throw new ApiError(422, "Credential was not valid at scan time.");
-            }
-            return {
-              unit_id: credential.unit_id,
-              credential_id: credential.id,
-              user_id: credential.issued_to,
-              event_type: report.result === "granted"
-                ? "access_granted"
-                : "access_denied",
-              result: report.result,
-              reason: report.reason,
-            };
-          });
+          await recordDeviceReport(
+            store,
+            target.id,
+            {
+              kind: "qr_scan",
+              ...report,
+            },
+            async () => {
+              const credentials = await store.rows("credentials", {
+                id: `eq.${report.credential_id}`,
+              });
+              const credential = credentials[0];
+              if (!credential) throw new ApiError(404, "Unknown credential.");
+              if (
+                !target.unit_id ||
+                credential.unit_id !== target.unit_id ||
+                (credential.device_id && credential.device_id !== target.id)
+              ) {
+                throw new ApiError(
+                  403,
+                  "Credential does not belong to this device.",
+                );
+              }
+              const occurred = timestamp(report.occurred_at);
+              if (occurred > now()) {
+                throw new ApiError(422, "Scan time is in the future.");
+              }
+              //added this because delayed delivery is allowed, but granted scans must have been valid then.
+              if (
+                report.result === "granted" &&
+                (occurred < timestamp(credential.issued_at) ||
+                  occurred >= timestamp(credential.expires_at) ||
+                  (credential.is_revoked &&
+                    (!credential.revoked_at ||
+                      occurred >= timestamp(credential.revoked_at))))
+              ) {
+                throw new ApiError(
+                  422,
+                  "Credential was not valid at scan time.",
+                );
+              }
+              return {
+                unit_id: credential.unit_id,
+                credential_id: credential.id,
+                user_id: credential.issued_to,
+                event_type:
+                  report.result === "granted"
+                    ? "access_granted"
+                    : "access_denied",
+                result: report.result,
+                reason: report.reason,
+              };
+            },
+          );
           return response({
             event_id: report.event_id,
             credential_id: report.credential_id,
@@ -520,30 +597,38 @@ export function createHandler(
             event_type: "eq.config_sync",
           });
           const reported = new Set(
-            rows.filter((r) => r.metadata?.kind === "command_result").map((r) =>
-              r.metadata.command_id
-            ),
+            rows
+              .filter((r) => r.metadata?.kind === "command_result")
+              .map((r) => r.metadata.command_id),
           );
-          const commands = rows.filter((r) =>
-            r.metadata?.kind === "door_command" && !reported.has(r.id) &&
-            timestamp(r.metadata.expires_at) > time
-          )
+          const commands = rows
+            .filter(
+              (r) =>
+                r.metadata?.kind === "door_command" &&
+                !reported.has(r.id) &&
+                timestamp(r.metadata.expires_at) > time,
+            )
             .map((r) =>
               Object.fromEntries(
-                ["command_id", "action", "door_id", "issued_at", "expires_at"]
-                  .map((key) => [key, r.metadata[key]]),
-              )
+                [
+                  "command_id",
+                  "action",
+                  "door_id",
+                  "issued_at",
+                  "expires_at",
+                ].map((key) => [key, r.metadata[key]]),
+              ),
             );
           commands.sort((a, b) =>
             timestamp(a.issued_at) < timestamp(b.issued_at)
               ? -1
               : timestamp(a.issued_at) > timestamp(b.issued_at)
-              ? 1
-              : a.command_id < b.command_id
-              ? -1
-              : a.command_id > b.command_id
-              ? 1
-              : 0
+                ? 1
+                : a.command_id < b.command_id
+                  ? -1
+                  : a.command_id > b.command_id
+                    ? 1
+                    : 0,
           );
           return response({ server_time: stamp(time), commands });
         }
@@ -572,27 +657,32 @@ export function createHandler(
             command_id: uuid(input.command_id),
             occurred_at: stamp(timestamp(input.occurred_at)),
           };
-          await recordDeviceReport(store, target.id, {
-            kind: "command_result",
-            ...report,
-          }, async () => {
-            const commands = await store.rows("access_events", {
-              id: `eq.${report.command_id}`,
-              device_id: `eq.${target.id}`,
-              event_type: "eq.config_sync",
-              "metadata->>kind": "eq.door_command",
-            });
-            if (!commands.length) {
-              throw new ApiError(404, "Unknown command for this device.");
-            }
-            if (commands[0].metadata.action !== report.action) {
-              throw new ApiError(409, "Command action does not match.");
-            }
-            return {
-              unit_id: target.unit_id ?? null,
-              event_type: "config_sync",
-            };
-          });
+          await recordDeviceReport(
+            store,
+            target.id,
+            {
+              kind: "command_result",
+              ...report,
+            },
+            async () => {
+              const commands = await store.rows("access_events", {
+                id: `eq.${report.command_id}`,
+                device_id: `eq.${target.id}`,
+                event_type: "eq.config_sync",
+                "metadata->>kind": "eq.door_command",
+              });
+              if (!commands.length) {
+                throw new ApiError(404, "Unknown command for this device.");
+              }
+              if (commands[0].metadata.action !== report.action) {
+                throw new ApiError(409, "Command action does not match.");
+              }
+              return {
+                unit_id: target.unit_id ?? null,
+                event_type: "config_sync",
+              };
+            },
+          );
           return response({
             event_id: report.event_id,
             command_id: report.command_id,
@@ -602,11 +692,13 @@ export function createHandler(
       }
       throw new ApiError(404, "Unknown endpoint.");
     } catch (error) {
-      return response({
-        detail: error instanceof ApiError
-          ? error.message
-          : "Service unavailable.",
-      }, error instanceof ApiError ? error.status : 502);
+      return response(
+        {
+          detail:
+            error instanceof ApiError ? error.message : "Service unavailable.",
+        },
+        error instanceof ApiError ? error.status : 502,
+      );
     }
   };
 }
