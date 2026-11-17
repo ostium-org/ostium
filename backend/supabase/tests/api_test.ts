@@ -976,19 +976,20 @@ Deno.test(
       "user",
       `/houses/${UNIT}/access-grants/${grant.id}`,
       { action: "expire" },
-      null,
+      "user-token",
       "PATCH",
     );
     equal(expired.status, 200);
-    equal((await expired.json()).is_active, false);
-    equal((await expired.json()).valid_until, stamp(NOW + 500000000n));
+    const expiredBody = await expired.json();
+    equal(expiredBody.is_active, false);
+    equal(expiredBody.valid_until, stamp(NOW + 500000000n));
 
     // Activate re-enables the grant.
     const activated = await f.call(
       "user",
       `/houses/${UNIT}/access-grants/${grant.id}`,
       { action: "activate" },
-      null,
+      "user-token",
       "PATCH",
     );
     equal(activated.status, 200);
@@ -999,7 +1000,7 @@ Deno.test(
       "user",
       `/houses/${UNIT}/access-grants/${grant.id}`,
       { action: "revoke" },
-      null,
+      "user-token",
       "PATCH",
     );
     equal(revoked.status, 200);
@@ -1012,7 +1013,7 @@ Deno.test(
           "user",
           `/houses/${UNIT}/access-grants/${crypto.randomUUID()}`,
           { action: "revoke" },
-          null,
+          "user-token",
           "PATCH",
         )
       ).status,
@@ -1024,7 +1025,7 @@ Deno.test(
           "user",
           `/houses/${crypto.randomUUID()}/access-grants/${grant.id}`,
           { action: "revoke" },
-          null,
+          "user-token",
           "PATCH",
         )
       ).status,
@@ -1036,7 +1037,7 @@ Deno.test(
           "user",
           `/houses/${UNIT}/access-grants/${grant.id}`,
           { action: "delete" },
-          null,
+          "user-token",
           "PATCH",
         )
       ).status,
@@ -1067,7 +1068,7 @@ Deno.test(
       "user",
       `/houses/${UNIT}/access-grants/${grant.id}`,
       { action: "revoke" },
-      null,
+      "user-token",
       "PATCH",
     );
     f.store.roleName = "tenant";

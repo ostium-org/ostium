@@ -812,14 +812,13 @@ export function createHandler(
               kind: "temperature_sync",
               ...report,
             },
-            async () => {
-              return {
+            () =>
+              Promise.resolve({
                 unit_id: target.unit_id ?? null,
                 event_type: "temperature_sync",
                 result: null,
                 reason: null,
-              };
-            },
+              }),
           );
           return response({
             event_id: report.event_id,
