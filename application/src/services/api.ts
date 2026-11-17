@@ -17,7 +17,9 @@ export type LoginResult = {
   user: AuthUser;
 };
 
-export type SignupResult = LoginResult | { confirmationRequired: true; email: string };
+export type SignupResult =
+  | LoginResult
+  | { confirmationRequired: true; email: string };
 
 // What went wrong
 export type ApiErrorKind =
@@ -44,8 +46,11 @@ export class ApiError extends Error {
   }
 }
 
-const MOCK_ENABLED = __DEV__ && supabaseUrl === "" && process.env.EXPO_PUBLIC_MOCK_API === "true";
-export function isMockApiEnabled(): boolean { return MOCK_ENABLED; }
+const MOCK_ENABLED =
+  __DEV__ && supabaseUrl === "" && process.env.EXPO_PUBLIC_MOCK_API === "true";
+export function isMockApiEnabled(): boolean {
+  return MOCK_ENABLED;
+}
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
@@ -73,38 +78,79 @@ const DEV_ACCOUNTS: { password: string; user: AuthUser }[] = [
 
 export function getDevLoginHint(): string | null {
   return MOCK_ENABLED
-    ? 'Dev accounts: tenant@example.com / tenant-pass (tenant) | manager@example.com / manager-pass (manager)'
+    ? "Dev accounts: tenant@example.com / tenant-pass (tenant) | manager@example.com / manager-pass (manager)"
     : null;
 }
 
 function configured() {
-  if (!supabaseUrl || !supabaseKey) throw new ApiError("not-configured", "Supabase public configuration is missing.");
-  if (!__DEV__ && !supabaseUrl.startsWith("https://")) throw new ApiError("not-configured", "Supabase URL must use HTTPS.");
+  if (!supabaseUrl || !supabaseKey)
+    throw new ApiError(
+      "not-configured",
+      "Supabase public configuration is missing.",
+    );
+  if (!__DEV__ && !supabaseUrl.startsWith("https://"))
+    throw new ApiError("not-configured", "Supabase URL must use HTTPS.");
 }
 
-function authError(error: { status?: number; name?: string; message?: string }, loginAttempt = false): ApiError {
+function authError(
+  error: { status?: number; name?: string; message?: string },
+  loginAttempt = false,
+): ApiError {
   const status = error.status;
-  if (error.name === "AuthRetryableFetchError") return new ApiError("network", "Could not reach Supabase.", status);
-  if (status === 429) return new ApiError("rate-limited", "Too many requests.", status);
-  if (status && status >= 500) return new ApiError("server", "Server error.", status);
-  if (status === 400 || status === 401 || status === 403) return new ApiError(loginAttempt ? "invalid-credentials" : "unauthorized", loginAttempt ? "Incorrect email or password." : "Not authorized.", status);
+  if (error.name === "AuthRetryableFetchError")
+    return new ApiError("network", "Could not reach Supabase.", status);
+  if (status === 429)
+    return new ApiError("rate-limited", "Too many requests.", status);
+  if (status && status >= 500)
+    return new ApiError("server", "Server error.", status);
+  if (status === 400 || status === 401 || status === 403)
+    return new ApiError(
+      loginAttempt ? "invalid-credentials" : "unauthorized",
+      loginAttempt ? "Incorrect email or password." : "Not authorized.",
+      status,
+    );
   return new ApiError("request-failed", "Authentication failed.", status);
 }
 
-function signupError(error: { code?: string; status?: number; name?: string; message?: string }): ApiError {
+function signupError(error: {
+  code?: string;
+  status?: number;
+  name?: string;
+  message?: string;
+}): ApiError {
   // Translate known codes rather than exposing raw server error messages.
   switch (error.code) {
     case "email_exists":
     case "user_already_exists":
-      return new ApiError("signup-rejected", "An account with this email already exists. Please sign in instead.", error.status);
+      return new ApiError(
+        "signup-rejected",
+        "An account with this email already exists. Please sign in instead.",
+        error.status,
+      );
     case "email_address_invalid":
-      return new ApiError("signup-rejected", "Supabase rejected this email address. Please check it and try again.", error.status);
+      return new ApiError(
+        "signup-rejected",
+        "Supabase rejected this email address. Please check it and try again.",
+        error.status,
+      );
     case "weak_password":
-      return new ApiError("signup-rejected", "This password does not meet the account security requirements. Please choose a stronger password.", error.status);
+      return new ApiError(
+        "signup-rejected",
+        "This password does not meet the account security requirements. Please choose a stronger password.",
+        error.status,
+      );
     case "signup_disabled":
-      return new ApiError("signup-rejected", "Account registration is disabled. Please contact your project administrator.", error.status);
+      return new ApiError(
+        "signup-rejected",
+        "Account registration is disabled. Please contact your project administrator.",
+        error.status,
+      );
     case "email_address_not_authorized":
-      return new ApiError("signup-rejected", "This project cannot send a confirmation email to this address. Please contact your project administrator.", error.status);
+      return new ApiError(
+        "signup-rejected",
+        "This project cannot send a confirmation email to this address. Please contact your project administrator.",
+        error.status,
+      );
     default:
       return authError(error);
   }
@@ -112,17 +158,31 @@ function signupError(error: { code?: string; status?: number; name?: string; mes
 
 export async function loadProfile(session: Session): Promise<AuthUser> {
   const client = await getSupabase();
-  const { data, error } = await client.from("profiles").select("id, full_name, role, is_active").eq("id", session.user.id).maybeSingle();
+  const { data, error } = await client
+    .from("profiles")
+    .select("id, full_name, role, is_active")
+    .eq("id", session.user.id)
+    .maybeSingle();
   if (error) throw new ApiError("server", "Could not load your profile.");
-  if (!data || data.is_active !== true) throw new ApiError("request-failed", "An active profile is required.", 403);
-  const user = parseAuthUser({ id: data.id, email: session.user.email, name: data.full_name, role: data.role });
+  if (!data || data.is_active !== true)
+    throw new ApiError("request-failed", "An active profile is required.", 403);
+  const user = parseAuthUser({
+    id: data.id,
+    email: session.user.email,
+    name: data.full_name,
+    role: data.role,
+  });
   if (!user) throw new ApiError("bad-response", "Invalid profile response.");
   return user;
 }
 
 async function sessionResult(session: Session): Promise<LoginResult> {
   try {
-    return { accessToken: session.access_token, expiresIn: session.expires_in, user: await loadProfile(session) };
+    return {
+      accessToken: session.access_token,
+      expiresIn: session.expires_in,
+      user: await loadProfile(session),
+    };
   } catch (error) {
     // Never leave a new session signed in after its profile was rejected.
     await (await getSupabase()).auth.signOut({ scope: "local" });
@@ -143,13 +203,17 @@ export async function request<T = unknown>(
   configured();
   const url = `${supabaseUrl}/functions/v1/ostium-api${path}`;
 
-  const headers: Record<string, string> = { Accept: "application/json", apikey: supabaseKey };
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    apikey: supabaseKey,
+  };
   if (body !== undefined) headers["Content-Type"] = "application/json";
   let sentToken = false;
   if (authenticated) {
     const { data, error } = await (await getSupabase()).auth.getSession();
     if (error) throw authError(error);
-    if (!data.session) throw new ApiError("unauthorized", "Not authorized.", 401);
+    if (!data.session)
+      throw new ApiError("unauthorized", "Not authorized.", 401);
     headers.Authorization = `Bearer ${data.session.access_token}`;
     sentToken = true;
   }
@@ -199,18 +263,30 @@ export async function request<T = unknown>(
   if (status >= 500) {
     //added this so setup failures explain the problem without exposing raw server details.
     const messages: Record<string, string> = {
-      "QR signing is not configured.": "QR access is not configured yet. Contact your property manager.",
-      "QR signing is not configured correctly.": "QR access configuration needs attention. Contact your property manager.",
-      "Supabase is not configured.": "The access service is not configured yet. Contact your property manager.",
-      "Database read failed.": "The access service could not load its data. Please try again.",
-      "Database write failed.": "The access service could not save your request. Please try again.",
-      "Could not reach Supabase.": "The access service could not reach its database. Please try again.",
+      "QR signing is not configured.":
+        "QR access is not configured yet. Contact your property manager.",
+      "QR signing is not configured correctly.":
+        "QR access configuration needs attention. Contact your property manager.",
+      "Supabase is not configured.":
+        "The access service is not configured yet. Contact your property manager.",
+      "Database read failed.":
+        "The access service could not load its data. Please try again.",
+      "Database write failed.":
+        "The access service could not save your request. Please try again.",
+      "Could not reach Supabase.":
+        "The access service could not reach its database. Please try again.",
     };
     let message = `The access service returned an error (HTTP ${status}). Please try again.`;
     try {
       const data: unknown = JSON.parse(text);
-      if (data && typeof data === "object" && "detail" in data && typeof data.detail === "string" &&
-        Object.hasOwn(messages, data.detail)) message = messages[data.detail];
+      if (
+        data &&
+        typeof data === "object" &&
+        "detail" in data &&
+        typeof data.detail === "string" &&
+        Object.hasOwn(messages, data.detail)
+      )
+        message = messages[data.detail];
     } catch {
       //added this because gateways can return HTML instead of the function's JSON error.
     }
@@ -226,7 +302,8 @@ export function parseAuthUser(value: unknown): AuthUser | null {
   const id = typeof v.id === "number" ? String(v.id) : v.id; // SQLite ids are often integers
   if (typeof id !== "string" || id === "") return null;
   if (typeof v.email !== "string" || v.email === "") return null;
-  if (v.role !== "tenant" && v.role !== "manager" && v.role !== "admin") return null;
+  if (v.role !== "tenant" && v.role !== "manager" && v.role !== "admin")
+    return null;
   if (v.name !== undefined && v.name !== null && typeof v.name !== "string")
     return null;
 
@@ -260,25 +337,69 @@ async function mockLogin(
   };
 }
 
-export async function login(email: string, password: string): Promise<LoginResult> {
+export async function login(
+  email: string,
+  password: string,
+): Promise<LoginResult> {
   if (MOCK_ENABLED) return mockLogin(email, password);
   configured();
-  const { data, error } = await (await getSupabase()).auth.signInWithPassword({ email, password });
+  const { data, error } = await (
+    await getSupabase()
+  ).auth.signInWithPassword({ email, password });
   if (error) throw authError(error, true);
-  if (!data.session) throw new ApiError("bad-response", "Unexpected login response.");
+  if (!data.session)
+    throw new ApiError("bad-response", "Unexpected login response.");
   return sessionResult(data.session);
 }
 
-export async function signup(email: string, password: string, fullName?: string): Promise<SignupResult> {
-  if (MOCK_ENABLED) return { accessToken: "dev-token-tenant", expiresIn: 3600,
-    user: { id: "dev-tenant", email: email.trim().toLowerCase(), name: fullName, role: "tenant" } };
+export async function signup(
+  email: string,
+  password: string,
+  fullName?: string,
+): Promise<SignupResult> {
+  if (MOCK_ENABLED)
+    return {
+      accessToken: "dev-token-tenant",
+      expiresIn: 3600,
+      user: {
+        id: "dev-tenant",
+        email: email.trim().toLowerCase(),
+        name: fullName,
+        role: "tenant",
+      },
+    };
   configured();
-  const { data, error } = await (await getSupabase()).auth.signUp({ email, password,
-    options: { data: fullName?.trim() ? { full_name: fullName.trim() } : {} } });
+  const { data, error } = await (
+    await getSupabase()
+  ).auth.signUp({
+    email,
+    password,
+    options: { data: fullName?.trim() ? { full_name: fullName.trim() } : {} },
+  });
   if (error) {
-    if (__DEV__) console.warn("Supabase signup rejected", { code: error.code, status: error.status, name: error.name });
+    if (__DEV__)
+      console.warn("Supabase signup rejected", {
+        code: error.code,
+        status: error.status,
+        name: error.name,
+      });
     throw signupError(error);
   }
   if (!data.session) return { confirmationRequired: true, email };
   return sessionResult(data.session);
+}
+
+// Change the signed-in user's password. Supabase Auth owns the credential, so this goes straight
+// to `auth.updateUser` (no Edge Function needed). In mock mode we just simulate a short delay so
+// the UI path is exercised the same way.
+export async function changePassword(newPassword: string): Promise<void> {
+  if (MOCK_ENABLED) {
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    return;
+  }
+  configured();
+  const { error } = await (
+    await getSupabase()
+  ).auth.updateUser({ password: newPassword });
+  if (error) throw authError(error);
 }
