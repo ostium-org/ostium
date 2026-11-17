@@ -326,7 +326,7 @@ export function createHandler(
       "Access-Control-Allow-Headers",
       "authorization, apikey, content-type, x-client-info",
     );
-    headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    headers.set("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS");
     const response = (value: unknown, status = 200) =>
       new Response(JSON.stringify(value), { status, headers });
     if (request.method === "OPTIONS") {
@@ -494,6 +494,97 @@ export function createHandler(
           const id = uuid(match[1]);
           await store.role(id, input.role);
           return response({ detail: `Role for ${id} set to ${input.role}.` });
+        }
+        if (
+          (match = /^\/api\/v1\/houses\/([^/]+)\/access-grants$/.exec(route)) &&
+          request.method === "POST"
+        ) {
+          if (!["manager", "admin"].includes(user.role)) {
+            throw new ApiError(403, "Manager or admin access required.");
+          }
+          const unitId = uuid(match[1]);
+          const units = await store.rows("units", {
+            id: `eq.${unitId}`,
+            is_active: "eq.true",
+          });
+          if (!units.length)
+            throw new ApiError(404, "Unknown or inactive unit.");
+          const input = await bodyFields(
+            request,
+            ["grantee_id"],
+            ["grantee_role", "valid_from", "valid_until", "notes"],
+          );
+          const granteeId = uuid(input.grantee_id);
+          const profiles = await store.rows("profiles", {
+            id: `eq.${granteeId}`,
+          });
+          if (!profiles.length) throw new ApiError(404, "Unknown grantee.");
+          const granteeRole = input.grantee_role ?? "tenant";
+          if (!["tenant", "guest"].includes(granteeRole)) {
+            throw new ApiError(422, "Invalid grantee role.");
+          }
+          let validFrom: string | undefined;
+          let validUntil: string | undefined;
+          if (input.valid_from !== undefined) {
+            validFrom = stamp(timestamp(input.valid_from));
+          }
+          if (input.valid_until !== undefined) {
+            validUntil = stamp(timestamp(input.valid_until));
+          }
+          if (
+            validFrom &&
+            validUntil &&
+            timestamp(validUntil) <= timestamp(validFrom)
+          ) {
+            throw new ApiError(422, "valid_until must be after valid_from.");
+          }
+          const grant: Row = {
+            id: crypto.randomUUID(),
+            unit_id: unitId,
+            grantee_id: granteeId,
+            granted_by: user.id,
+            grantee_role: granteeRole,
+            valid_from: validFrom ?? stamp(now()),
+            valid_until: validUntil ?? null,
+            is_active: true,
+            notes: input.notes ?? null,
+          };
+          await store.insert("access_grants", grant);
+          return response(grant, 201);
+        }
+        if (
+          (match = /^\/api\/v1\/houses\/([^/]+)\/access-grants\/([^/]+)$/.exec(
+            route,
+          )) &&
+          request.method === "PATCH"
+        ) {
+          if (!["manager", "admin"].includes(user.role)) {
+            throw new ApiError(403, "Manager or admin access required.");
+          }
+          const unitId = uuid(match[1]);
+          const grantId = uuid(match[2]);
+          const input = await body(request, ["action"]);
+          if (!["expire", "activate", "revoke"].includes(input.action)) {
+            throw new ApiError(422, "Invalid grant action.");
+          }
+          const grants = await store.rows("access_grants", {
+            id: `eq.${grantId}`,
+            unit_id: `eq.${unitId}`,
+          });
+          const grant = grants[0];
+          if (!grant) throw new ApiError(404, "Unknown grant.");
+          const patch: Row = {};
+          if (input.action === "expire") {
+            patch.valid_until = stamp(now());
+            patch.is_active = false;
+          } else if (input.action === "activate") {
+            patch.is_active = true;
+            if (!grant.valid_from) patch.valid_from = stamp(now());
+          } else {
+            patch.is_active = false;
+          }
+          await store.update("access_grants", { id: `eq.${grantId}` }, patch);
+          return response({ ...grant, ...patch });
         }
       } else if (
         (match =
