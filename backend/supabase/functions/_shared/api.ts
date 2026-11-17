@@ -250,6 +250,7 @@ function sameReport(left: Row, right: Row): boolean {
       "action",
       "result",
       "reason",
+      "temperature_c",
     ].every((key) => left[key] === right[key]) &&
     typeof left.occurred_at === "string" &&
     timestamp(left.occurred_at) === timestamp(right.occurred_at)
@@ -588,7 +589,7 @@ export function createHandler(
         }
       } else if (
         (match =
-          /^\/api\/v1\/devices\/([^/]+)\/(commands|events|qr-events)$/.exec(
+          /^\/api\/v1\/devices\/([^/]+)\/(commands|events|qr-events|temperature)$/.exec(
             route,
           ))
       ) {
@@ -777,6 +778,51 @@ export function createHandler(
           return response({
             event_id: report.event_id,
             command_id: report.command_id,
+            recorded: true,
+          });
+        }
+        if (match[2] === "temperature" && request.method === "POST") {
+          // Remote temperature sync: the device reports a reading it already
+          // sampled on-board, and the backend records it as an access event.
+          const input = await body(request, [
+            "event_id",
+            "temperature_c",
+            "occurred_at",
+          ]);
+          if (
+            typeof input.event_id !== "string" ||
+            Array.from(input.event_id).length < 1 ||
+            Array.from(input.event_id).length > 200 ||
+            typeof input.temperature_c !== "number" ||
+            !Number.isFinite(input.temperature_c) ||
+            input.temperature_c < -40 ||
+            input.temperature_c > 125 ||
+            typeof input.occurred_at !== "string"
+          ) {
+            throw new ApiError(422, "Invalid temperature report.");
+          }
+          const report: Row = {
+            ...input,
+            occurred_at: stamp(timestamp(input.occurred_at)),
+          };
+          await recordDeviceReport(
+            store,
+            target.id,
+            {
+              kind: "temperature_sync",
+              ...report,
+            },
+            async () => {
+              return {
+                unit_id: target.unit_id ?? null,
+                event_type: "temperature_sync",
+                result: null,
+                reason: null,
+              };
+            },
+          );
+          return response({
+            event_id: report.event_id,
             recorded: true,
           });
         }

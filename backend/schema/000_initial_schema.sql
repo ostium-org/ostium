@@ -75,6 +75,7 @@ create table if not exists public.devices (
   status          text not null default 'provisioned'
                   check (status in ('provisioned', 'active', 'disabled', 'offline')),
   credential_hash text,                          -- one-way hash of the device credential (never plaintext)
+  temperature_c   numeric(5,2),                  -- last reported temperature (°C), synced from the device
   config          jsonb not null default '{}'::jsonb,
   last_seen_at    timestamptz,
   created_at      timestamptz not null default now(),
@@ -83,6 +84,10 @@ create table if not exists public.devices (
 
 comment on table public.devices is
   'ESP32-CAM door devices. Devices authenticate via credential_hash and post events as the service role.';
+
+-- Idempotent upgrade for databases created before temperature sync existed.
+alter table public.devices
+  add column if not exists temperature_c numeric(5,2);
 
 create index if not exists devices_unit_id_idx
   on public.devices (unit_id);
@@ -156,7 +161,8 @@ create table if not exists public.access_events (
   event_type    text not null
                 check (event_type in (
                   'access_granted', 'access_denied', 'doorbell',
-                  'device_online', 'device_offline', 'config_sync', 'snapshot'
+                  'device_online', 'device_offline', 'config_sync', 'snapshot',
+                  'temperature_sync'
                 )),
   result        text check (result in ('granted', 'denied', 'error')),
   reason        text,                            -- e.g. expired, revoked, wrong_unit, unknown_credential
@@ -167,6 +173,17 @@ create table if not exists public.access_events (
 
 comment on table public.access_events is
   'Granted/denied scans and device activity (doorbell, online/offline, etc.).';
+
+-- Idempotent upgrade: widen the event_type constraint for databases created
+-- before temperature sync existed.
+alter table public.access_events
+  drop constraint if exists access_events_event_type_check;
+alter table public.access_events
+  add constraint access_events_event_type_check check (event_type in (
+    'access_granted', 'access_denied', 'doorbell',
+    'device_online', 'device_offline', 'config_sync', 'snapshot',
+    'temperature_sync'
+  ));
 
 create index if not exists access_events_unit_id_idx
   on public.access_events (unit_id);
