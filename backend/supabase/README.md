@@ -4,9 +4,13 @@ The Expo app uses **Supabase Auth directly** for signup, login, sessions, refres
 and sign-out. The existing endpoint behavior lives in two TypeScript Edge Functions.
 There is no FastAPI process or separate server to run.
 
-The existing schema stays in `backend/schema/000_initial_schema.sql`, unchanged.
-There are **no database migrations, table changes, policy changes, or seed scripts**
-in this implementation. Nothing here automatically updates the shared project.
+The schema stays in `backend/schema/000_initial_schema.sql`. It is idempotent
+(`create or replace`, `if not exists`, and `add column if not exists`), so it can
+be re-run on an existing project to pick up the `devices.temperature_c` column,
+the widened `access_events.event_type` constraint, and the column-level revocation
+of `devices.credential_hash` from the `authenticated` role. Nothing here
+automatically updates the shared project; apply the schema in the SQL editor or
+via `supabase db push`.
 
 ## Run the app
 
@@ -37,15 +41,18 @@ mode requires an empty Supabase URL and `EXPO_PUBLIC_MOCK_API=true`.
 
 ## Endpoints
 
-| Function | Routes |
-| --- | --- |
-| `ostium-api` | `POST /api/v1/doors/{door_id}/commands` |
-| `ostium-api` | `POST /api/v1/houses/{houseId}/qr-credentials` |
+| Function     | Routes                                                              |
+| ------------ | ------------------------------------------------------------------- |
+| `ostium-api` | `POST /api/v1/doors/{door_id}/commands`                             |
+| `ostium-api` | `POST /api/v1/houses/{houseId}/qr-credentials`                      |
 | `ostium-api` | `GET /api/v1/houses/{houseId}/qr-credentials/{credentialId}/status` |
-| `ostium-api` | `POST /api/v1/auth/users/{user_id}/role` |
-| `device-api` | `GET /api/v1/devices/{device_id}/commands` |
-| `device-api` | `POST /api/v1/devices/{device_id}/events` |
-| `device-api` | `POST /api/v1/devices/{device_id}/qr-events` |
+| `ostium-api` | `POST /api/v1/auth/users/{user_id}/role`                            |
+| `ostium-api` | `POST /api/v1/houses/{houseId}/access-grants`                       |
+| `ostium-api` | `PATCH /api/v1/houses/{houseId}/access-grants/{grantId}`            |
+| `device-api` | `GET /api/v1/devices/{device_id}/commands`                          |
+| `device-api` | `POST /api/v1/devices/{device_id}/events`                           |
+| `device-api` | `POST /api/v1/devices/{device_id}/qr-events`                        |
+| `device-api` | `POST /api/v1/devices/{device_id}/temperature`                      |
 
 Append the route to `https://PROJECT.supabase.co/functions/v1/FUNCTION`.
 Signup/login use the Supabase SDK rather than replacement HTTP endpoints.

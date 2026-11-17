@@ -25,7 +25,7 @@ ID as `created_by`. Database defaults assign the UUID and active status.
 `POST /api/v1/doors/{door_id}/commands`, with a manager/admin bearer token:
 
 ```json
-{"action":"unlock"}
+{ "action": "unlock" }
 ```
 
 Only `unlock` and `lock` are accepted; extra fields are rejected. A successful
@@ -33,11 +33,11 @@ response is `201`:
 
 ```json
 {
-  "command_id":"2392307c-9fef-4bc6-8b4f-d8aa89c442da",
-  "action":"unlock",
-  "door_id":"front-door",
-  "issued_at":"2026-10-22T12:00:00Z",
-  "expires_at":"2026-10-22T12:00:10Z"
+  "command_id": "2392307c-9fef-4bc6-8b4f-d8aa89c442da",
+  "action": "unlock",
+  "door_id": "front-door",
+  "issued_at": "2026-10-22T12:00:00Z",
+  "expires_at": "2026-10-22T12:00:10Z"
 }
 ```
 
@@ -51,14 +51,16 @@ returns `200`:
 
 ```json
 {
-  "server_time":"2026-10-22T12:00:01Z",
-  "commands":[{
-    "command_id":"2392307c-9fef-4bc6-8b4f-d8aa89c442da",
-    "action":"unlock",
-    "door_id":"front-door",
-    "issued_at":"2026-10-22T12:00:00Z",
-    "expires_at":"2026-10-22T12:00:10Z"
-  }]
+  "server_time": "2026-10-22T12:00:01Z",
+  "commands": [
+    {
+      "command_id": "2392307c-9fef-4bc6-8b4f-d8aa89c442da",
+      "action": "unlock",
+      "door_id": "front-door",
+      "issued_at": "2026-10-22T12:00:00Z",
+      "expires_at": "2026-10-22T12:00:10Z"
+    }
+  ]
 }
 ```
 
@@ -73,12 +75,12 @@ across repeated polls. No command is delivered to another device.
 
 ```json
 {
-  "event_id":"firmware-event-123",
-  "command_id":"2392307c-9fef-4bc6-8b4f-d8aa89c442da",
-  "action":"unlock",
-  "result":"done",
-  "reason":null,
-  "occurred_at":"2026-10-22T12:00:02Z"
+  "event_id": "firmware-event-123",
+  "command_id": "2392307c-9fef-4bc6-8b4f-d8aa89c442da",
+  "action": "unlock",
+  "result": "done",
+  "reason": null,
+  "occurred_at": "2026-10-22T12:00:02Z"
 }
 ```
 
@@ -87,7 +89,11 @@ across repeated polls. No command is delivered to another device.
 or exact retry returns `200`:
 
 ```json
-{"event_id":"firmware-event-123","command_id":"2392307c-9fef-4bc6-8b4f-d8aa89c442da","recorded":true}
+{
+  "event_id": "firmware-event-123",
+  "command_id": "2392307c-9fef-4bc6-8b4f-d8aa89c442da",
+  "recorded": true
+}
 ```
 
 Reports may arrive after command expiry. Unknown/other-device commands return
@@ -98,11 +104,71 @@ representations compare equal. A deterministic report UUID plus the existing
 primary key makes concurrent exact retries idempotent.
 
 Missing/incorrect device tokens, unknown devices, and devices outside
-`active`/`offline` return `401` for both device endpoints.
+`active`/`offline` return `401` for all device endpoints.
+
+Every successful authenticated device request (commands, events, qr-events, and
+temperature) refreshes `devices.last_seen_at` to the server time and promotes an
+`offline` device back to `active`. A `disabled` or `provisioned` device is
+rejected with `401` and is never heartbeated.
 
 For the door unit's side of these routes, including the checks it applies to
 each command and how it handles each response, see the
 [lock command contract](firmware/lock-command-v0.md).
+
+## Temperature sync
+
+`POST /api/v1/devices/{device_id}/temperature`, with the device bearer token,
+reports a temperature the device already sampled on-board so the backend can
+store it remotely:
+
+```json
+{
+  "event_id": "temp-1",
+  "temperature_c": 21.5,
+  "occurred_at": "2026-10-22T12:00:00Z"
+}
+```
+
+All three fields are required; `temperature_c` must be a finite number between
+-40 and 125 (inclusive); `occurred_at` must include a timezone. A first report
+or exact retry returns `200`:
+
+```json
+{ "event_id": "temp-1", "recorded": true }
+```
+
+The reading is stored in `access_events` with `event_type=temperature_sync` and
+`metadata.kind=temperature_sync`, alongside the device, unit, and occurrence
+time. Event IDs share the device report namespace, so reusing one with a
+different reading returns `409`. Invalid readings return `422`; disabled devices
+return `401`.
+
+## Access grants
+
+Managers and admins manage tenant access through two routes. House loading and
+creation still use the Supabase SDK directly under RLS.
+
+`POST /api/v1/houses/{houseId}/access-grants` creates a grant for an active
+unit. `grantee_id` is required; `grantee_role` (`tenant` or `guest`, default
+`tenant`), `valid_from`, `valid_until`, and `notes` are optional. The grantee
+must be an existing profile. `valid_until` must be after `valid_from` when both
+are supplied. A successful response is `201` with the stored grant.
+
+`PATCH /api/v1/houses/{houseId}/access-grants/{grantId}` applies one action:
+
+```json
+{ "action": "expire" }
+```
+
+`expire` sets `valid_until` to now and deactivates the grant; `activate`
+re-enables it; `revoke` deactivates it without changing the window. Unknown
+grants or units return `404`; an invalid action returns `422`; non-managers
+return `403`.
+
+A tenant may only issue QR credentials while holding an active, non-expired
+grant (`is_active`, `valid_from <= now`, and `valid_until` null or `> now`).
+Revoking or expiring a grant immediately blocks further issuance for that
+tenant.
 
 ## QR credentials
 
@@ -115,9 +181,9 @@ A successful response is `201`, matching the frontend contract:
 
 ```json
 {
-  "house_id":"c10ad395-f37e-4b2f-bfc1-c4b883ac3835",
-  "payload":"eyJhbGciOiJFZERTQSJ9.…",
-  "expires_at":"2026-10-22T12:01:00Z"
+  "house_id": "c10ad395-f37e-4b2f-bfc1-c4b883ac3835",
+  "payload": "eyJhbGciOiJFZERTQSJ9.…",
+  "expires_at": "2026-10-22T12:01:00Z"
 }
 ```
 
@@ -145,7 +211,12 @@ Commands and reports reuse `access_events`, with `event_type=config_sync` and
 `metadata.kind=door_command` / `command_result`. Command rows use the command
 UUID as their ID and store the response fields in metadata. Reports store all
 normalized original fields in metadata. Unrelated constrained fields such as
-`result` remain null. The schema remains in `backend/schema/000_initial_schema.sql`; this implementation changes no tables, policies, or SQL functions.
+`result` remain null. Temperature sync reuses `access_events` with
+`event_type=temperature_sync` and `metadata.kind=temperature_sync`. The schema
+lives in `backend/schema/000_initial_schema.sql`; it is idempotent and adds the
+`devices.temperature_c` column, the `temperature_sync` event type, and a
+column-level revocation of `devices.credential_hash` from the `authenticated`
+role.
 
 Upstream connection failures return `502`, timeouts `504`, and database read
 or write failures `502`. Missing function configuration returns `503`. API
@@ -202,8 +273,7 @@ normally 60 seconds and capped by a tenant's access grant.
 
 `GET /api/v1/houses/{houseId}/qr-credentials/{credentialId}/status` on `ostium-api`
 requires a user JWT and active profile. Only the credential's owner may query it,
-including managers/admins; an unknown, other-house, or other-owner credential returns
-404. Responses are uncached:
+including managers/admins; an unknown, other-house, or other-owner credential returns 404. Responses are uncached:
 
 ```json
 {
@@ -235,8 +305,7 @@ All five fields are required; unexpected fields are rejected:
 contain 1–200 Unicode characters and cannot be whitespace-only. Occurrence time must
 include a timezone and cannot be in the server's future. Granted scans must fall
 within credential issuance/expiry and precede any recorded revocation. Late delivery
-is allowed. Unknown credentials return 404; mismatched device/unit bindings return
-403. User/unit identity comes from the stored credential, never from the report.
+is allowed. Unknown credentials return 404; mismatched device/unit bindings return 403. User/unit identity comes from the stored credential, never from the report.
 
 A successful report returns `{ "event_id": "stable-device-scan-id",
 "credential_id": "CREDENTIAL_UUID", "recorded": true }`. Exact retries, including
