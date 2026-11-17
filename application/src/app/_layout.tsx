@@ -16,6 +16,7 @@ import {
   ThemePreferenceProvider,
   useThemePreference,
 } from "@/hooks/theme-preference";
+import { I18nProvider } from "@/i18n/i18n";
 
 // Keep the native splash screen up until the app is ready (AnimatedSplashOverlay hides it).
 SplashScreen.preventAutoHideAsync();
@@ -24,9 +25,11 @@ export default function RootLayout() {
   // Order matters: ThemedApp reads both the theme and the sign-in state, so both providers wrap it.
   return (
     <ThemePreferenceProvider>
-      <AuthProvider>
-        <ThemedApp />
-      </AuthProvider>
+      <I18nProvider>
+        <AuthProvider>
+          <ThemedApp />
+        </AuthProvider>
+      </I18nProvider>
     </ThemePreferenceProvider>
   );
 }

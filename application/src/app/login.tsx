@@ -22,6 +22,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { PageTitleSize, Spacing } from "@/constants/theme";
 import { useAuth } from "@/hooks/auth";
+import { useI18n } from "@/i18n/i18n";
 import { ApiError, getDevLoginHint, type ApiErrorKind } from "@/services/api";
 import { validateLoginForm, type LoginFieldErrors } from "@/utils/validation";
 
@@ -47,6 +48,7 @@ function messageFor(error: unknown): string {
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
+  const { t, recordAction } = useI18n();
 
   //pressing "next" on the keyboard jump from the email field to the password field.
   const passwordRef = useRef<TextInputInstance>(null);
@@ -75,6 +77,7 @@ export default function LoginScreen() {
     setSubmitting(true);
     try {
       await signIn(email.trim(), password);
+      recordAction("action.signIn");
     } catch (error) {
       setFormError(messageFor(error));
       // don't leave a rejected password sitting in the box
@@ -105,20 +108,20 @@ export default function LoginScreen() {
             <View style={styles.content}>
               <View style={styles.brand}>
                 <ThemedText type="title" style={styles.title}>
-                  SIGN IN
+                  {t("login.title").toUpperCase()}
                 </ThemedText>
                 <ThemedText
                   type="small"
                   themeColor="textSecondary"
                   style={styles.subtitle}
                 >
-                  Welcome to Ostium
+                  {t("login.subtitle")}
                 </ThemedText>
               </View>
 
               <View style={styles.form}>
                 <TextField
-                  label="Email"
+                  label={t("login.email")}
                   value={email}
                   onChangeText={(text) => {
                     setEmail(text);
@@ -141,7 +144,7 @@ export default function LoginScreen() {
 
                 <TextField
                   ref={passwordRef}
-                  label="Password"
+                  label={t("login.password")}
                   value={password}
                   onChangeText={(text) => {
                     setPassword(text);
@@ -164,7 +167,7 @@ export default function LoginScreen() {
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={
-                        showPassword ? "Hide password" : "Show password"
+                        showPassword ? t("login.hide") : t("login.show")
                       }
                       onPress={() =>
                         setShowPassword((current: boolean) => !current)
@@ -172,7 +175,9 @@ export default function LoginScreen() {
                       hitSlop={Spacing.two}
                     >
                       <ThemedText type="smallBold" themeColor="textSecondary">
-                        {showPassword ? "HIDE" : "SHOW"}
+                        {showPassword
+                          ? t("login.hide").toUpperCase()
+                          : t("login.show").toUpperCase()}
                       </ThemedText>
                     </Pressable>
                   }
@@ -191,19 +196,19 @@ export default function LoginScreen() {
                 ) : null}
 
                 <Button
-                  title="SIGN IN"
+                  title={t("login.submit").toUpperCase()}
                   onPress={handleSubmit}
                   loading={submitting}
                 />
 
                 <View style={styles.switchRow}>
                   <ThemedText type="small" themeColor="textSecondary">
-                    New to Ostium?
+                    {t("login.newAccount")}
                   </ThemedText>
                   <Link href="/signup" asChild>
                     <Pressable accessibilityRole="link" hitSlop={Spacing.two}>
                       <ThemedText type="smallBold" themeColor="accent">
-                        CREATE ACCOUNT
+                        {t("login.createAccount").toUpperCase()}
                       </ThemedText>
                     </Pressable>
                   </Link>

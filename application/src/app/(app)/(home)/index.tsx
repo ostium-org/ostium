@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router } from "expo-router";
 import {
   ActivityIndicator,
   FlatList,
@@ -6,13 +6,13 @@ import {
   StyleSheet,
   useWindowDimensions,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { HouseCard } from '@/components/house-card';
-import { ScreenTransition } from '@/components/screen-transition';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { HouseCard } from "@/components/house-card";
+import { ScreenTransition } from "@/components/screen-transition";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
 import {
   BottomTabInset,
   DesktopContentWidth,
@@ -20,16 +20,18 @@ import {
   PageTitleSize,
   Spacing,
   TopTabInset,
-} from '@/constants/theme';
-import { useHouses } from '@/hooks/use-houses';
-import { useAuth } from '@/hooks/auth';
-import { canManageHouses } from '@/services/houses';
-import { Button } from '@/components/button';
+} from "@/constants/theme";
+import { useHouses } from "@/hooks/use-houses";
+import { useAuth } from "@/hooks/auth";
+import { canManageHouses } from "@/services/houses";
+import { Button } from "@/components/button";
+import { useI18n } from "@/i18n/i18n";
 
 export default function HomeScreen() {
   //replaced the local demo filter with the houses this account can actually see.
   const { houses, loading, error, reload } = useHouses();
   const { user } = useAuth();
+  const { t } = useI18n();
   const isSingle = houses.length === 1;
   const { width } = useWindowDimensions();
   const columns = isSingle
@@ -38,10 +40,10 @@ export default function HomeScreen() {
 
   return (
     <ThemedView style={styles.page}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <ScreenTransition>
           <FlatList
-            key={`${columns}-${isSingle ? 'single' : 'grid'}`}
+            key={`${columns}-${isSingle ? "single" : "grid"}`}
             data={houses}
             refreshing={loading}
             onRefresh={reload}
@@ -52,33 +54,48 @@ export default function HomeScreen() {
                 <HouseCard
                   house={item}
                   large={isSingle}
-                  onPress={(house) => router.push({
-                    pathname: '/houses/[id]',
-                    params: { id: house.id },
-                  })}
+                  onPress={(house) =>
+                    router.push({
+                      pathname: "/houses/[id]",
+                      params: { id: house.id },
+                    })
+                  }
                 />
               </View>
             )}
             ListHeaderComponent={
               <View>
                 <ThemedText type="title" style={styles.header}>
-                  HOUSES
+                  {t("home.title").toUpperCase()}
                 </ThemedText>
                 {/* Managers and admins can create real Supabase houses. */}
                 {canManageHouses(user?.role) && (
-                  <Button title="Add house" onPress={() => router.push('/houses/new')} />
+                  <Button
+                    title={t("home.addHouse")}
+                    onPress={() => router.push("/houses/new")}
+                  />
                 )}
               </View>
             }
             ListEmptyComponent={
-              loading ? <ActivityIndicator accessibilityLabel="Loading houses" /> : error ? (
+              loading ? (
+                <ActivityIndicator accessibilityLabel={t("qr.loadingHouses")} />
+              ) : error ? (
                 <View style={styles.empty}>
-                  <ThemedText type="small" accessibilityRole="alert">{error}</ThemedText>
-                  <Button title="Retry houses" onPress={reload} />
+                  <ThemedText type="small" accessibilityRole="alert">
+                    {error}
+                  </ThemedText>
+                  <Button title={t("qr.retryHouses")} onPress={reload} />
                 </View>
-              ) : <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
-                No houses yet.
-              </ThemedText>
+              ) : (
+                <ThemedText
+                  type="small"
+                  themeColor="textSecondary"
+                  style={styles.empty}
+                >
+                  {t("home.noHouses")}
+                </ThemedText>
+              )
             }
             contentContainerStyle={styles.listContent}
           />
@@ -88,17 +105,16 @@ export default function HomeScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    width: '100%',
+    width: "100%",
   },
   safeArea: {
     flex: 1,
-    width: '100%',
-    maxWidth: Platform.OS === 'web' ? DesktopContentWidth : MaxContentWidth,
-    alignSelf: 'center',
+    width: "100%",
+    maxWidth: Platform.OS === "web" ? DesktopContentWidth : MaxContentWidth,
+    alignSelf: "center",
   },
   listContent: {
     paddingHorizontal: Spacing.two,
@@ -107,7 +123,7 @@ const styles = StyleSheet.create({
   },
   header: {
     ...PageTitleSize,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: Spacing.one,
     marginBottom: Spacing.three,
   },
@@ -116,7 +132,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   empty: {
-    textAlign: 'center',
+    textAlign: "center",
     paddingVertical: Spacing.five,
   },
 });

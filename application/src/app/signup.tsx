@@ -22,6 +22,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { PageTitleSize, Spacing } from "@/constants/theme";
 import { useAuth } from "@/hooks/auth";
+import { useI18n } from "@/i18n/i18n";
 import { ApiError, type ApiErrorKind } from "@/services/api";
 import { validateSignupForm, type SignupFieldErrors } from "@/utils/validation";
 
@@ -40,7 +41,8 @@ const ERROR_MESSAGES: Record<ApiErrorKind, string> = {
 };
 
 function messageFor(error: unknown): string {
-  if (error instanceof ApiError && error.kind === "signup-rejected") return error.message;
+  if (error instanceof ApiError && error.kind === "signup-rejected")
+    return error.message;
   if (error instanceof ApiError) return ERROR_MESSAGES[error.kind];
   if (error instanceof Error) return error.message;
   return "Something went wrong. Please try again.";
@@ -48,6 +50,7 @@ function messageFor(error: unknown): string {
 
 export default function SignupScreen() {
   const { signUp } = useAuth();
+  const { t } = useI18n();
 
   const passwordRef = useRef<TextInputInstance>(null);
   const confirmRef = useRef<TextInputInstance>(null);
@@ -59,7 +62,9 @@ export default function SignupScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<SignupFieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
-  const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null);
+  const [confirmationEmail, setConfirmationEmail] = useState<string | null>(
+    null,
+  );
   const [submitting, setSubmitting] = useState(false);
 
   const submittingRef = useRef(false);
@@ -85,7 +90,11 @@ export default function SignupScreen() {
     submittingRef.current = true;
     setSubmitting(true);
     try {
-      const result = await signUp(email.trim(), password, fullName.trim() || undefined);
+      const result = await signUp(
+        email.trim(),
+        password,
+        fullName.trim() || undefined,
+      );
       if (result === "confirmation-required") {
         setConfirmationEmail(email.trim());
         setPassword("");
@@ -118,20 +127,20 @@ export default function SignupScreen() {
             <View style={styles.content}>
               <View style={styles.brand}>
                 <ThemedText type="title" style={styles.title}>
-                  CREATE ACCOUNT
+                  {t("signup.title").toUpperCase()}
                 </ThemedText>
                 <ThemedText
                   type="small"
                   themeColor="textSecondary"
                   style={styles.subtitle}
                 >
-                  Welcome to Ostium
+                  {t("login.subtitle")}
                 </ThemedText>
               </View>
 
               <View style={styles.form}>
                 <TextField
-                  label="Full name (optional)"
+                  label={t("signup.fullNameOptional")}
                   value={fullName}
                   onChangeText={(text) => {
                     setFullName(text);
@@ -149,7 +158,7 @@ export default function SignupScreen() {
                 />
 
                 <TextField
-                  label="Email"
+                  label={t("signup.email")}
                   value={email}
                   onChangeText={(text) => {
                     setEmail(text);
@@ -169,7 +178,7 @@ export default function SignupScreen() {
 
                 <TextField
                   ref={passwordRef}
-                  label="Password"
+                  label={t("signup.password")}
                   value={password}
                   onChangeText={(text) => {
                     setPassword(text);
@@ -189,13 +198,15 @@ export default function SignupScreen() {
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={
-                        showPassword ? "Hide password" : "Show password"
+                        showPassword ? t("login.hide") : t("login.show")
                       }
                       onPress={() => setShowPassword((current) => !current)}
                       hitSlop={Spacing.two}
                     >
                       <ThemedText type="smallBold" themeColor="textSecondary">
-                        {showPassword ? "HIDE" : "SHOW"}
+                        {showPassword
+                          ? t("login.hide").toUpperCase()
+                          : t("login.show").toUpperCase()}
                       </ThemedText>
                     </Pressable>
                   }
@@ -203,7 +214,7 @@ export default function SignupScreen() {
 
                 <TextField
                   ref={confirmRef}
-                  label="Confirm password"
+                  label={t("signup.confirmPassword")}
                   value={confirmPassword}
                   onChangeText={(text) => {
                     setConfirmPassword(text);
@@ -223,8 +234,7 @@ export default function SignupScreen() {
 
                 {confirmationEmail ? (
                   <ThemedText type="small" role="status">
-                    Check {confirmationEmail} for a confirmation link. Confirm your
-                    email, then return here and sign in.
+                    {t("signup.confirmation", { email: confirmationEmail })}
                   </ThemedText>
                 ) : null}
 
@@ -240,19 +250,19 @@ export default function SignupScreen() {
                 ) : null}
 
                 <Button
-                  title="CREATE ACCOUNT"
+                  title={t("signup.submit").toUpperCase()}
                   onPress={handleSubmit}
                   loading={submitting}
                 />
 
                 <View style={styles.switchRow}>
                   <ThemedText type="small" themeColor="textSecondary">
-                    Already have an account?
+                    {t("signup.haveAccount")}
                   </ThemedText>
                   <Link href="/login" asChild>
                     <Pressable accessibilityRole="link" hitSlop={Spacing.two}>
                       <ThemedText type="smallBold" themeColor="accent">
-                        SIGN IN
+                        {t("signup.signIn").toUpperCase()}
                       </ThemedText>
                     </Pressable>
                   </Link>
