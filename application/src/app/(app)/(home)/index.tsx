@@ -68,6 +68,12 @@ export default function HomeScreen() {
                 {canManageHouses(user?.role) && (
                   <Button title="Add house" onPress={() => router.push('/houses/new')} />
                 )}
+                {error && houses.length > 0 && (
+                  <View style={styles.refreshError}>
+                    <ThemedText type="small" accessibilityRole="alert">{error}</ThemedText>
+                    <Button title="Retry houses" variant="secondary" onPress={reload} />
+                  </View>
+                )}
               </View>
             }
             ListEmptyComponent={
@@ -110,6 +116,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: Spacing.one,
     marginBottom: Spacing.three,
+  },
+  refreshError: {
+    gap: Spacing.two,
+    marginTop: Spacing.two,
   },
   cell: {
     padding: Spacing.two,
