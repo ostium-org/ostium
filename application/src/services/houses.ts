@@ -1,6 +1,7 @@
 import type { House, NewHouse } from '@/data/houses';
 import { DEMO_HOUSES } from '@/data/houses';
 import { userHasHouseAccess } from '@/data/house-access';
+import { invalidateHouseList } from '@/data/house-list';
 import { ApiError, isMockApiEnabled, type AuthUser } from '@/services/api';
 import { getSupabase } from '@/services/supabase';
 
@@ -77,6 +78,7 @@ export async function createHouse(user: AuthUser, values: NewHouse): Promise<voi
       created_by: user.id,
     });
     if (error) throw new ApiError('request-failed', 'Could not save the house. Please check your permissions and try again.');
+    invalidateHouseList();
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError('network', 'Could not save the house. Please check your connection.');
