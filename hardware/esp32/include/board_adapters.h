@@ -107,6 +107,7 @@ class WifiLink {
   void begin();
   void maintain(uint32_t nowMs);
   bool connected() const { return WiFi.status() == WL_CONNECTED; }
+  void checkInternet();
 
  private:
   const char* ssid_;
