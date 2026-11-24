@@ -1,11 +1,12 @@
 @startuml firmware-class-diagram
 !pragma layout smetana
-' Door unit firmware classes (SCRUM-54). Drawn by hand from the headers in
-' hardware/esp32/lib/ostium_core/src/ and hardware/esp32/include/.
+' Door unit firmware classes (SCRUM-54), with QR access (SCRUM-38). Drawn by
+' hand from the headers in hardware/esp32/lib/ostium_core/src/ and
+' hardware/esp32/include/.
 ' To render: java -jar plantuml.jar -tsvg docs/firmware/diagrams/class-diagram.puml
 ' Run it again with -tpng for the report image. PlantUML uses only the last -t flag.
 
-title Door unit firmware: class diagram (Assignment 1 MVP)
+title Door unit firmware: class diagram (Assignment 1 MVP and QR access)
 
 skinparam classAttributeIconSize 0
 skinparam packageStyle rectangle
@@ -42,14 +43,20 @@ package "ostium_core: core logic (plain C++, no hardware)" as core {
 
   class DuplicateList {
     + {static} kCapacity : size_t = 32
-    + contains(commandId : string) : bool
-    + add(commandId : string, expiresAtEpochMs : int64_t, nowEpochMs : int64_t) : bool
+    + contains(id : string) : bool
+    + removeExpired(nowEpochMs : int64_t, nowMs : uint32_t = 0) : void
+    + add(id : string, expiresAtEpochMs : int64_t, nowEpochMs : int64_t, nowMs : uint32_t = 0, holdMs : uint32_t = 0) : bool
+    + size() : size_t
   }
 
   class EventOutbox {
     + {static} kCapacity : size_t = 8
+    - kind_ : ReportKind
+    + EventOutbox(log : Log, kind : ReportKind = Command)
     + push(event : Event, nowMs : uint32_t) : void
-    + service(sender : EventSender, clock : Clock) : void
+    + push(eventId : string, body : string, nowMs : uint32_t, droppable : bool) : bool
+    + service(sender : EventSender, clock : Clock, retrying : bool* = nullptr) : bool
+    + size() : size_t
     + contains(eventId : string) : bool
   }
 
@@ -58,6 +65,18 @@ package "ostium_core: core logic (plain C++, no hardware)" as core {
     + body : string
     + nextAttemptMs : uint32_t
     + failures : uint32_t
+    + droppable : bool
+  }
+
+  enum ReportKind {
+    Command
+    Qr
+  }
+
+  class ReportScheduler {
+    - secondFirst_ : bool
+    + ReportScheduler(first : EventOutbox, firstSender : EventSender, second : EventOutbox, secondSender : EventSender)
+    + serviceOne(clock : Clock) : bool
   }
 
   class PollScheduler {
@@ -71,7 +90,7 @@ package "ostium_core: core logic (plain C++, no hardware)" as core {
   }
 
   class "poll_service.h" as PollService <<utility>> {
-    + {static} runPoll(fetcher : PollFetcher, clock : Clock, scheduler : PollScheduler, processor : CommandProcessor) : bool
+    + {static} runPoll(fetcher : PollFetcher, clock : Clock, scheduler : PollScheduler, processor : CommandProcessor, serverClock : ServerClock* = nullptr) : bool
   }
 
   class "poll_parser.h" as PollParser <<utility>> {
@@ -151,6 +170,167 @@ package "ostium_core: core logic (plain C++, no hardware)" as core {
   }
 }
 
+package "ostium_core: QR access (SCRUM-38)" as qr {
+
+  class QrAccess {
+    + {static} kMaxScanAgeMs : uint32_t = 2000
+    + {static} kRepeatQuietMs : uint32_t = 3000
+    + {static} kOccurredAtMarginMs : int64_t = 500
+    + {static} kMaxLifetimeMs : int64_t = 60000
+    + {static} kDenialMemoryMs : int64_t = 120000
+    + {static} kListHoldMs : uint32_t = 61000
+    - verify_ : Ed25519Verifier = verifyEd25519
+    - enabled_ : bool
+    - disabledReason_ : string
+    - unitId_ : string
+    - issuer_ : string
+    - audience_ : string
+    - lastText_ : string
+    - lastSeenMs_ : uint32_t
+    + begin(settings : QrSettings) : bool
+    + enabled() : bool
+    + handleScan(data : const char*, length : size_t, decodedAtMs : uint32_t) : QrDecision
+    + handleScan(scan : QrScan) : QrDecision
+    + revoke(credentialId : string, retainUntilEpochMs : int64_t, nowEpochMs : int64_t) : bool
+    - evaluate(data : const char*, length : size_t, detail : const char**) : QrDecision
+    - denyReported(claims : QrClaims, reason : const char*, occurredAtMs : int64_t, earliestMs : int64_t, nowMs : uint32_t) : QrDecision
+    - logDecision(decision : QrDecision, detail : const char*, length : size_t) : void
+  }
+
+  class "qr_access.h" as QrAccessFns <<utility>> {
+    + {static} drainScans(source : ScanSource, access : QrAccess, limit : size_t = 4) : size_t
+  }
+
+  class QrSettings <<struct>> {
+    + unitId : string
+    + publicKey : string
+    + keyId : string = "ostium-qr-1"
+    + issuer : string = "ostium"
+    + audience : string = "ostium-devices"
+    + allowTestKey : bool = false
+  }
+
+  class QrDecision <<struct>> {
+    + outcome : QrOutcome
+    + reason : const char*
+    + isFinal : bool
+    + reported : bool
+    + credentialId : string
+  }
+
+  enum QrOutcome {
+    Granted
+    Denied
+    Ignored
+  }
+
+  class ServerClock {
+    + {static} kDriftPpm : uint32_t = 50
+    + {static} kMaxOfflineMs : uint32_t = 259200000
+    + {static} kMaxWidthMs : int64_t = 30000
+    + {static} kBootMarginMs : int64_t = 1000
+    - anchorMs_ : uint32_t
+    - lowMs_ : int64_t
+    - highMs_ : int64_t
+    - bootTimeLatestMs_ : int64_t
+    - deviceRefused_ : bool
+    + onPollSucceeded(serverTimeMs : int64_t, requestStartedMs : uint32_t, responseArrivedMs : uint32_t) : void
+    + onPollRefused() : void
+    + tick(nowMs : uint32_t) : void
+    + bounds(nowMs : uint32_t, out : ServerTimeBounds*) : bool
+    + bootTimeLatestMs() : int64_t
+    + deviceRefused() : bool
+    + {static} driftMs(elapsedMs : uint32_t) : int64_t
+  }
+
+  class ServerTimeBounds <<struct>> {
+    + earliestMs : int64_t
+    + latestMs : int64_t
+  }
+
+  class "qr_token.h" as QrTokenFns <<utility>> {
+    + {static} verifyQrToken(text : const char*, length : size_t, key : QrKey, verify : Ed25519Verifier = verifyEd25519) : QrToken
+    + {static} makeQrKey(keyId : string, publicKeyBase64Url : string, out : QrKey*, error : const char**) : bool
+    + {static} canonicalUuid(text : string, lowercaseOut : string*) : bool
+    + {static} issuedAtMsFromSeconds(seconds : double) : int64_t
+    + {static} expiresAtMsFromSeconds(seconds : double) : int64_t
+  }
+
+  class QrKey <<struct>> {
+    + keyId : string
+    + publicKey : Ed25519PublicKey
+    + expectedHeader : string
+  }
+
+  class QrToken <<struct>> {
+    + problem : QrTokenProblem
+    + detail : const char*
+    + claims : QrClaims
+  }
+
+  class QrClaims <<struct>> {
+    + credentialId : string
+    + unitId : string
+    + issuedAtMs : int64_t
+    + expiresAtMs : int64_t
+    + issuer : string
+    + audience : string
+    + hasIssuer : bool
+    + hasAudience : bool
+    + hasSubject : bool
+    + hasOtherClaims : bool
+  }
+
+  enum QrTokenProblem {
+    None
+    Malformed
+    UnsupportedHeader
+    BadSignature
+    MalformedClaims
+  }
+
+  class "base64url.h" as Base64Url <<utility>> {
+    + {static} decodeBase64Url(text : const char*, length : size_t, out : string*) : bool
+    + {static} encodeBase64Url(data : const uint8_t*, length : size_t) : string
+  }
+
+  class "ed25519.h" as Ed25519Fns <<utility>> {
+    + {static} verifyEd25519(signature : const uint8_t[64], publicKey : Ed25519PublicKey, message : const uint8_t*, length : size_t) : bool
+    + Ed25519Verifier : type, a pointer to a function like verifyEd25519
+  }
+
+  class "qr_self_test.h" as SelfTest <<utility>> {
+    + {static} runQrSelfTest(token : const char*, publicKeyBase64Url : const char*, verify : Ed25519Verifier = verifyEd25519, clock : const Clock* = nullptr, checkMs : uint32_t* = nullptr) : bool
+  }
+
+  class "qr_event.h" as QrEventFns <<utility>> {
+    + {static} serializeQrReport(report : QrReport) : string
+    + {static} qrEventIdFor(credentialId : string, granted : bool) : string
+  }
+
+  class QrReport <<struct>> {
+    + credentialId : string
+    + granted : bool
+    + reason : string
+    + occurredAtMs : int64_t
+    + eventId() : string
+  }
+
+  class SerialScanParser {
+    + {static} kMaxLineBytes : size_t = 1024
+    - line_ : string
+    - overflow_ : bool
+    - lastWasCr_ : bool
+    + feed(c : char, token : string*, log : Log) : bool
+  }
+}
+
+package "monocypher: vendored, unmodified 4.0.2" as vendored {
+  class "monocypher-ed25519.h" as Monocypher <<utility>> {
+    + {static} crypto_ed25519_check(signature : const uint8_t[64], publicKey : const uint8_t[32], message : const uint8_t*, length : size_t) : int
+  }
+}
+
 package "ostium_core: interfaces to the hardware" as ports {
 
   interface LockOutput {
@@ -183,6 +363,15 @@ package "ostium_core: interfaces to the hardware" as ports {
     + read() : int
     + connected() : bool
     + wait() : void
+  }
+
+  interface ScanSource {
+    + next(scan : QrScan*) : bool
+  }
+
+  class QrScan <<struct>> {
+    + text : string
+    + decodedAtMs : uint32_t
   }
 }
 
@@ -223,10 +412,22 @@ package "Board adapters (Arduino-ESP32, src/ and include/)" as board {
     - clock_ : MillisClock
     - commandsUrl_ : String
     - eventsUrl_ : String
+    - qrEventsUrl_ : String
     - authorization_ : String
     + begin() : bool
     + get(body : string&) : int
     + post(body : string) : int
+    + postQrEvent(body : string) : int
+    + qrEvents() : EventSender&
+  }
+
+  class "BackendClient::QrEventSender" as QrEventSender {
+    + post(body : string) : int
+  }
+
+  class SerialScanSource {
+    - stream_ : Stream&
+    + next(scan : QrScan*) : bool
   }
 
   class WifiLink {
@@ -237,12 +438,9 @@ package "Board adapters (Arduino-ESP32, src/ and include/)" as board {
   }
 }
 
-package "Future scope (final product)" as future #EEEEEE {
-  class QrScanner <<future>> {
-    + scan() : string
-  }
-  class CredentialVerifier <<future>> {
-    + verify(payload : string) : bool
+package "Future scope (SCRUM-68)" as future #EEEEEE {
+  class CameraScanSource <<future>> {
+    + next(scan : QrScan*) : bool
   }
 }
 
@@ -270,6 +468,42 @@ PollService ..> CommandProcessor : hands poll to
 PollService ..> PollParser : parses with
 PollParser ..> PollResult : creates
 PollParser ..> Timestamp
+EventOutbox --> ReportKind : kind_
+ReportScheduler "1" --> "2" EventOutbox : one post per pass, QR first, taking turns >
+ReportScheduler "1" --> "2" EventSender
+
+' QR access associations
+QrAccess "1" --> "1" LockController : unlocks >
+QrAccess "1" --> "1" EventOutbox : queues QR reports >
+QrAccess "1" --> "1" ServerClock : reads bounds
+QrAccess "1" --> "1" Clock
+QrAccess "1" --> "1" Log
+QrAccess "1" *-- "3" DuplicateList : used_, revoked_, deniedReported_
+QrAccess "1" *-- "1" QrKey : key_
+QrAccess ..> QrSettings : begin() checks
+QrAccess ..> SelfTest : begin() runs
+QrAccess ..> QrTokenFns : verifyQrToken()
+QrAccess ..> Ed25519Fns : verify_, for the self-test and every scan
+QrAccess ..> QrDecision : returns
+QrAccess ..> QrScan : handles
+QrAccess ..> QrReport : creates
+QrAccess ..> QrEventFns : serializes reports with
+QrAccessFns ..> ScanSource : drains
+QrAccessFns ..> QrAccess : handleScan()
+QrDecision --> QrOutcome
+QrTokenFns ..> QrToken : creates
+QrTokenFns ..> QrKey : makeQrKey() builds
+QrToken "1" *-- "1" QrClaims
+QrToken --> QrTokenProblem
+QrTokenFns ..> Base64Url : decodes with
+QrTokenFns ..> Ed25519Fns : checks the signature with
+Ed25519Fns ..> Monocypher : crypto_ed25519_check()
+SelfTest ..> QrTokenFns : verifyQrToken()
+QrEventFns ..> QrReport : reads
+QrEventFns ..> Timestamp : formats occurred_at
+ServerClock ..> ServerTimeBounds : creates
+ServerClock "1" --> "1" Log
+PollService ..> ServerClock : feeds each poll to
 
 ' Realizations
 GpioLockOutput ..|> LockOutput
@@ -278,6 +512,11 @@ MillisClock ..|> Clock
 SerialLog ..|> Log
 BackendClient ..|> PollFetcher
 BackendClient ..|> EventSender
+QrEventSender ..|> EventSender
+BackendClient "1" *-- "1" QrEventSender : qrEvents_
+SerialScanSource ..|> ScanSource
+SerialScanSource "1" *-- "1" SerialScanParser : parser_
+SerialScanSource "1" --> "1" Log
 ClientSource ..|> ByteSource
 BackendClient ..> BodyReader : reads each response body with
 BodyReader ..> ByteSource : reads from
@@ -285,8 +524,7 @@ WifiLink "1" --> "1" Log
 BackendClient "1" --> "1" Log
 
 ' Future scope
-QrScanner ..> CredentialVerifier : scanned payload
-CredentialVerifier ..> LockController : unlock() on a valid credential
+CameraScanSource ..|> ScanSource
 
 legend right
   Assignment 1 classes, by the names in SCRUM-54:
@@ -295,12 +533,19 @@ legend right
   command client = BackendClient (PollFetcher), runPoll() in poll_service.h,
     readBody() in body_reader.h (size cap and time limits)
   command validator = parsePollResponse() in poll_parser.h, CommandProcessor
-  event reporter = EventOutbox, EventSender
-  clock = Clock, MillisClock, OneShotTimer
+  event reporter = EventOutbox (command and QR queues), EventSender,
+    ReportScheduler
+  clock = Clock, MillisClock, OneShotTimer, ServerClock
   Wi-Fi manager = WifiLink
+  QR scanner = ScanSource, SerialScanSource (bench build),
+    CameraScanSource (SCRUM-68)
+  credential verifier = QrAccess, verifyQrToken() in qr_token.h,
+    verifyEd25519() in ed25519.h, runQrSelfTest() in qr_self_test.h
   <<utility>> boxes are header files of free functions, not classes.
-  main.cpp creates one LockController, EventOutbox, CommandProcessor,
-  PollScheduler, and one of each board adapter, and wires them together.
+  main.cpp creates one LockController, CommandProcessor, PollScheduler,
+  ServerClock, QrAccess, and ReportScheduler, two EventOutboxes (commands
+  and QR reports), and one of each board adapter, and wires them together.
+  Only the esp32s3-bench build creates a SerialScanSource.
 endlegend
 
 @enduml

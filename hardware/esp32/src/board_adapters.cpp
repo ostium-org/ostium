@@ -2,6 +2,8 @@
 
 #include <WiFi.h>
 
+#include <utility>
+
 namespace board {
 namespace {
 
@@ -170,6 +172,7 @@ bool BackendClient::begin() {
 
   commandsUrl_ = root_ + "/devices/" + deviceId_ + "/commands";
   eventsUrl_ = root_ + "/devices/" + deviceId_ + "/events";
+  qrEventsUrl_ = root_ + "/devices/" + deviceId_ + "/qr-events";
 
   http_.setReuse(true);
 
@@ -183,6 +186,10 @@ int BackendClient::get(std::string& body) {
 
 int BackendClient::post(const std::string& body) {
   return send(eventsUrl_, &body, nullptr);
+}
+
+int BackendClient::postQrEvent(const std::string& body) {
+  return send(qrEventsUrl_, &body, nullptr);
 }
 
 int BackendClient::send(const String& url,
@@ -283,6 +290,20 @@ int BackendClient::send(const String& url,
   http_.end();
 
   return status;
+}
+
+bool SerialScanSource::next(ostium::QrScan* scan) {
+  std::string token;
+  for (int waiting = stream_.available(); waiting > 0; --waiting) {
+    const int c = stream_.read();
+    if (c < 0) break;
+    if (parser_.feed(static_cast<char>(c), &token, log_)) {
+      scan->text = std::move(token);
+      scan->decodedAtMs = millis();
+      return true;
+    }
+  }
+  return false;
 }
 
 void WifiLink::begin() {

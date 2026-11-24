@@ -28,7 +28,7 @@ Also run `npx tsc --noEmit` and `npm run lint` for the application. These checks
 
 ## Firmware unit tests
 
-The firmware suite (SCRUM-51) tests the door unit's core logic in `hardware/esp32/lib/ostium_core/`: lock and unlock timing, command checks, event reports, timestamp parsing, poll backoff, and reading response bodies with a size cap and deadlines. Each rule in the [lock command contract](firmware/lock-command-v0.md) has at least one test, and the test names match the contract. The tests live in `hardware/esp32/test/test_core/`.
+The firmware suite (SCRUM-51) tests the door unit's core logic in `hardware/esp32/lib/ostium_core/`: lock and unlock timing, command checks, event reports, timestamp parsing, poll backoff, and reading response bodies with a size cap and deadlines. Since SCRUM-38, it also tests local QR access: strict base64url and Ed25519 against the RFC 8032 vectors, token and claim checks, the server time bounds, the QR decision order, QR reports and their queue, and the bench build's serial input. Each rule in the [lock command contract](firmware/lock-command-v0.md) and the [QR access contract](firmware/qr-access-v0.md) has at least one test, and the test names match the contracts. The 119 tests live in `hardware/esp32/test/test_core/`.
 
 The suite runs on a laptop in PlatformIO's native environment, so it needs no board, backend, or network after the first run. Fakes stand in for the lock output, clock, relock timer, and network. The native project is `hardware/esp32/native-tests/`, separate from the board's configuration.
 
@@ -40,12 +40,47 @@ pio test -d hardware/esp32/native-tests
 
 The first run downloads the native platform, ArduinoJson, and Unity. The command exits with a nonzero status when any test fails. The build treats compiler warnings as errors.
 
-The `test_backend_*` tests replay historical FastAPI responses stored in
-`hardware/esp32/test/test_core/backend_responses.h`. They still check firmware
-parsing against the preserved door contract. The legacy
+The Ed25519 code is Monocypher 4.0.2, vendored unmodified in `hardware/esp32/lib/monocypher/`, so the QR tests need no crypto library or other setup. The native tests and the board compile the same files.
+
+The nine tests in `test_backend_replay.cpp` replay historical FastAPI responses
+stored in `hardware/esp32/test/test_core/backend_responses.h`. They still check
+firmware parsing against the preserved door contract. The legacy
 `hardware/esp32/tools/capture_backend_responses.py` recorder needs the FastAPI
 checkout and cannot run on this Supabase branch. For current backend behavior,
 run `deno task --config backend/supabase/deno.json test`; those handler tests do
 not establish a live board-to-Edge-Function connection.
+
+The seven tests in `test_qr_backend_replay.cpp` replay tokens and responses from the
+current Deno backend, stored in `hardware/esp32/test/test_core/qr_backend_responses.h`.
+`hardware/esp32/tools/capture_qr_backend.ts` records them: it runs the real
+`createHandler` in process against an in-memory store, with fixed clocks and fixed
+credential IDs, so the output changes only when the backend changes. It records two
+sets. The first runs on a microsecond clock. The production-clock set runs on
+`createHandler`'s default clock, `BigInt(Date.now()) * 1000n`, with `Date.now` pinned,
+so its times are whole milliseconds, as in real tokens. For that set, the tool
+computes the Q6 values with ArduinoJson's number parse and IEEE double arithmetic,
+as the firmware does, because that parse doesn't always give the nearest double.
+The tool copies the parse of ArduinoJson 7.4.3, and the three build files pin that
+release exactly. The tool fails if a build file names another version, and the
+replay tests don't build against another release. Two of the seven tests are for
+that set: the grant and its exact report body at the earliest `occurred_at` the
+door writes, and both edges of the credential's window, including the earliest
+grant of a token whose `iatMs` is 1 ms after `issued_at`. The response-table test
+also replays the set's five reports. The tool also writes the startup self-test
+vector, `hardware/esp32/lib/ostium_core/src/qr_test_vector.h`, from
+`backend/supabase/tests/python_compatibility.json`. After a change to the QR
+routes, the device routes, or that fixture, write both headers again from the
+repository root with Deno 2:
+
+```sh
+deno run --check --allow-read --allow-write=hardware/esp32/test/test_core,hardware/esp32/lib/ostium_core/src hardware/esp32/tools/capture_qr_backend.ts
+```
+
+With `--check`, the tool writes nothing, and exits with a nonzero status if either
+header differs from what it would write. The `firmware-test` CI job runs it that way:
+
+```sh
+deno run --check --allow-read hardware/esp32/tools/capture_qr_backend.ts --check
+```
 
 `test_core` defines its own `main()`, so it builds only for the native environment. The board project, `hardware/esp32/platformio.ini`, sets `test_ignore = test_core`, so `pio test` for the board skips this suite.

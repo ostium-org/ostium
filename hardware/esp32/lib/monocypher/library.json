@@ -1,0 +1,8 @@
+{
+  "name": "monocypher",
+  "version": "4.0.2",
+  "license": "BSD-2-Clause OR CC0-1.0",
+  "description": "Vendored, unmodified Monocypher 4.0.2 (Ed25519 for QR credentials)",
+  "frameworks": "*",
+  "platforms": "*"
+}

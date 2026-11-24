@@ -1,8 +1,9 @@
 @startuml firmware-use-case-diagram
 !pragma layout smetana
 ' Door unit use cases (SCRUM-55). The MVP boundary is what Assignment 1
-' demonstrates; the future-scope boundary is the final product.
+' demonstrates; the QR access boundary is what SCRUM-38 added.
 ' To render: java -jar plantuml.jar -tsvg docs/firmware/diagrams/use-case-diagram.puml
+' Run it again with -tpng for the report image. PlantUML uses only the last -t flag.
 
 title Door unit: use case diagram
 
@@ -14,7 +15,7 @@ actor "Property Manager" as Manager
 actor "Tenant" as Tenant
 actor "Guest" as Guest
 actor "Smart Access Device\n(ESP32-S3 door unit)" as Device
-actor "Backend API\n(FastAPI)" as Backend <<system>>
+actor "Backend API\n(Supabase Edge Functions)" as Backend <<system>>
 
 rectangle "Assignment 1 MVP" {
   usecase "Lock door" as Lock
@@ -26,10 +27,11 @@ rectangle "Assignment 1 MVP" {
   usecase "Reject command\n(malformed, invalid action,\nwrong door, issued before boot,\nexpired, unlock failed,\nduplicate list full)" as Reject
 }
 
-rectangle "Future scope" #EEEEEE {
+rectangle "QR access (SCRUM-38)" {
   usecase "Present QR code" as Present
   usecase "Scan QR code" as Scan
   usecase "Verify credential" as Verify
+  usecase "Report scan" as ReportScan
 }
 
 Manager --> Lock
@@ -56,17 +58,33 @@ Tenant --> Present
 Guest --> Present
 Device --> Scan
 Device --> Verify
+Device --> ReportScan
+ReportScan --> Backend
 Present ..> Scan : <<include>>
 Scan ..> Verify : <<include>>
+ReportScan ..> Verify : <<extend>>
+Timed ..> Verify : <<extend>>
 
 note right of Scan
-  The SCRUM-59 bench demo accepts one fixed code.
-  It isn't a credential check, so it stays future scope.
+  The camera is SCRUM-68. Until then,
+  the bench build reads the decoded
+  text from Serial.
 end note
 
 note right of Verify
+  Signature, unit, server time bounds,
+  single use, and expiry (Q1 to Q20).
   A valid credential runs the same
   timed unlock as an app command.
+end note
+
+note right of ReportScan
+  Only for a token whose signature
+  verified and whose unit matches,
+  while the door knows the server
+  time (Q8). Forged, malformed, and
+  foreign tokens, and transient
+  denials, are never reported.
 end note
 
 @enduml

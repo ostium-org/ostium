@@ -1,8 +1,10 @@
-// Event bodies and the event response table.
+// Event bodies and the event response table, for command events and QR
+// reports (Q18, Q19).
 
 #include <unity.h>
 
 #include "fakes.h"
+#include "qr_fakes.h"
 #include "tests.h"
 
 using fakes::FakeClock;
@@ -10,7 +12,10 @@ using fakes::FakeLog;
 using fakes::FakeSender;
 using ostium::Event;
 using ostium::EventOutbox;
+using ostium::QrReport;
+using ostium::ReportKind;
 using ostium::Result;
+using qrfakes::jtiFor;
 
 namespace {
 
@@ -22,6 +27,21 @@ Event doneEvent(const std::string& commandId) {
   event.result = Result::Done;
   event.occurredAtMs = fakes::kBaseEpochMs;
   return event;
+}
+
+// A QR report for credential jtiFor(n). A denial says expired.
+QrReport qrReport(int n, bool granted) {
+  QrReport report;
+  report.credentialId = jtiFor(n);
+  report.granted = granted;
+  if (!granted) report.reason = ostium::qr_reason::kExpired;
+  report.occurredAtMs = fakes::kBaseEpochMs;
+  return report;
+}
+
+// Queues a QR report the way QrAccess does: only denials are droppable.
+bool pushQr(EventOutbox& outbox, const QrReport& report, uint32_t nowMs) {
+  return outbox.push(report.eventId(), ostium::serializeQrReport(report), nowMs, !report.granted);
 }
 
 }  // namespace
@@ -199,4 +219,243 @@ void test_event_queue_drops_oldest_when_full() {
   TEST_ASSERT_FALSE(outbox.contains("evt-cmd-0"));
   TEST_ASSERT_TRUE(outbox.contains("evt-cmd-8"));
   TEST_ASSERT_TRUE(log.contains("dropped evt-cmd-0"));
+}
+
+void test_qr_report_body_matches_contract() {
+  // Mirrors docs/firmware/examples/qr-event-granted.json.
+  QrReport granted;
+  granted.credentialId = "55555555-5555-4555-8555-555555555555";
+  granted.granted = true;
+  granted.occurredAtMs = 1792670400623LL;
+  TEST_ASSERT_EQUAL_STRING(
+      "{\"event_id\":\"qr-55555555-5555-4555-8555-555555555555-granted\","
+      "\"credential_id\":\"55555555-5555-4555-8555-555555555555\",\"result\":\"granted\","
+      "\"reason\":null,\"occurred_at\":\"2026-10-22T12:00:00.623Z\"}",
+      ostium::serializeQrReport(granted).c_str());
+
+  // Mirrors docs/firmware/examples/qr-event-denied.json.
+  QrReport denied = granted;
+  denied.granted = false;
+  denied.reason = ostium::qr_reason::kExpired;
+  denied.occurredAtMs = 1792670465000LL;
+  TEST_ASSERT_EQUAL_STRING(
+      "{\"event_id\":\"qr-55555555-5555-4555-8555-555555555555-denied\","
+      "\"credential_id\":\"55555555-5555-4555-8555-555555555555\",\"result\":\"denied\","
+      "\"reason\":\"expired\",\"occurred_at\":\"2026-10-22T12:01:05.000Z\"}",
+      ostium::serializeQrReport(denied).c_str());
+
+  // The IDs are at most 47 characters, and never look like evt-<command_id>.
+  TEST_ASSERT_EQUAL_UINT32(47, granted.eventId().size());
+  TEST_ASSERT_EQUAL_UINT32(46, denied.eventId().size());
+  TEST_ASSERT_EQUAL_STRING("qr-55555555-5555-4555-8555-555555555555-denied",
+                           ostium::qrEventIdFor(granted.credentialId, false).c_str());
+
+  // Every reason the door reports keeps the body under 250 bytes.
+  const char* const kReportedReasons[] = {
+      ostium::qr_reason::kInvalidClaims,    ostium::qr_reason::kRevoked,
+      ostium::qr_reason::kAlreadyUsed,      ostium::qr_reason::kIssuedBeforeBoot,
+      ostium::qr_reason::kExpired,          ostium::qr_reason::kUsedListFull,
+      ostium::qr_reason::kUnlockFailed,
+  };
+  for (const char* reasonCode : kReportedReasons) {
+    denied.reason = reasonCode;
+    const std::string body = ostium::serializeQrReport(denied);
+    TEST_ASSERT_TRUE_MESSAGE(body.size() < 250, reasonCode);
+    TEST_ASSERT_TRUE_MESSAGE(body.find(reasonCode) != std::string::npos, reasonCode);
+  }
+}
+
+void test_qr_event_responses_follow_table() {
+  struct Case {
+    int status;
+    bool kept;
+  };
+  const Case cases[] = {
+      {200, false}, {201, false}, {204, false},  // Delivered.
+      {409, false},                              // Already reported.
+      {400, false}, {403, false}, {404, false},  // Dropped.
+      {413, false}, {415, false}, {422, false},
+      {401, true},  {429, true},  {500, true},  {503, true},  {-1, true},  // Retried.
+      {307, true},  {405, true},                                         // Any other status.
+  };
+  for (const Case& responseCase : cases) {
+    FakeClock clock;
+    FakeLog log;
+    EventOutbox outbox(log, ReportKind::Qr);
+    FakeSender sender;
+    sender.fallbackStatus = responseCase.status;
+    TEST_ASSERT_TRUE(pushQr(outbox, qrReport(1, false), clock.nowMs()));
+    TEST_ASSERT_TRUE(outbox.service(sender, clock));
+
+    const std::string label = "status " + std::to_string(responseCase.status);
+    TEST_ASSERT_EQUAL_MESSAGE(responseCase.kept ? 1 : 0, outbox.size(), label.c_str());
+    if (responseCase.status < 200 || responseCase.status > 299) {
+      TEST_ASSERT_TRUE_MESSAGE(log.contains(std::to_string(responseCase.status)), label.c_str());
+    }
+    if (!responseCase.kept) continue;
+    // A kept report is posted again after 2 s.
+    clock.set(1999);
+    TEST_ASSERT_FALSE_MESSAGE(outbox.service(sender, clock), label.c_str());
+    clock.set(2000);
+    TEST_ASSERT_TRUE_MESSAGE(outbox.service(sender, clock), label.c_str());
+    TEST_ASSERT_EQUAL_MESSAGE(2, sender.bodies.size(), label.c_str());
+  }
+
+  // A 403 means this device's unit doesn't match the credential's, so the log
+  // says what to check. A dropped grant also says the access log lacks it.
+  FakeClock clock;
+  FakeLog log;
+  EventOutbox outbox(log, ReportKind::Qr);
+  FakeSender sender;
+  sender.statuses = {403, 422};
+  pushQr(outbox, qrReport(1, false), clock.nowMs());
+  outbox.service(sender, clock);
+  TEST_ASSERT_TRUE(log.contains("after status 403; check that devices.unit_id for this device "
+                                "equals OSTIUM_UNIT_ID"));
+  TEST_ASSERT_FALSE(log.contains("access log lacks this unlock"));  // It was a denial.
+  pushQr(outbox, qrReport(2, true), clock.nowMs());
+  outbox.service(sender, clock);
+  TEST_ASSERT_EQUAL_UINT32(0, outbox.size());
+  TEST_ASSERT_TRUE(log.contains("dropped event " + ostium::qrEventIdFor(jtiFor(2), true) +
+                                " after status 422"));
+  TEST_ASSERT_TRUE(
+      log.contains("backend refused a granted QR report; the access log lacks this unlock"));
+
+  // The command table still retries 403.
+  FakeLog commandLog;
+  EventOutbox commands(commandLog);
+  FakeSender forbidden;
+  forbidden.fallbackStatus = 403;
+  commands.push(doneEvent("cmd-a"), clock.nowMs());
+  commands.service(forbidden, clock);
+  TEST_ASSERT_EQUAL_UINT32(1, commands.size());
+  TEST_ASSERT_FALSE(commandLog.contains("devices.unit_id"));
+}
+
+void test_qr_denial_never_evicts_a_grant_report() {
+  // With 8 grants queued, a denial isn't queued, and every grant stays.
+  {
+    FakeLog log;
+    EventOutbox outbox(log, ReportKind::Qr);
+    for (int i = 0; i < 8; ++i) TEST_ASSERT_TRUE(pushQr(outbox, qrReport(i, true), 0));
+    TEST_ASSERT_FALSE(pushQr(outbox, qrReport(8, false), 0));
+    TEST_ASSERT_TRUE(log.contains("event queue full, didn't queue " +
+                                  ostium::qrEventIdFor(jtiFor(8), false)));
+    TEST_ASSERT_EQUAL_UINT32(EventOutbox::kCapacity, outbox.size());
+    for (int i = 0; i < 8; ++i) {
+      TEST_ASSERT_TRUE(outbox.contains(ostium::qrEventIdFor(jtiFor(i), true)));
+    }
+  }
+
+  // With 7 grants and 1 denial queued, a new grant evicts the denial.
+  {
+    FakeLog log;
+    EventOutbox outbox(log, ReportKind::Qr);
+    pushQr(outbox, qrReport(0, true), 0);
+    pushQr(outbox, qrReport(1, false), 0);
+    for (int i = 2; i < 8; ++i) pushQr(outbox, qrReport(i, true), 0);
+    TEST_ASSERT_TRUE(pushQr(outbox, qrReport(8, true), 0));
+    TEST_ASSERT_EQUAL_UINT32(EventOutbox::kCapacity, outbox.size());
+    TEST_ASSERT_FALSE(outbox.contains(ostium::qrEventIdFor(jtiFor(1), false)));
+    TEST_ASSERT_TRUE(outbox.contains(ostium::qrEventIdFor(jtiFor(0), true)));
+    TEST_ASSERT_TRUE(outbox.contains(ostium::qrEventIdFor(jtiFor(8), true)));
+    TEST_ASSERT_TRUE(log.contains("event queue full, dropped " +
+                                  ostium::qrEventIdFor(jtiFor(1), false)));
+  }
+
+  // A new denial evicts the oldest denial, never a grant ahead of it.
+  {
+    FakeLog log;
+    EventOutbox outbox(log, ReportKind::Qr);
+    pushQr(outbox, qrReport(0, true), 0);
+    pushQr(outbox, qrReport(1, false), 0);
+    pushQr(outbox, qrReport(2, false), 0);
+    for (int i = 3; i < 8; ++i) pushQr(outbox, qrReport(i, true), 0);
+    TEST_ASSERT_TRUE(pushQr(outbox, qrReport(8, false), 0));
+    TEST_ASSERT_FALSE(outbox.contains(ostium::qrEventIdFor(jtiFor(1), false)));
+    TEST_ASSERT_TRUE(outbox.contains(ostium::qrEventIdFor(jtiFor(0), true)));
+    TEST_ASSERT_TRUE(outbox.contains(ostium::qrEventIdFor(jtiFor(2), false)));
+    TEST_ASSERT_TRUE(outbox.contains(ostium::qrEventIdFor(jtiFor(8), false)));
+  }
+
+  // With 8 grants queued, a new grant evicts the oldest grant.
+  {
+    FakeLog log;
+    EventOutbox outbox(log, ReportKind::Qr);
+    for (int i = 0; i < 8; ++i) pushQr(outbox, qrReport(i, true), 0);
+    TEST_ASSERT_TRUE(pushQr(outbox, qrReport(8, true), 0));
+    TEST_ASSERT_EQUAL_UINT32(EventOutbox::kCapacity, outbox.size());
+    TEST_ASSERT_FALSE(outbox.contains(ostium::qrEventIdFor(jtiFor(0), true)));
+    TEST_ASSERT_TRUE(outbox.contains(ostium::qrEventIdFor(jtiFor(8), true)));
+    TEST_ASSERT_TRUE(log.contains("event queue full, dropped " +
+                                  ostium::qrEventIdFor(jtiFor(0), true)));
+  }
+}
+
+void test_one_report_post_per_pass_qr_first() {
+  FakeClock clock;
+  FakeLog log;
+  EventOutbox qrReports(log, ReportKind::Qr);
+  EventOutbox commands(log);
+  FakeSender qrSender;
+  qrSender.statuses = {500};
+  FakeSender commandSender;
+  ostium::ReportScheduler reports(qrReports, qrSender, commands, commandSender);
+  pushQr(qrReports, qrReport(1, true), clock.nowMs());
+  commands.push(doneEvent("cmd-a"), clock.nowMs());
+
+  // Both are due, so the pass posts only the QR report.
+  TEST_ASSERT_TRUE(reports.serviceOne(clock));
+  TEST_ASSERT_EQUAL_UINT32(1, qrSender.bodies.size());
+  TEST_ASSERT_EQUAL_UINT32(0, commandSender.bodies.size());
+
+  // The QR post failed with 500 and waits 2 s, so the next pass posts the
+  // command event.
+  TEST_ASSERT_TRUE(reports.serviceOne(clock));
+  TEST_ASSERT_EQUAL_UINT32(1, qrSender.bodies.size());
+  TEST_ASSERT_EQUAL_UINT32(1, commandSender.bodies.size());
+  TEST_ASSERT_EQUAL_UINT32(0, commands.size());
+
+  // Nothing is due until the QR retry.
+  TEST_ASSERT_FALSE(reports.serviceOne(clock));
+  clock.set(1999);
+  TEST_ASSERT_FALSE(reports.serviceOne(clock));
+  clock.set(2000);
+  TEST_ASSERT_TRUE(reports.serviceOne(clock));
+  TEST_ASSERT_EQUAL_UINT32(2, qrSender.bodies.size());
+  TEST_ASSERT_EQUAL_UINT32(0, qrReports.size());
+  TEST_ASSERT_FALSE(reports.serviceOne(clock));
+}
+
+void test_failing_qr_reports_cannot_starve_command_events() {
+  FakeClock clock;
+  FakeLog log;
+  EventOutbox qrReports(log, ReportKind::Qr);
+  EventOutbox commands(log);
+  // Every QR post times out after 3 s, as if qr-events hung while /events works.
+  fakes::BlockingSender qrSender(clock, 3000);
+  FakeSender commandSender;
+  ostium::ReportScheduler reports(qrReports, qrSender, commands, commandSender);
+  for (int i = 0; i < 4; ++i) pushQr(qrReports, qrReport(i, true), clock.nowMs());
+
+  // With four slow failures queued, some QR report is due on every pass. Each
+  // new command event still posts on the next pass: QR goes first, and a QR
+  // post that fails gives the next pass to the command queue.
+  for (int i = 0; i < 20; ++i) {
+    const std::string label = "command event " + std::to_string(i);
+    commands.push(doneEvent("cmd-" + std::to_string(i)), clock.nowMs());
+    TEST_ASSERT_TRUE_MESSAGE(reports.serviceOne(clock), label.c_str());
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(1, commands.size(), label.c_str());
+    TEST_ASSERT_TRUE_MESSAGE(reports.serviceOne(clock), label.c_str());
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, commands.size(), label.c_str());
+  }
+  TEST_ASSERT_EQUAL_UINT32(20, commandSender.bodies.size());
+
+  // The QR reports kept their turns, and stay queued for their retries.
+  TEST_ASSERT_EQUAL_UINT32(4, qrReports.size());
+  size_t qrPosts = 0;
+  for (const std::string& message : log.messages) {
+    if (message.find("-granted failed with status -1") != std::string::npos) ++qrPosts;
+  }
+  TEST_ASSERT_EQUAL_UINT32(20, qrPosts);
 }

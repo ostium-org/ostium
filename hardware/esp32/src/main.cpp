@@ -1,6 +1,8 @@
 // Door unit firmware (SCRUM-58). Polls the backend for Lock and Unlock
 // commands, runs them through ostium_core, and reports one event per command.
-// docs/firmware/lock-command-v0.md defines the behavior.
+// It also checks decoded QR credentials on the door, unlocks for a valid one,
+// and reports the result (SCRUM-38). docs/firmware/lock-command-v0.md and
+// docs/firmware/qr-access-v0.md define the behavior.
 
 #include <Arduino.h>
 #include <esp_system.h>
@@ -19,6 +21,14 @@
 #include "secrets.example.h"
 #endif
 
+// A secrets.h from before SCRUM-38 has no QR settings, so QR access stays off.
+#ifndef OSTIUM_UNIT_ID
+#define OSTIUM_UNIT_ID ""
+#endif
+#ifndef OSTIUM_QR_PUBLIC_KEY
+#define OSTIUM_QR_PUBLIC_KEY ""
+#endif
+
 namespace
 {
 
@@ -33,12 +43,23 @@ namespace
       OSTIUM_DEVICE_ID, lockController, outbox, deviceClock, serialLog);
   ostium::PollScheduler scheduler;
 
+  // QR reports have their own queue, so they never evict a command event.
+  ostium::EventOutbox qrOutbox(serialLog, ostium::ReportKind::Qr);
+  ostium::ServerClock serverClock(serialLog);
+  ostium::QrAccess qrAccess(
+      lockController, qrOutbox, serverClock, deviceClock, serialLog);
+
   board::BackendClient backend(
       OSTIUM_API_ROOT,
       OSTIUM_DEVICE_ID,
       OSTIUM_DEVICE_TOKEN,
       OSTIUM_ROOT_CA,
       serialLog);
+
+  // One report post per loop pass across both queues, QR reports first, taking
+  // turns with command events while QR posts keep failing (R14, Q19).
+  ostium::ReportScheduler reports(
+      qrOutbox, backend.qrEvents(), outbox, backend);
 
   board::WifiLink wifi(
       OSTIUM_WIFI_SSID,
@@ -54,6 +75,35 @@ namespace
   constexpr uint32_t kNetworkCheckIntervalMs = 60000;
   uint32_t nextNetworkCheckMs = 0;
 
+#ifdef OSTIUM_BENCH_TOOLS
+  board::SerialScanSource serialScans(Serial, serialLog);
+#endif
+
+  ostium::QrSettings qrSettings()
+  {
+    ostium::QrSettings settings;
+    settings.unitId = OSTIUM_UNIT_ID;
+    settings.publicKey = OSTIUM_QR_PUBLIC_KEY;
+    settings.keyId = OSTIUM_QR_KEY_ID;
+    settings.issuer = OSTIUM_QR_ISSUER;
+    settings.audience = OSTIUM_QR_AUDIENCE;
+#ifdef OSTIUM_BENCH_TOOLS
+    settings.allowTestKey = true;
+#endif
+    return settings;
+  }
+
+  // Hands waiting decoded QR codes to QrAccess (Q1). Only the bench serial
+  // input feeds it so far. The camera still runs AccessPanel's own fixed-code
+  // check until a camera scan source adds:
+  // ostium::drainScans(cameraScans, qrAccess);
+  void pumpScans()
+  {
+#ifdef OSTIUM_BENCH_TOOLS
+    ostium::drainScans(serialScans, qrAccess);
+#endif
+  }
+
 } // namespace
 
 void setup()
@@ -61,6 +111,10 @@ void setup()
   // R1: Write the locked level before anything else starts.
   lockController.begin();
 
+#ifdef OSTIUM_BENCH_TOOLS
+  // Must come before Serial.begin.
+  Serial.setRxBufferSize(OSTIUM_SERIAL_RX_BUFFER);
+#endif
   Serial.begin(OSTIUM_SERIAL_BAUD);
 
   serialLog.write(
@@ -77,6 +131,18 @@ void setup()
   {
     serialLog.write("Relock timer initialized");
   }
+
+  // Runs the Ed25519 self-test on this stack, checks the QR settings, and logs
+  // "QR access on" or "QR access off". The stack line after it covers the
+  // verifier's stack use.
+  qrAccess.begin(qrSettings());
+  serialLog.write(
+      "loop stack: " + std::to_string(uxTaskGetStackHighWaterMark(nullptr)) +
+      " bytes never used");
+#ifdef OSTIUM_BENCH_TOOLS
+  serialLog.write(
+      "bench build: send 'qr <token>' on Serial to scan a QR payload");
+#endif
 
   serialLog.write("Initializing backend configuration");
   backendReady = backend.begin();
@@ -114,6 +180,7 @@ void loop()
 {
   const uint32_t nowMs = deviceClock.nowMs();
 
+  serverClock.tick(nowMs);
   wifi.maintain(nowMs);
 
   // Access panel update
@@ -133,6 +200,9 @@ void loop()
         "QR: ACCESS DENIED");
   }
 
+  // Signed QR codes work offline while the server clock is known.
+  pumpScans();
+
   // Check internet reachability periodically while Wi-Fi is connected.
   // This is diagnostic only; it does not change lock state.
   if (wifi.connected() &&
@@ -148,12 +218,14 @@ void loop()
   {
     if (scheduler.due(deviceClock.nowMs()))
     {
-      ostium::runPoll(backend, deviceClock, scheduler, processor);
+      ostium::runPoll(backend, deviceClock, scheduler, processor, &serverClock);
+      // Decide the scans that waited during the poll before the report post.
+      pumpScans();
     }
 
-    // At most one event per pass, so a slow post never holds up
-    // the next poll for long (R14).
-    outbox.service(backend, deviceClock);
+    // At most one report post per pass, so a slow post never holds up the
+    // next poll for long, and neither queue can starve the other (R14, Q19).
+    reports.serviceOne(deviceClock);
   }
 
   delay(10);

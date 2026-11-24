@@ -50,4 +50,21 @@ class EventSender {
   virtual int post(const std::string& body) = 0;
 };
 
+// One decoded QR code, as the scanner delivered it.
+struct QrScan {
+  std::string text;          // Exactly the decoded bytes. May hold any byte.
+  uint32_t decodedAtMs = 0;  // Clock time when the decode finished.
+};
+
+// Decoded QR codes waiting for the main loop. On the board, the bench build
+// reads them from Serial, and the camera (SCRUM-68) will queue them from its
+// own task. next() never blocks.
+class ScanSource {
+ public:
+  virtual ~ScanSource() = default;
+  // Moves the oldest waiting scan into *scan and returns true, or returns
+  // false right away when none is waiting.
+  virtual bool next(QrScan* scan) = 0;
+};
+
 }  // namespace ostium
