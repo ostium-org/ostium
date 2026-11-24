@@ -81,6 +81,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # The QR replay tests use headers generated from the Deno backend. This
+      # step fails when they're stale, and prints the command that writes them.
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno run --check --allow-read hardware/esp32/tools/capture_qr_backend.ts --check
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ env.PYTHON_VERSION }}

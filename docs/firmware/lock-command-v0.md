@@ -1,9 +1,9 @@
 # Lock command contract (v0)
 
-This document defines how the door unit receives Lock and Unlock commands from the backend, what it does with each command, and how it reports the result. It's the firmware side of SCRUM-48. The device routes are the FastAPI routes from SCRUM-60, described in [API](../api.md).
+This document defines how the door unit receives Lock and Unlock commands from the backend, what it does with each command, and how it reports the result. It's the firmware side of SCRUM-48. The Supabase `device-api` Edge Function serves the device routes, described in [API](../api.md). They keep the paths and bodies of the FastAPI routes from SCRUM-60, which the backend no longer runs.
 
-- **Status:** matches the FastAPI door routes merged in PR #10 (SCRUM-60). For review by the firmware owners.
-- **Version:** 0, updated October 22, 2026.
+- **Status:** matches the door routes in the Supabase `device-api` function, which keep the paths and bodies of the FastAPI routes merged in PR #10 (SCRUM-60). For review by the firmware owners.
+- **Version:** 0, updated November 16, 2026.
 - **Applies to:** the Assignment 1 MVP (due October 25, 2026).
 
 ## Scope
@@ -12,17 +12,17 @@ In scope:
 
 - A manager presses **Lock** or **Unlock** in the app. The backend stores the command, and the door polls for it over HTTPS.
 - The door checks each command, drives the lock, and reports one event per command.
-- The fixed-QR proof of concept (SCRUM-59) uses the same unlock path as an app command. See [Fixed-QR proof of concept](#fixed-qr-proof-of-concept).
+
+Signed, expiring QR credentials, which the door checks by itself (SCRUM-38), have their own contract: the [QR access contract](qr-access-v0.md), with rules Q1 to Q20. A valid QR credential uses the same lock controller as an app command (R9 to R12), and QR reports share the report loop (R14).
 
 Out of scope for v0, and planned for the final product:
 
-- Signed, expiring QR credentials checked on the door (SCRUM-38).
 - Configuration sync, revocation data, doorbell events, and snapshot upload.
-- Offline access rules.
+- An offline event buffer. In v0, events wait in RAM.
 
 For the MVP, this contract replaces the QR-era Device API. It drops `/devices/{device_id}/config` and `/devices/{device_id}/snapshots`, and it changes the body of `/devices/{device_id}/events`.
 
-Because the backend is now in the unlock path, this contract departs from the trust boundary in [Architecture](../architecture.md) and the local-validation and offline items in [Requirements](../requirements.md). Those documents still describe the QR design for the final product. [Security](../security.md) now allows remote Lock and Unlock commands from active managers and admins.
+Because the backend is in the unlock path for a command, this contract departs from the trust boundary in [Architecture](../architecture.md) and the local-validation and offline items in [Requirements](../requirements.md). QR access keeps that trust boundary: the door checks each credential itself. [Security](../security.md) also allows remote Lock and Unlock commands from active managers and admins.
 
 ## Firmware platform
 
@@ -30,7 +30,7 @@ Because the backend is now in the unlock path, this contract departs from the tr
 - **Board:** ESP32-S3 with an onboard camera. The firmware team sets the PlatformIO board ID after it records the exact model (SCRUM-49).
 - **Lock:** the rules assume a fail-secure lock that's locked when its output is off, such as a solenoid on a relay. A motor-driven lock needs different rules.
 - **Core logic:** plain C++ that doesn't include `Arduino.h`. The lock output, clock, timer, and network sit behind interfaces, so the Unity tests run on a laptop with `pio test -d hardware/esp32/native-tests` (SCRUM-51). The tests don't need a board or a backend.
-- **Libraries:** ArduinoJson 7 for JSON, and `HTTPClient` with `WiFiClientSecure` for HTTPS.
+- **Libraries:** ArduinoJson 7.4.3 for JSON, pinned exactly because the QR replay tests depend on its number parse, and `HTTPClient` with `WiFiClientSecure` for HTTPS.
 
 In this document, the *lock controller* is the core logic that decides when to lock and unlock, and the *lock output* is the GPIO pin that drives the relay or lock.
 
@@ -73,20 +73,20 @@ The firmware build reads these values from `hardware/esp32/include/secrets.h`, w
 | `OSTIUM_DEVICE_TOKEN` | This door unit's own secret, sent as a bearer token | Provided by the backend owner, never committed |
 | `OSTIUM_ROOT_CA` | PEM root certificate of the backend host | The CA for the deployed host |
 | `OSTIUM_WIFI_SSID`, `OSTIUM_WIFI_PASSWORD` | Wi-Fi network | Bench network |
-| `OSTIUM_QR_ACCESS_VALUE` | Text the fixed-QR proof of concept accepts. If it's empty, QR unlock is off. | The value in the app's placeholder QR |
-| `OSTIUM_ALLOW_PLAIN_HTTP` | Build flag that allows an `http://` API root. The `esp32s3-bench` environment defines it, for the local mock or FastAPI on a laptop. | Not defined |
+| `OSTIUM_ALLOW_PLAIN_HTTP` | Build flag that allows an `http://` API root. The `esp32s3-bench` environment defines it, for the local mock on a laptop. | Not defined |
+
+The QR access settings, `OSTIUM_UNIT_ID`, `OSTIUM_QR_PUBLIC_KEY`, `OSTIUM_QR_KEY_ID`, `OSTIUM_QR_ISSUER`, and `OSTIUM_QR_AUDIENCE`, are in the QR access contract's [Configuration](qr-access-v0.md#configuration).
 
 These are the `OSTIUM_API_ROOT` forms:
 
 | Backend | `OSTIUM_API_ROOT` |
 |---|---|
-| FastAPI service | `https://<host>/api/v1` |
-| FastAPI on a bench laptop, started with `uvicorn app.main:app --host 0.0.0.0` | `http://<laptop LAN IP>:8000/api/v1` |
+| Supabase `device-api` Edge Function | `https://<project-ref>.supabase.co/functions/v1/device-api/api/v1` |
 | Local mock on the bench network | `http://<laptop LAN IP>:<port>/api/v1` |
 
-SCRUM-62 plans to replace FastAPI with Supabase Edge Functions. If it does, `OSTIUM_API_ROOT` becomes the function URL, for example `https://<project-ref>.supabase.co/functions/v1/<function>/api/v1`. The functions must be deployed with JWT verification off (`--no-verify-jwt`), because the door's bearer token isn't a Supabase JWT. The paths, bodies, and status codes in this document must stay the same.
+The backend runs as Supabase Edge Functions, and FastAPI is removed. `device-api` runs with the platform's JWT check off (`verify_jwt = false` in `backend/supabase/config.toml`), because the door's bearer token isn't a Supabase JWT, and the handler checks the token itself. Its door routes keep the paths, bodies, and status codes in this document.
 
-The firmware removes a trailing slash from `OSTIUM_API_ROOT` and adds only `/devices/{device_id}/commands` or `/devices/{device_id}/events`. It doesn't follow redirects.
+The firmware removes a trailing slash from `OSTIUM_API_ROOT` and adds only `/devices/{device_id}/commands`, `/devices/{device_id}/events`, or `/devices/{device_id}/qr-events` (for QR reports). It doesn't follow redirects.
 
 ## Device authentication
 
@@ -128,7 +128,7 @@ When there are no commands, `commands` is `[]`. The door handles at most the fir
 
 | Field | Required | Door's use |
 |---|---|---|
-| `server_time` | Yes | Reference time for R4 and R5, because the door has no real-time clock |
+| `server_time` | Yes | Reference time for R4 and R5, because the door has no real-time clock. It also narrows the QR time bounds (Q10). |
 | `commands` | Yes | Commands to run, in this order |
 | `command_id` | Yes | Duplicate check, and the source of the event ID |
 | `action` | Yes | `lock` or `unlock` |
@@ -137,6 +137,8 @@ When there are no commands, `commands` is `[]`. The door handles at most the fir
 | `expires_at` | Yes | Expiry check |
 
 The door ignores any other fields. The backend writes timestamps with 6 fractional digits, or none on a whole second, and R15 accepts both.
+
+`runPoll()` also feeds `ServerClock`, which QR access takes its time from. A good poll gives it `server_time`, the request start, and the response arrival, and a `401` poll pauses QR access until a poll succeeds. See the QR access contract's [Time model](qr-access-v0.md#time-model). This doesn't change how the door handles commands.
 
 ## Rules the door follows
 
@@ -157,7 +159,7 @@ Each rule has unit tests in `hardware/esp32/test/test_core/` (SCRUM-51), with th
 | R11 | Lock relocks right away and ends an unlock early. Lock on a locked door reports `done`. | `test_lock_during_unlock_relocks_immediately` |
 | R12 | A network error never unlocks the door. The relock runs from a one-shot `esp_timer` callback, behind the timer interface, that writes the lock output itself. It fires on time while the main loop is blocked in an HTTP request, DNS lookup, TLS handshake, Wi-Fi reconnect, or QR decode. Network code never writes the lock output. | `test_network_error_keeps_door_locked`, `test_relock_fires_while_request_blocks` |
 | R13 | Each command with a usable `command_id` gets at most one event, and its `event_id` is `evt-` followed by the `command_id`. A command gets no event if the door drops the event (see [How the door handles each response](#how-the-door-handles-each-response)) or if the command has no usable `command_id` (R7). | `test_event_id_derives_from_command_id` |
-| R14 | The door retries a failed event post without blocking lock control or later polls. | `test_failed_event_post_does_not_block_lock_control` |
+| R14 | The door retries a failed event post without blocking lock control, later polls, or QR scans. At most one report post per loop pass, QR reports first. After a QR post that will be retried, command events go first until one posts, so failing QR reports can't hold up command events. | `test_failed_event_post_does_not_block_lock_control`, `test_failing_qr_reports_cannot_starve_command_events` |
 | R15 | The door parses ISO 8601 timestamps with 0 to 9 fractional digits, ending in `Z` or a `±hh:mm` offset. | `test_timestamp_parser_accepts_utc_formats` |
 | R16 | A bad poll response runs nothing. The door treats the poll as failed, runs none of its commands, posts no events for them, and backs off, in any of these cases: the status isn't `200`, the body isn't valid JSON (including a raw control character inside a string), is over 8 KiB, or has anything but whitespace after the JSON, `server_time` is missing or can't be parsed, or `commands` isn't an array. The parser also accepts single-quoted strings and unquoted keys, which the backend never sends. | `test_bad_poll_response_runs_nothing` |
 
@@ -237,14 +239,16 @@ Request bodies stay under 1 KiB.
 
 The retry queue holds 8 events. When it's full, the door drops the oldest event and logs it.
 
+QR reports use a separate 8-entry queue, so they never evict a command event. Their response table differs only for `403`, as the QR access contract's [response table](qr-access-v0.md#how-the-door-handles-each-response) says. The command response table above doesn't change.
+
 ## Errors and backoff
 
 - The door starts a poll every 1,500 ms, measured from the start of one poll to the start of the next, and reuses the TLS connection between polls (`HTTPClient::setReuse(true)`). If a poll is still running when the next one is due, the next one starts as soon as it finishes.
 - After a failed poll, the door waits 2 seconds before the next one, then 4, then 8. It stays at 8 seconds until a poll succeeds, and then returns to 1,500 ms. A failed poll is a timeout, a network error, or any response that R16 treats as bad.
 - During an outage, a command can expire before the door's next attempt. The backend then stops returning it, and the door stays locked.
 - The door stays locked through every error, including `401`, and logs the status.
-- The door logs error bodies but doesn't depend on their shape. The FastAPI service returns `{"detail": "..."}`.
-- When Wi-Fi drops, the door stays locked and keeps trying to reconnect. App commands resume after it reconnects. The fixed QR code still works while the door is offline.
+- The door logs error bodies but doesn't depend on their shape. The backend returns `{"detail": "..."}`.
+- When Wi-Fi drops, the door stays locked and keeps trying to reconnect. App commands resume after it reconnects. Signed QR codes keep working for up to 72 hours after the last good poll, as the [QR access contract](qr-access-v0.md#offline-and-waiting) describes.
 
 ## Timing
 
@@ -261,24 +265,12 @@ The retry queue holds 8 events. When it's full, the door drops the oldest event 
 | Command IDs kept for the duplicate check | Up to 32, each until its command expires |
 | Event retry queue | 8 events |
 | Largest poll response | 8 KiB |
-| Wait after a denied QR scan | 1,000 ms |
-
-## Fixed-QR proof of concept
-
-The SCRUM-59 proof of concept lets the door open for one fixed QR code. The app's QR screen shows that code while `USE_QR_PLACEHOLDER` is `true` in `application/src/app/(app)/qr-code.tsx`.
-
-- When the decoded text equals `OSTIUM_QR_ACCESS_VALUE`, the door calls the same unlock as an app command, so R9 to R12 apply.
-- If `OSTIUM_QR_ACCESS_VALUE` is empty, QR unlock is off. An empty or failed decode never matches.
-- The door denies and logs any other code with a reason, and then waits 1 second before the next scan.
-- The door doesn't report QR scans to the backend in v0, because the backend has no route for them.
-
-A fixed code never expires and can't be revoked. Anyone with a copy of it can open the door, so it's a bench demo only. The app also commits this code as `application/assets/images/qr-placeholder.png`, so treat the value as public even though `secrets.h` is ignored. The final product uses signed, expiring credentials checked on the door (SCRUM-38).
 
 ## What the backend does
 
-The FastAPI routes merged in PR #10 (`backend/app/routers/access.py`) behave like this. For the full description, see [API](../api.md).
+The `ostium-api` and `device-api` Edge Functions (`backend/supabase/functions/_shared/api.ts`) behave like this, as the FastAPI routes merged in PR #10 did. For the full description, see [API](../api.md).
 
-- They serve the three routes under `/api/v1`, at the exact paths in this document, with no trailing slash. A route declared with a trailing slash would answer the door with `307`, and the door doesn't follow redirects.
+- They serve the three routes under `/api/v1`, at the exact paths in this document. A path with a trailing slash gets `404`. The door never sends one, and it doesn't follow redirects.
 - They look up `{device_id}` and `{door_id}` in `devices.device_key`, and they check the device token's SHA-256 digest against `devices.credential_hash`.
 - They set `expires_at` to 10 seconds after `issued_at`.
 - A poll returns only this device's unexpired, unreported commands, ordered by `issued_at` and then `command_id`. Polling doesn't consume commands, and a command stops appearing once it has a report.
@@ -292,12 +284,12 @@ Before a bench run, someone with database access creates the door unit's `device
 
 ## Testing
 
-- **Unit tests (SCRUM-51):** `pio test -d hardware/esp32/native-tests`, run from the repository root, runs the R1 to R16 tests with a fake lock output, clock, timer, and network. For details, see [Testing](../testing.md#firmware-unit-tests).
+- **Unit tests (SCRUM-51):** `pio test -d hardware/esp32/native-tests`, run from the repository root, runs the R1 to R16 tests with a fake lock output, clock, timer, and network. The same suite runs the Q1 to Q20 tests from the [QR access contract](qr-access-v0.md#testing). For details, see [Testing](../testing.md#firmware-unit-tests).
 - **Mock backend (SCRUM-58):** to test the polling code on the bench without the real backend, run a local mock that serves the two device routes.
   - For polls, the mock returns bodies shaped like the `poll-response` files in the [example JSON files](examples/). It sets `server_time` to its current UTC time, and sets `issued_at` and `expires_at` relative to it. With the fixed example timestamps, R5 could reject a command depending on how soon after startup the first poll arrives.
   - For events, the mock returns `200` with `{"event_id": ..., "command_id": ..., "recorded": true}`, as the real backend does. The event example files show what the door posts.
-- **Replay tests:** `hardware/esp32/tools/capture_backend_responses.py` runs the real FastAPI routes in process and records their responses in `hardware/esp32/test/test_core/backend_responses.h`. The `test_backend_*` tests run those responses through the firmware core and check that the firmware writes the exact event bodies the backend accepted. To record them again after a backend change, see [Testing](../testing.md#firmware-unit-tests).
-- **Integration with the real backend:** run FastAPI on a laptop as [backend setup](../../backend/readme.md) describes, and follow the walkthrough in [API](../api.md#thursday-walkthrough) with the door unit as the device.
+- **Replay tests:** the nine tests in `test_backend_replay.cpp` run historical responses from the removed FastAPI backend, stored in `hardware/esp32/test/test_core/backend_responses.h`, through the firmware core. They check that the firmware writes the exact event bodies that backend accepted. `hardware/esp32/tools/capture_backend_responses.py` recorded them, and it needs the FastAPI backend, so it can't run against the Supabase backend and these fixtures can't be recorded again. For current backend behavior, run `deno task --config backend/supabase/deno.json test`, as [Testing](../testing.md#firmware-unit-tests) describes. The QR replay tests use Deno captures, and are in the [QR access contract](qr-access-v0.md#testing).
+- **Integration with the real backend:** deploy the functions as [Supabase setup](../../backend/supabase/README.md) describes, and follow the walkthrough in [API](../api.md#thursday-walkthrough) with the door unit as the device.
 - **Certificates:** before integration, run the mock over HTTPS at least once, with a self-signed CA loaded as `OSTIUM_ROOT_CA`. Then load a different CA, and confirm that every request fails and the door stays locked.
 - **Bench tests (SCRUM-52):**
   - Boot and reset behavior, including a reset and a forced crash during an unlock. For the crash, measure how long the relay stays on.

@@ -192,7 +192,8 @@ local shell. Do not put tokens into committed scripts or shared logs.
 If the command expired during the walkthrough, reports still succeed. Repeat
 with a fresh command to demonstrate disappearance due to acknowledgement
 before its ten-second expiry. QR issuance can be checked separately with an
-active unit UUID and user bearer token; firmware verification is separate work.
+active unit UUID and user bearer token; to check a token on a door unit, follow
+the [QR bench procedure](firmware/qr-access-v0.md#bench-procedure).
 
 ## Rotating QR access confirmation
 
@@ -247,7 +248,17 @@ a namespace with command reports, so use distinct IDs for separate events.
 The app polls every two seconds while its QR screen is active, tracks replaced codes
 for 15 seconds after replacement or expiry, and stops on confirmed success. Network
 errors never imply access. No database migration is required. Deploy both functions
-and configure signing secrets before distributing the updated app. Existing firmware
-does not yet validate/report QR scans: the reader must verify the signed token and
-confirm access locally before sending a granted report. Test fixtures exercise the
-contract without claiming physical door operation.
+and configure signing secrets before distributing the updated app.
+
+The door unit verifies each token locally and reports the result, as the
+[QR access contract](firmware/qr-access-v0.md) defines. Its event IDs are
+`qr-<credential_id>-granted` and `qr-<credential_id>-denied`. `occurred_at` is the
+earliest possible server time at the decision minus 500 ms, so it is never in the
+server's future, and a granted report always falls inside the credential's window.
+The door reports only tokens whose signature verified and whose `unit_id` matches
+its own unit. Each credential has one granted and one denied event ID. The backend
+keys reports by device and event ID, so it records at most one report of each kind
+per credential for each door device. Single use is per door, so on a unit with
+several doors, one code can produce a granted report from each door; see the
+contract's [known limits](firmware/qr-access-v0.md#known-limits). The firmware tests
+replay responses from these handlers; a run on a physical door is still pending.

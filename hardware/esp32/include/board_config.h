@@ -30,3 +30,24 @@
 #ifndef OSTIUM_SERIAL_BAUD
 #define OSTIUM_SERIAL_BAUD 115200
 #endif
+
+// Signed QR access (SCRUM-38). Each value must match the backend's setting of
+// the same name without OSTIUM_, or the door denies every QR code.
+#ifndef OSTIUM_QR_KEY_ID
+#define OSTIUM_QR_KEY_ID "ostium-qr-1"  // QR_KEY_ID
+#endif
+
+#ifndef OSTIUM_QR_ISSUER
+#define OSTIUM_QR_ISSUER "ostium"  // QR_ISSUER
+#endif
+
+#ifndef OSTIUM_QR_AUDIENCE
+#define OSTIUM_QR_AUDIENCE "ostium-devices"  // QR_AUDIENCE
+#endif
+
+// The Serial receive buffer in the bench build. A pasted "qr <token>" line is
+// about 460 bytes, and the 256-byte default loses the rest while loop() is
+// blocked in a request.
+#ifndef OSTIUM_SERIAL_RX_BUFFER
+#define OSTIUM_SERIAL_RX_BUFFER 2048
+#endif

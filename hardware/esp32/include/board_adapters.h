@@ -60,7 +60,8 @@ class SerialLog : public ostium::Log {
 
 // Talks to the backend's device routes over HTTPS, or over plain HTTP in the
 // bench build. Each request carries the device token. The firmware never calls
-// setInsecure() and doesn't follow redirects.
+// setInsecure() and doesn't follow redirects. As an EventSender, it posts
+// command events. qrEvents() posts QR reports.
 class BackendClient : public ostium::PollFetcher, public ostium::EventSender {
  public:
   static constexpr uint32_t kTimeoutMs = 3000;
@@ -80,7 +81,21 @@ class BackendClient : public ostium::PollFetcher, public ostium::EventSender {
   int get(std::string& body) override;
   int post(const std::string& body) override;
 
+  // Posts one QR report to .../qr-events, the same way post() sends an event.
+  int postQrEvent(const std::string& body);
+  // The sender for the QR outbox (Q19).
+  ostium::EventSender& qrEvents() { return qrEvents_; }
+
  private:
+  class QrEventSender : public ostium::EventSender {
+   public:
+    explicit QrEventSender(BackendClient& client) : client_(client) {}
+    int post(const std::string& body) override { return client_.postQrEvent(body); }
+
+   private:
+    BackendClient& client_;
+  };
+
   int send(const String& url, const std::string* requestBody, std::string* responseBody);
 
   String root_;
@@ -95,6 +110,25 @@ class BackendClient : public ostium::PollFetcher, public ostium::EventSender {
   HTTPClient http_;
   String commandsUrl_;
   String eventsUrl_;
+  String qrEventsUrl_;
+  QrEventSender qrEvents_{*this};
+};
+
+// Reads "qr <token>" lines from a stream, such as Serial, as if the camera had
+// decoded each token (Q1). A line can end in CR, LF, or CRLF, so any serial
+// terminal works. Only the bench build creates one. next() reads only
+// the bytes already waiting, so it never blocks, and it stops after the first
+// token, so later lines wait in the stream for the next call.
+class SerialScanSource : public ostium::ScanSource {
+ public:
+  SerialScanSource(Stream& stream, ostium::Log& log) : stream_(stream), log_(log) {}
+
+  bool next(ostium::QrScan* scan) override;
+
+ private:
+  Stream& stream_;
+  ostium::Log& log_;
+  ostium::SerialScanParser parser_;
 };
 
 // Joins the Wi-Fi network and reconnects after it drops, without blocking
