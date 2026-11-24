@@ -6,8 +6,11 @@
 #include <esp_system.h>
 #include <ostium_core.h>
 
+#include <string>
+
 #include "board_adapters.h"
 #include "board_config.h"
+#include "access_panel.h"
 
 #if __has_include("secrets.h")
 #include "secrets.h"
@@ -16,40 +19,45 @@
 #include "secrets.example.h"
 #endif
 
-namespace {
+namespace
+{
 
-board::SerialLog serialLog;
-board::MillisClock deviceClock;
-board::GpioLockOutput lockOutput(OSTIUM_LOCK_PIN, OSTIUM_LOCK_ACTIVE_HIGH);
-board::EspOneShotTimer relockTimer;
-ostium::LockController lockController(
-    lockOutput, relockTimer, OSTIUM_UNLOCK_MS);
-ostium::EventOutbox outbox(serialLog);
-ostium::CommandProcessor processor(
-    OSTIUM_DEVICE_ID, lockController, outbox, deviceClock, serialLog);
-ostium::PollScheduler scheduler;
+  board::SerialLog serialLog;
+  board::MillisClock deviceClock;
+  board::GpioLockOutput lockOutput(OSTIUM_LOCK_PIN, OSTIUM_LOCK_ACTIVE_HIGH);
+  board::EspOneShotTimer relockTimer;
+  ostium::LockController lockController(
+      lockOutput, relockTimer, OSTIUM_UNLOCK_MS);
+  ostium::EventOutbox outbox(serialLog);
+  ostium::CommandProcessor processor(
+      OSTIUM_DEVICE_ID, lockController, outbox, deviceClock, serialLog);
+  ostium::PollScheduler scheduler;
 
-board::BackendClient backend(
-    OSTIUM_API_ROOT,
-    OSTIUM_DEVICE_ID,
-    OSTIUM_DEVICE_TOKEN,
-    OSTIUM_ROOT_CA,
-    serialLog);
+  board::BackendClient backend(
+      OSTIUM_API_ROOT,
+      OSTIUM_DEVICE_ID,
+      OSTIUM_DEVICE_TOKEN,
+      OSTIUM_ROOT_CA,
+      serialLog);
 
-board::WifiLink wifi(
-    OSTIUM_WIFI_SSID,
-    OSTIUM_WIFI_PASSWORD,
-    OSTIUM_WIFI_RETRY_MS,
-    serialLog);
+  board::WifiLink wifi(
+      OSTIUM_WIFI_SSID,
+      OSTIUM_WIFI_PASSWORD,
+      OSTIUM_WIFI_RETRY_MS,
+      serialLog);
 
-bool backendReady = false;
+  // Access panel
+  board::AccessPanel accessPanel;
 
-constexpr uint32_t kNetworkCheckIntervalMs = 60000;
-uint32_t nextNetworkCheckMs = 0;
+  bool backendReady = false;
 
-}  // namespace
+  constexpr uint32_t kNetworkCheckIntervalMs = 60000;
+  uint32_t nextNetworkCheckMs = 0;
 
-void setup() {
+} // namespace
+
+void setup()
+{
   // R1: Write the locked level before anything else starts.
   lockController.begin();
 
@@ -60,19 +68,25 @@ void setup() {
       " starting, locked, reset reason " +
       std::to_string(static_cast<int>(esp_reset_reason())));
 
-  if (!relockTimer.begin()) {
+  if (!relockTimer.begin())
+  {
     serialLog.write(
         "ERROR: couldn't create the relock timer; every unlock will be refused");
-  } else {
+  }
+  else
+  {
     serialLog.write("Relock timer initialized");
   }
 
   serialLog.write("Initializing backend configuration");
   backendReady = backend.begin();
 
-  if (backendReady) {
+  if (backendReady)
+  {
     serialLog.write("Backend configuration OK");
-  } else {
+  }
+  else
+  {
     serialLog.write(
         "ERROR: backend configuration failed; API polling disabled");
   }
@@ -80,26 +94,60 @@ void setup() {
   serialLog.write("Initializing Wi-Fi");
   wifi.begin();
 
+  // Access Panel Initialization
+  if (!accessPanel.begin())
+  {
+    serialLog.write(
+        "ERROR: access panel initialization failed");
+  }
+  else
+  {
+    serialLog.write("Access panel initialized");
+  }
+
   nextNetworkCheckMs = millis() + kNetworkCheckIntervalMs;
+
+  serialLog.write("Ostium Core startup complete");
 }
 
-void loop() {
+void loop()
+{
   const uint32_t nowMs = deviceClock.nowMs();
 
   wifi.maintain(nowMs);
 
+  // Access panel update
+  accessPanel.update(nowMs);
+
+  // QR code processing
+  const board::AccessResult qrResult = accessPanel.processQr();
+
+  if (qrResult == board::AccessResult::Granted)
+  {
+    serialLog.write(
+        "QR: ACCESS GRANTED");
+  }
+  else if (qrResult == board::AccessResult::Denied)
+  {
+    serialLog.write(
+        "QR: ACCESS DENIED");
+  }
+
   // Check internet reachability periodically while Wi-Fi is connected.
   // This is diagnostic only; it does not change lock state.
   if (wifi.connected() &&
-      ostium::reached(nowMs, nextNetworkCheckMs)) {
+      ostium::reached(nowMs, nextNetworkCheckMs))
+  {
     serialLog.write("NET: periodic connectivity check starting");
     wifi.checkInternet();
     nextNetworkCheckMs = deviceClock.nowMs() +
                          kNetworkCheckIntervalMs;
   }
 
-  if (backendReady && wifi.connected()) {
-    if (scheduler.due(deviceClock.nowMs())) {
+  if (backendReady && wifi.connected())
+  {
+    if (scheduler.due(deviceClock.nowMs()))
+    {
       ostium::runPoll(backend, deviceClock, scheduler, processor);
     }
 
