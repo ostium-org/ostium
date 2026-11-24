@@ -22,7 +22,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { PageTitleSize, Spacing } from "@/constants/theme";
 import { useAuth } from "@/hooks/auth";
-import { ApiError, type ApiErrorKind } from "@/services/api";
+import { ApiError, type ApiErrorKind, type SignupAccountType } from "@/services/api";
 import { validateSignupForm, type SignupFieldErrors } from "@/utils/validation";
 
 const ERROR_MESSAGES: Record<ApiErrorKind, string> = {
@@ -48,6 +48,7 @@ function messageFor(error: unknown): string {
 
 export default function SignupScreen() {
   const { signUp } = useAuth();
+  const [accountType, setAccountType] = useState<SignupAccountType>("tenant");
 
   const passwordRef = useRef<TextInputInstance>(null);
   const confirmRef = useRef<TextInputInstance>(null);
@@ -85,7 +86,7 @@ export default function SignupScreen() {
     submittingRef.current = true;
     setSubmitting(true);
     try {
-      const result = await signUp(email.trim(), password, fullName.trim() || undefined);
+      const result = await signUp(email.trim(), password, fullName.trim() || undefined, accountType);
       if (result === "confirmation-required") {
         setConfirmationEmail(email.trim());
         setPassword("");
@@ -130,6 +131,22 @@ export default function SignupScreen() {
               </View>
 
               <View style={styles.form}>
+                <ThemedText type="smallBold">Account type</ThemedText>
+                <Button
+                  title={accountType === "tenant" ? "Tenant (selected)" : "Tenant"}
+                  variant={accountType === "tenant" ? "primary" : "secondary"}
+                  onPress={() => setAccountType("tenant")}
+                  disabled={submitting}
+                />
+                <Button
+                  title={accountType === "landlord" ? "Landlord (selected)" : "Landlord"}
+                  variant={accountType === "landlord" ? "primary" : "secondary"}
+                  onPress={() => setAccountType("landlord")}
+                  disabled={submitting}
+                />
+                <ThemedText type="small" themeColor="textSecondary">
+                  Choosing Landlord does not automatically grant manager access.
+                </ThemedText>
                 <TextField
                   label="Full name (optional)"
                   value={fullName}
