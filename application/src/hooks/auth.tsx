@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { AppState, Platform } from 'react-native';
 
-import { isMockApiEnabled, loadProfile, login, signup, type AuthUser } from '@/services/api';
+import { isMockApiEnabled, loadProfile, login, signup, type AuthUser, type SignupAccountType } from '@/services/api';
 import { observeSession, type AuthState } from '@/services/session';
 import { getSupabase } from '@/services/supabase';
 
@@ -9,7 +9,12 @@ type AuthContextValue = {
   user: AuthUser | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName?: string) => Promise<'signed-in' | 'confirmation-required'>;
+  signUp: (
+    email: string,
+    password: string,
+    fullName?: string,
+    accountType?: SignupAccountType,
+  ) => Promise<'signed-in' | 'confirmation-required'>;
   signOut: () => Promise<void>;
 };
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -46,8 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const result = await login(email, password);
     if (isMockApiEnabled()) setState({ user: result.user, isLoading: false });
   }, []);
-  const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
-    const result = await signup(email, password, fullName);
+  const signUp = useCallback(async (
+    email: string,
+    password: string,
+    fullName?: string,
+    accountType?: SignupAccountType,
+  ) => {
+    const result = await signup(email, password, fullName, accountType);
     if ('confirmationRequired' in result) return 'confirmation-required' as const;
     if (isMockApiEnabled()) setState({ user: result.user, isLoading: false });
     return 'signed-in' as const;

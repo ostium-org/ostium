@@ -18,9 +18,28 @@ describe('direct Supabase authentication', () => {
     expect(result.accessToken).toBe('session-token');
     expect(client.from).toHaveBeenCalledWith('profiles');
   });
-  test('sends only full_name in signup metadata', async () => {
+    test('defaults the requested account type to tenant and trims the name', async () => {
     await signup(user.email, 'password123', '  Tenant  ');
-    expect(client.auth.signUp).toHaveBeenCalledWith({ email: user.email, password: 'password123', options: { data: { full_name: 'Tenant' } } });
+
+    expect(client.auth.signUp).toHaveBeenCalledWith({
+      email: user.email,
+      password: 'password123',
+      options: {
+        data: { full_name: 'Tenant', requested_account_type: 'tenant' },
+      },
+    });
+  });
+
+  test('sends a landlord request without sending a permission role', async () => {
+    await signup(user.email, 'password123', undefined, 'landlord');
+
+    expect(client.auth.signUp).toHaveBeenCalledWith({
+      email: user.email,
+      password: 'password123',
+      options: {
+        data: { requested_account_type: 'landlord' },
+      },
+    });
   });
   test.each(['email_exists', 'user_already_exists'])('explains duplicate registration (%s)', async (code) => {
     client.auth.signUp.mockResolvedValue({ data: { session: null, user }, error: { code, status: 422 } });

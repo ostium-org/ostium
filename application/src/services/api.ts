@@ -3,6 +3,7 @@ import { getSupabase, supabaseUrl, supabaseKey } from "@/services/supabase";
 
 //added this because active Supabase profiles can also belong to admins.
 export type UserRole = "tenant" | "manager" | "admin";
+export type SignupAccountType = "tenant" | "landlord";
 
 export type AuthUser = {
   id: string;
@@ -269,12 +270,25 @@ export async function login(email: string, password: string): Promise<LoginResul
   return sessionResult(data.session);
 }
 
-export async function signup(email: string, password: string, fullName?: string): Promise<SignupResult> {
+export async function signup(
+  email: string,
+  password: string,
+  fullName?: string,
+  accountType: SignupAccountType = "tenant",
+): Promise<SignupResult> {
   if (MOCK_ENABLED) return { accessToken: "dev-token-tenant", expiresIn: 3600,
     user: { id: "dev-tenant", email: email.trim().toLowerCase(), name: fullName, role: "tenant" } };
   configured();
-  const { data, error } = await (await getSupabase()).auth.signUp({ email, password,
-    options: { data: fullName?.trim() ? { full_name: fullName.trim() } : {} } });
+  const { data, error } = await (await getSupabase()).auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        requested_account_type: accountType,
+        ...(fullName?.trim() ? { full_name: fullName.trim() } : {}),
+      },
+    },
+  });
   if (error) {
     if (__DEV__) console.warn("Supabase signup rejected", { code: error.code, status: error.status, name: error.name });
     throw signupError(error);
