@@ -4,18 +4,6 @@
  */
 
 #include "collections.h"
-// Modification my me
-#include <stdlib.h>
-#include <string.h>
-
-// Direct definitions for the legacy memory allocations
-extern void *heap_caps_malloc(unsigned int size, unsigned int caps);
-#define MALLOC_CAP_SPIRAM 0x00000400
-
-#ifndef ps_malloc
-#define ps_malloc(size) heap_caps_malloc(size, MALLOC_CAP_SPIRAM)
-#endif
-// End of modification
 #define CHAR_BITS (sizeof(char) * 8)
 #define CHAR_MASK (CHAR_BITS - 1)
 #define CHAR_SHIFT IM_LOG2(CHAR_MASK)
