@@ -1,8 +1,12 @@
-# GitHub Actions CI for Ostium (Assignment 1, Part C: SCRUM-46 and SCRUM-53).
+# GitHub Actions CI for Ostium (Assignment 1, Part C: SCRUM-46 and SCRUM-53;
+# delivery for Assignment 2, Part C).
 #
 # A push to a pull request starts the build jobs. If every build passes, the
 # test jobs run. If every test passes in a pull request that targets main, the
-# auto-merge job merges the pull request. For setup, see docs/ci.md.
+# auto-merge job merges the pull request and starts a run on main, or, if the
+# pull request has to wait for something such as a review, leaves the merge to
+# a person. When a run on main passes, firmware-release publishes the door
+# firmware as a GitHub release. For setup, see docs/ci.md.
 
 name: CI
 
@@ -44,6 +48,15 @@ jobs:
       - run: pip install "platformio==$PLATFORMIO_VERSION"
       - run: pio run -d hardware/esp32 -e esp32s3
       - run: pio run -d hardware/esp32 -e esp32s3-bench
+      # Delivery (Assignment 2, Part C): package both builds on every run, so a
+      # packaging problem fails the pull request. firmware-release publishes the
+      # package from main. The images hold secrets.example.h's placeholders.
+      - run: hardware/esp32/tools/package_firmware.sh dist "r$GITHUB_RUN_NUMBER" "$GITHUB_SHA"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: firmware-release
+          path: dist/
+          if-no-files-found: error
 
   backend-build:
     runs-on: ubuntu-latest
@@ -151,16 +164,91 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
+      actions: write
       contents: write
       pull-requests: write
     steps:
       # If nothing else blocks the pull request, gh merges it right away, and
       # --match-head-commit makes GitHub refuse if someone pushed again after
       # this run started. If main requires more, such as an approving review,
-      # --auto turns on auto-merge, and GitHub merges once the requirement is met.
+      # --auto makes gh turn on GitHub's auto-merge instead of failing, and the
+      # next step turns it back off.
       - run: gh pr merge "$PR_URL" --merge --auto --match-head-commit "$HEAD_SHA"
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           PR_URL: ${{ github.event.pull_request.html_url }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      # GitHub doesn't start a run for a push made with this job's token, but
+      # it does for workflow_dispatch. So once the merge is done, start a run
+      # on main: it builds and tests the merged code, then firmware-release
+      # publishes it. GitHub's auto-merge would merge later on behalf of this
+      # job's token, so that merge would start no run on main and publish no
+      # release. So if the pull request has to wait, turn auto-merge off and
+      # leave the merge to a person: their merge is a push to main, which
+      # starts a run there.
+      - run: |
+          state=$(gh pr view "$PR_URL" --json state --jq .state)
+          if [ "$state" != MERGED ]; then
+            # This fails if GitHub merged in the meantime; the check below sees that.
+            gh pr merge "$PR_URL" --disable-auto || true
+            state=$(gh pr view "$PR_URL" --json state --jq .state)
+            auto=$(gh pr view "$PR_URL" --json autoMergeRequest --jq '.autoMergeRequest != null')
+          fi
+          if [ "$state" = MERGED ]; then
+            gh workflow run ci.yml --ref main
+          elif [ "$auto" = true ]; then
+            echo "::error::Couldn't turn off auto-merge. Turn it off on the pull request, and merge it yourself once the requirement is met: a merge that GitHub makes starts no run on main and publishes no firmware release."
+            exit 1
+          else
+            msg="The pull request has to wait for a requirement, such as an approving review, so this job didn't merge it. Once the requirement is met, merge it yourself: your merge starts a run on main, which publishes the firmware release."
+            echo "::warning::$msg"
+            echo "$msg" >>"$GITHUB_STEP_SUMMARY"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+
+  # Delivery (Assignment 2, Part C): when a run on main passes every build and
+  # test, publish both firmware builds as a GitHub release tagged at that
+  # commit. The run comes from a person's push or merge to main, from
+  # auto-merge's workflow_dispatch, or from Run workflow on main. A re-run
+  # replaces the assets instead of failing. A release from a re-run of an
+  # older run isn't marked Latest, so Latest stays on the newest firmware.
+  firmware-release:
+    needs: [firmware-test, backend-test, frontend-test]
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: firmware-release
+          path: dist
+      - uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: firmware-test-report
+          path: dist
+      - run: |
+          tag="firmware-r$GITHUB_RUN_NUMBER"
+          assets=(dist/*.zip dist/SHA256SUMS)
+          if [ -f dist/firmware-tests.xml ]; then assets+=(dist/firmware-tests.xml); fi
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "${assets[@]}" --clobber
+          else
+            # GitHub marks a newly published release Latest unless told not to.
+            newest=$(gh release list --exclude-drafts --limit 1000 --json tagName \
+              --jq '[.[].tagName | select(startswith("firmware-r")) | ltrimstr("firmware-r") | tonumber?] | max // 0')
+            latest=true
+            if [ "$newest" -gt "$GITHUB_RUN_NUMBER" ]; then latest=false; fi
+            gh release create "$tag" "${assets[@]}" --target "$GITHUB_SHA" --latest="$latest" \
+              --title "Door firmware r$GITHUB_RUN_NUMBER" --notes-file dist/release-notes.md
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
