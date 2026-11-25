@@ -1,7 +1,10 @@
 import { ApiError, type Row, type Settings, type Store } from "./api.ts";
 
 export class RestStore implements Store {
-  constructor(private url: string, private secret: string) {}
+  constructor(
+    private url: string,
+    private secret: string,
+  ) {}
 
   private async call(
     path: string,
@@ -71,6 +74,21 @@ export class RestStore implements Store {
     throw new ApiError(502, "Database write failed.");
   }
 
+  async update(
+    table: string,
+    filters: Record<string, string>,
+    row: Row,
+  ): Promise<void> {
+    const params = new URLSearchParams(filters);
+    const response = await this.call(`/rest/v1/${table}?${params}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify(row),
+    });
+    if (response.ok) return;
+    throw new ApiError(502, "Database update failed.");
+  }
+
   async user(token: string): Promise<Row> {
     const response = await this.call("/auth/v1/user", {}, token);
     if ([400, 401, 403, 422].includes(response.status)) {
@@ -92,10 +110,12 @@ export class RestStore implements Store {
 }
 
 export function environment(): { store: Store; settings: Settings } {
-  const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
-    Object.values(
+  const secret =
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
+    (Object.values(
       JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") || "{}"),
-    )[0] as string || "";
+    )[0] as string) ||
+    "";
   return {
     store: new RestStore(Deno.env.get("SUPABASE_URL") || "", secret),
     settings: {
