@@ -2,7 +2,7 @@
 
 This document defines how the door unit checks a signed QR credential by itself, decides whether to unlock, and reports the result to the backend. It's the firmware side of SCRUM-38. The backend issues each credential as a signed token, described in [API](../api.md#qr-credentials), and the app shows the token as a QR code. The [lock command contract](lock-command-v0.md) defines remote Lock and Unlock commands. QR access shares its lock controller (R9 to R12) and its report loop (R14).
 
-- **Status:** implemented in `hardware/esp32/lib/ostium_core/` and wired into the board firmware. All 119 native tests pass, and both board builds compile. The [bench procedure](#bench-procedure) hasn't run on a board yet. For review by the firmware owners.
+- **Status:** implemented in `hardware/esp32/lib/ostium_core/` and wired into the board firmware. All 122 native tests pass, and both board builds compile. The [bench procedure](#bench-procedure) hasn't run on a board yet. For review by the firmware owners.
 - **Version:** 0, November 16, 2026.
 - **Applies to:** the door unit firmware in `hardware/esp32/`, with the Supabase `ostium-api` and `device-api` Edge Functions.
 
@@ -15,7 +15,7 @@ This contract covers everything from one decoded QR text onward:
 - The report to `POST /devices/{device_id}/qr-events`.
 - The board wiring, the bench build's serial input, the tests, and the CI fixture check.
 
-SCRUM-68 (Cameron) owns the camera, QR image decoding, the reader's buffer fix, and LCD or LED feedback. It merged the camera prototype into the door program as `board::AccessPanel` (`hardware/esp32/src/access_panel.cpp`). That panel still compares each decode with one fixed test code and doesn't call `QrAccess`, so the camera can't unlock the door with a signed credential yet. [Camera handoff (SCRUM-68)](#camera-handoff-scrum-68) defines how a camera scan source connects the two. Until then, only the bench build's Serial input reaches `QrAccess`.
+SCRUM-68 (Cameron) owns the camera, QR image decoding, the reader's buffer fix, and LCD or LED feedback. It merged the camera prototype into the door program as `board::AccessPanel` (`hardware/esp32/src/access_panel.cpp`). The camera now feeds `QrAccess` in both board builds: `board::CameraScanSource` hands each decode to it, and the panel's LCD shows each decision. The team has no lock yet, so an LED on the lock output stands in for the relay and lights for each unlock. The bench build also takes decoded text from Serial. [Camera handoff (SCRUM-68)](#camera-handoff-scrum-68) describes how the two connect, and the two steps that remain: a bench check that QVGA decodes a full token, and a real relay in the LED's place.
 
 Out of scope for v0:
 
@@ -27,7 +27,7 @@ Out of scope for v0:
 
 1. The door polls `GET /api/v1/devices/{device_id}/commands`, as in the lock command contract. Each good poll narrows the door's bounds on the server's clock. QR access needs at least one good poll since boot.
 2. The tenant opens the QR screen. The app sends `POST /api/v1/houses/{houseId}/qr-credentials` and shows the returned `payload` as a QR code. The token lasts 60 seconds, or less when the tenant's grant ends sooner.
-3. The scanner decodes the code and queues the text for the door's main loop. On the bench build, a `qr <token>` line on Serial stands in for the camera.
+3. The camera task decodes the code and queues the text for the door's main loop. On the bench build, a `qr <token>` line on Serial is also a decode.
 4. The door checks the token in the [decision order](#decision-order): its shape, the pinned header, the Ed25519 signature, the claims, the unit, the server time bounds, single use, the boot watermark, expiry, and issue time.
 5. For a valid token, the door unlocks through `LockController`, which relocks after 3 seconds (R9).
 6. The door posts one `granted` report to `POST /api/v1/devices/{device_id}/qr-events`.
@@ -185,7 +185,7 @@ Each rule has unit tests in `hardware/esp32/test/test_core/`, with the names lis
 
 | # | Rule | Tests |
 |---|---|---|
-| Q1 | The door handles a decoded QR only through `QrAccess::handleScan`, from `loop()`, through `drainScans` at most 4 at a time, before and after each poll, and offline too. It ignores decodes over 2,000 ms old, or stamped later than now (`stale_scan`). After a final decision, it ignores the same text while it keeps arriving with gaps under 3,000 ms. Transient decisions aren't remembered. On the bench build, a `qr <token>` Serial line, ended by CR, LF, or CRLF, is a decode. | `test_stale_scan_is_ignored`, `test_repeated_decodes_are_ignored`, `test_qr_scan_drain_is_bounded`, `test_serial_scan_lines_are_parsed` |
+| Q1 | The door handles a decoded QR only through `QrAccess::handleScan`, from `loop()`, through `drainScans` at most 4 at a time from each scan source, before and after each poll, and offline too. It ignores decodes over 2,000 ms old, or stamped later than now (`stale_scan`). After a final decision, it ignores the same text while it keeps arriving with gaps under 3,000 ms. Transient decisions aren't remembered. A camera decode is exactly its decoded bytes, and failed camera decodes are skipped. On the bench build, a `qr <token>` Serial line, ended by CR, LF, or CRLF, is also a decode. Right after each decision, `drainScans` shows its signal on the panel: `Granted`, `Denied` for a final denial, or `Wait` for a transient one. An ignored decode shows nothing. | `test_stale_scan_is_ignored`, `test_repeated_decodes_are_ignored`, `test_qr_scan_drain_is_bounded`, `test_serial_scan_lines_are_parsed`, `test_camera_decode_is_copied_exactly`, `test_qr_signal_follows_decision`, `test_qr_drain_shows_each_decision` |
 | Q2 | The text must be at most 768 bytes of `[A-Za-z0-9_.-]`, with exactly two dots. The header can't be empty. The payload must be 1 to 512 characters, with `length % 4 != 1`. The signature must be exactly 86 characters that strictly decode to 64 bytes. base64url decoding is strict: no padding, and the unused bits of the last character must be zero. Otherwise: `malformed_qr`, not reported. | `test_malformed_qr_text_is_rejected`, `test_qr_demo_payload_is_rejected`, `test_base64url_decoding_is_strict`, `test_base64url_round_trips` |
 | Q3 | The header segment must equal, byte for byte, the base64url of `{"alg":"EdDSA","typ":"JWT","kid":"<OSTIUM_QR_KEY_ID>"}`. Otherwise: `unsupported_header`, not reported. The door never parses unsigned JSON. | `test_qr_header_must_match_configured_key` |
 | Q4 | Ed25519 (RFC 8032) over the exact received ASCII of `header.payload` must verify with `OSTIUM_QR_PUBLIC_KEY`, and S ≥ L is rejected. Otherwise: `bad_signature`, not reported. The door refuses a small-order public key at startup, because one fixed signature verifies under it over every message. | `test_forged_qr_is_rejected`, `test_qr_signature_matches_backend_fixture`, `test_ed25519_matches_rfc8032_vectors`, `test_ed25519_rejects_non_canonical_signature`, `test_ed25519_test_seed_derives_fixture_public_key`, `test_backend_qr_token_is_granted` |
@@ -367,7 +367,7 @@ Only `403` differs from the command [response table](lock-command-v0.md#how-the-
 | Largest lifetime | 60,000 ms, after Q6 rounding |
 | Stale scan age | 2,000 ms |
 | Repeat quiet gap | 3,000 ms, restarted by each repeat |
-| Scans per drain | 4, before and after each poll |
+| Scans per drain | 4 from each scan source, before and after each poll |
 | Drift allowance | 50 ppm |
 | Offline limit | 72 hours after the last good poll |
 | Largest clock width | 30,000 ms |
@@ -397,27 +397,41 @@ The test vector is `hardware/esp32/lib/ostium_core/src/qr_test_vector.h`, genera
 
 ## Camera handoff (SCRUM-68)
 
-The camera code hands decoded QR texts to the door through `ostium::ScanSource`, declared in `interfaces.h`:
+The camera code hands decoded QR texts to the door through `ostium::ScanSource`, declared in `interfaces.h`, and the door shows each decision through `ostium::QrFeedback`, declared in `qr_access.h`. These steps are done:
 
-1. Implement `board::CameraScanSource : public ostium::ScanSource`. Its `next()` calls `reader.receiveQrCode(&data, 0)`, so it never blocks.
-2. Skip entries with `data.valid == false`. Their payloads are quirc error strings.
-3. Copy exactly `payloadLen` bytes, with `scan->text.assign(reinterpret_cast<const char*>(data.payload), data.payloadLen)`. Never use `strlen`.
-4. Set `decodedAtMs` in the camera task when the decode finishes. Add a `uint32_t decodedAtMs = millis()` field to the merged copy of `QRCodeData` before `xQueueSend`. Without it, Q1 can't drop decodes that waited in the queue during a blocked HTTPS call.
-5. Before a camera goes on a door, fix the unbounded copy in `ESP32QRCodeReader.cpp`: the loop at lines 229 to 231 and the NUL at line 234 can write up to 8,896 bytes into a 1,024-byte payload. Clamp `payload_len` to `sizeof(payload) - 1`, or reject longer codes.
-6. Register the source in `pumpScans()` in `main.cpp`, with `ostium::drainScans(cameraScans, qrAccess);`. Never call `QrAccess` from the camera task.
-7. In the merged program, delete the prototype's `AUTHORIZED_QR` comparison, its cooldown, and its `delay()` calls. `QrAccess` suppresses repeats, and the relock is timer-driven.
-8. Never log payloads, because they're bearer credentials.
-9. Drive feedback from each `QrDecision`. `drainScans` doesn't return them, so write a loop that calls `QrAccess::handleScan` for each scan:
-   - `Granted`: access granted.
-   - A final `Denied`: access denied.
-   - A transient `Denied` (`clock_unsynced` or `not_yet_valid`): "hold still".
-   - `Ignored`: no change.
-10. A 453-byte token at error correction level M needs about QR version 17 (85 by 85 modules). Confirm that QVGA decodes it at the working distance, or raise the frame size.
-11. Keep R1: `lockController.begin()` stays the first statement of `setup()`, and the camera GPIOs stay off `OSTIUM_LOCK_PIN`.
+1. `board::CameraScanSource : public ostium::ScanSource`, in `access_panel.h`, reads the camera's queue. Its `next()` calls `reader.receiveQrCode()` with a timeout of 0, so it never blocks, and it returns false until `AccessPanel::begin()` has started the camera.
+2. It skips entries whose `valid` flag is false. Their payloads are quirc error strings, or `payload too long`.
+3. It copies exactly `payloadLen` bytes, never using `strlen`, through `ostium::scanFromCameraDecode()` in `camera_scan.h`. That function also refuses a length below 0 or over the buffer's 1,023-byte capacity. It's in the core, so the native tests cover it.
+4. The camera task sets `QRCodeData::decodedAtMs` to `millis()` when the decode finishes, before `xQueueSend`, so Q1 can drop decodes that waited in the queue during a blocked HTTPS call.
+5. The reader no longer writes past its buffer. quirc can decode up to 8,896 bytes, but `QRCodeData::payload` holds 1,024, so `ESP32QRCodeReader.cpp` queues a decode over 1,023 bytes as a failed decode with the text `payload too long`, and clamps a failed decode's error text the same way. `payloadLen` is never more than 1,023. The reader's `setup()` also no longer sets GPIO 13 and 14 to `INPUT_PULLUP`. That was upstream's workaround for the ESP-EYE camera, behind `#if defined(CAMERA_MODEL_ESP_EYE)`, but `ESP32CameraPins.h` always defines that macro, so it ran on every board. On the door, it turned off the driver of the lock output, GPIO 14, after `LockController` had set it up (step 10).
+6. `pumpScans()` in `main.cpp` drains the camera with `ostium::drainScans(cameraScans, qrAccess, 4, &accessPanel)` in both builds, and then, in the bench build, Serial the same way. The camera task never calls `QrAccess`.
+7. The prototype's fixed-code check is gone: `processQr()`, the `AUTHORIZED_QR` comparison, its 5-second cooldown, and its payload print. The panel has no `delay()` calls. `QrAccess` suppresses repeats, and the relock is timer-driven.
+8. Nothing logs a payload, because payloads are bearer credentials (Q20). The reader's debug output prints each payload, so it stays off: the door program never calls `setDebug()`.
+9. `AccessPanel` implements `ostium::QrFeedback`. Right after each decision, `drainScans` passes `show()` the decision's `QrSignal`, from `qrSignalFor()`. Each LCD message lasts 3 seconds. The LED is the lock output (step 10), so it shows the unlock, not the decision.
+
+   | Decision | Signal | LCD | LED (the lock output) |
+   |---|---|---|---|
+   | `Granted` | `Granted` | `ACCESS GRANTED`, `Welcome!` | On for the unlock, until the relock (R9) |
+   | A final `Denied` | `Denied` | `ACCESS DENIED`, `Try again later` | No change |
+   | A transient `Denied` (`clock_unsynced` or `not_yet_valid`) | `Wait` | `PLEASE WAIT`, `Show code again` | No change |
+   | `Ignored` (`stale_scan` or `repeat`) | `None` | No change | No change |
+
+10. R1 holds: `lockController.begin()` stays the first statement of `setup()`, and the camera GPIOs stay off `OSTIUM_LOCK_PIN`. The team has no lock yet, so the LED on GPIO 14 stands in for the lock relay: it's the lock output, `OSTIUM_LOCK_PIN`, and only `LockController` drives it. While `LED_PIN` in `access_panel.cpp` equals `OSTIUM_LOCK_PIN`, `kPanelDrivesLed` is false, so the panel never sets up or writes that pin, and its own LED patterns stay off. `AccessPanel::begin()` then logs `LED is the lock stand-in on OSTIUM_LOCK_PIN; LockController drives it.` So the LED lights for exactly each 3-second unlock, and goes off at the relock. If the panel's patterns drove the pin, a denial's three flashes would unlock the stand-in three times, and a grant's 2-second pattern would relock it before the unlock ended.
+
+    The camera reader must not set up that pin either, so its ESP-EYE pull-up workaround is gone (step 5). Two more guards keep a library from leaving the lock undriven:
+    - `GpioLockOutput::write()` makes the pin an output on every write, after it sets the level, not only on the first write.
+    - `setup()` calls `lockController.lock()` after `accessPanel.begin()`, which drives the locked level again once the camera and sensors are set up.
+
+    The native tests can't reach board code, so the [bench procedure](#bench-procedure) checks the pin with the camera running.
+
+Two steps remain before the door unit goes on a real door:
+
+1. **Check the decode on the bench.** A 453-byte token at error correction level M needs about QR version 17 (85 by 85 modules). Confirm that QVGA decodes it at the working distance, or raise the frame size in `access_panel.cpp`.
+2. **Replace the LED with a real relay.** A relay module takes the LED's place on `OSTIUM_LOCK_PIN`. Once SCRUM-49 records the board's pinout, set `OSTIUM_LOCK_PIN` and `OSTIUM_LOCK_ACTIVE_HIGH` for the relay, as the [board README](../../hardware/esp32/README.md#build-and-flash-the-board) describes. If the panel then gets its own indicator LED on another GPIO, with `LED_PIN` set to that GPIO, its LED patterns turn back on: on for 2 seconds for a grant, and three flashes for a final denial.
 
 ## Testing
 
-- **Unit tests:** `pio test -d hardware/esp32/native-tests`, run from the repository root, runs the Q1 to Q20 tests with the R1 to R16 tests, 119 in all. The QR tests are in `test_ed25519.cpp` (3), `test_qr_token.cpp` (9), `test_server_clock.cpp` (9), `test_qr_access.cpp` (28), `test_event_outbox.cpp` (5 of its tests), `test_serial_scan.cpp` (1), and `test_qr_backend_replay.cpp` (7). For details, see [Testing](../testing.md#firmware-unit-tests).
+- **Unit tests:** `pio test -d hardware/esp32/native-tests`, run from the repository root, runs the Q1 to Q20 tests with the R1 to R16 tests, 122 in all. The QR tests are in `test_ed25519.cpp` (3), `test_qr_token.cpp` (9), `test_server_clock.cpp` (9), `test_qr_access.cpp` (28), `test_event_outbox.cpp` (5 of its tests), `test_serial_scan.cpp` (1), `test_camera_scan.cpp` (3), and `test_qr_backend_replay.cpp` (7). For details, see [Testing](../testing.md#firmware-unit-tests).
 - **Crypto:** Ed25519 is Monocypher 4.0.2, vendored unmodified in `hardware/esp32/lib/monocypher/`, so the native tests and the board run the same verifier, with no package to install. The tests check it against the RFC 8032 vectors, and sign with the fixture's seed to reproduce the backend's signature byte for byte.
 - **Replay tests:** `hardware/esp32/tools/capture_qr_backend.ts` runs the real `createHandler` from the Deno backend in process. It issues credentials, polls, and posts the firmware's report bodies, and records the tokens and statuses in `hardware/esp32/test/test_core/qr_backend_responses.h`. It records two sets:
   - The first runs on a microsecond clock, so no time falls on an exact millisecond, and the tool rounds the claims exactly.
@@ -451,7 +465,12 @@ Use the `esp32s3-bench` build with the real backend, and record the results in [
      -H "Authorization: Bearer $USER_TOKEN" | python3 -c 'import json,sys; print("qr " + json.load(sys.stdin)["payload"])'
    ```
 
-5. **Check the grant.** Expect `QR granted credential <jti>`, the relay on for 3 seconds, and `event qr-<jti>-granted delivered`. `GET …/houses/$UNIT_ID/qr-credentials/<jti>/status` must return `"status":"granted"`.
+5. **Check the grant.** Expect `QR granted credential <jti>`, the relay on for 3 seconds, and `event qr-<jti>-granted delivered`. `GET …/houses/$UNIT_ID/qr-credentials/<jti>/status` must return `"status":"granted"`. Until a relay replaces it, the LED on GPIO 14 is the relay: check this with the camera running, after `Camera initialized.` in the boot log. These readings are for the default `OSTIUM_LOCK_ACTIVE_HIGH` of `1`.
+   - After boot, the LED is off, and a meter on GPIO 14 reads 0 V.
+   - For the grant, the LED lights for 3 seconds, and the meter reads about 3.3 V. The LED then goes off at the relock, and the meter reads 0 V again.
+   - Send an Unlock command from the app, and expect the same 3-second LED and readings.
+
+   A dim glow at boot, or no light for a grant that the log shows, means something turned off the pin's output driver ([camera handoff](#camera-handoff-scrum-68), step 10).
 6. **Check the denials:**
    - Paste the same line again after 3 seconds: `already_used`, reported.
    - Paste it about 70 seconds after the grant: `expired`, not reported again. Until 61 seconds after the grant, it's still `already_used`, also not reported again.

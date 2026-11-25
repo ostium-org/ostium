@@ -1,8 +1,8 @@
 @startuml firmware-class-diagram
 !pragma layout smetana
-' Door unit firmware classes (SCRUM-54), with QR access (SCRUM-38). Drawn by
-' hand from the headers in hardware/esp32/lib/ostium_core/src/ and
-' hardware/esp32/include/.
+' Door unit firmware classes (SCRUM-54), with QR access (SCRUM-38), and the
+' camera scan source and access panel (SCRUM-68). Drawn by hand from the
+' headers in hardware/esp32/lib/ostium_core/src/ and hardware/esp32/include/.
 ' To render: java -jar plantuml.jar -tsvg docs/firmware/diagrams/class-diagram.puml
 ' Run it again with -tpng for the report image. PlantUML uses only the last -t flag.
 
@@ -198,7 +198,19 @@ package "ostium_core: QR access (SCRUM-38)" as qr {
   }
 
   class "qr_access.h" as QrAccessFns <<utility>> {
-    + {static} drainScans(source : ScanSource, access : QrAccess, limit : size_t = 4) : size_t
+    + {static} drainScans(source : ScanSource, access : QrAccess, limit : size_t = 4, feedback : QrFeedback* = nullptr) : size_t
+    + {static} qrSignalFor(decision : QrDecision) : QrSignal
+  }
+
+  enum QrSignal {
+    None
+    Granted
+    Denied
+    Wait
+  }
+
+  class "camera_scan.h" as CameraScanFns <<utility>> {
+    + {static} scanFromCameraDecode(valid : bool, payload : const uint8_t*, length : int, capacity : size_t, decodedAtMs : uint32_t, scan : QrScan*) : bool
   }
 
   class QrSettings <<struct>> {
@@ -369,6 +381,10 @@ package "ostium_core: interfaces to the hardware" as ports {
     + next(scan : QrScan*) : bool
   }
 
+  interface QrFeedback {
+    + show(signal : QrSignal) : void
+  }
+
   class QrScan <<struct>> {
     + text : string
     + decodedAtMs : uint32_t
@@ -430,17 +446,29 @@ package "Board adapters (Arduino-ESP32, src/ and include/)" as board {
     + next(scan : QrScan*) : bool
   }
 
+  class AccessPanel {
+    + begin() : bool
+    + update(nowMs : uint32_t) : void
+    + show(signal : QrSignal) : void
+    + telemetry() : PanelTelemetry
+    + showMessage(line1 : const char*, line2 : const char*) : void
+  }
+
+  class PanelTelemetry <<struct>> {
+    + temperature : float
+    + humidity : float
+    + soundRMS : float
+  }
+
+  class CameraScanSource {
+    + next(scan : QrScan*) : bool
+  }
+
   class WifiLink {
     - retryMs_ : uint32_t
     + begin() : void
     + maintain(nowMs : uint32_t) : void
     + connected() : bool
-  }
-}
-
-package "Future scope (SCRUM-68)" as future #EEEEEE {
-  class CameraScanSource <<future>> {
-    + next(scan : QrScan*) : bool
   }
 }
 
@@ -490,6 +518,10 @@ QrAccess ..> QrReport : creates
 QrAccess ..> QrEventFns : serializes reports with
 QrAccessFns ..> ScanSource : drains
 QrAccessFns ..> QrAccess : handleScan()
+QrAccessFns ..> QrFeedback : shows each signal, except None, with
+QrAccessFns ..> QrSignal : qrSignalFor() returns
+QrFeedback ..> QrSignal : shows
+CameraScanFns ..> QrScan : fills
 QrDecision --> QrOutcome
 QrTokenFns ..> QrToken : creates
 QrTokenFns ..> QrKey : makeQrKey() builds
@@ -517,14 +549,16 @@ BackendClient "1" *-- "1" QrEventSender : qrEvents_
 SerialScanSource ..|> ScanSource
 SerialScanSource "1" *-- "1" SerialScanParser : parser_
 SerialScanSource "1" --> "1" Log
+CameraScanSource ..|> ScanSource
+CameraScanSource ..> CameraScanFns : copies each camera decode with
+CameraScanSource ..> AccessPanel : reads the camera queue that begin() starts
+AccessPanel ..|> QrFeedback
+AccessPanel ..> PanelTelemetry : telemetry() returns
 ClientSource ..|> ByteSource
 BackendClient ..> BodyReader : reads each response body with
 BodyReader ..> ByteSource : reads from
 WifiLink "1" --> "1" Log
 BackendClient "1" --> "1" Log
-
-' Future scope
-CameraScanSource ..|> ScanSource
 
 legend right
   Assignment 1 classes, by the names in SCRUM-54:
@@ -537,8 +571,9 @@ legend right
     ReportScheduler
   clock = Clock, MillisClock, OneShotTimer, ServerClock
   Wi-Fi manager = WifiLink
-  QR scanner = ScanSource, SerialScanSource (bench build),
-    CameraScanSource (SCRUM-68)
+  QR scanner = ScanSource, CameraScanSource with scanFromCameraDecode()
+    in camera_scan.h (SCRUM-68), SerialScanSource (bench build),
+    AccessPanel (runs the camera, and shows each decision as a QrFeedback)
   credential verifier = QrAccess, verifyQrToken() in qr_token.h,
     verifyEd25519() in ed25519.h, runQrSelfTest() in qr_self_test.h
   <<utility>> boxes are header files of free functions, not classes.

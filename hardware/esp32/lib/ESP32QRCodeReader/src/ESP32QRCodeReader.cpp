@@ -3,6 +3,11 @@
 #include "quirc/quirc.h"
 #include "Arduino.h"
 
+#include <string.h>
+
+// The longest payload a QRCodeData entry can hold, leaving room for the NUL.
+static const int kMaxPayloadLen = static_cast<int>(sizeof(QRCodeData::payload)) - 1;
+
 ESP32QRCodeReader::ESP32QRCodeReader() : ESP32QRCodeReader(CAMERA_MODEL_AI_THINKER, FRAMESIZE_QVGA)
 {
 }
@@ -58,10 +63,13 @@ QRCodeReaderSetupErr ESP32QRCodeReader::setup()
   cameraConfig.jpeg_quality = 15;
   cameraConfig.fb_count = 1;
 
-#if defined(CAMERA_MODEL_ESP_EYE)
-  pinMode(13, INPUT_PULLUP);
-  pinMode(14, INPUT_PULLUP);
-#endif
+  // Upstream's ESP-EYE workaround set GPIO 13 and 14 to INPUT_PULLUP here,
+  // under #if defined(CAMERA_MODEL_ESP_EYE). ESP32CameraPins.h always defines
+  // that macro, so it ran on every board, and on the door GPIO 14 is
+  // OSTIUM_LOCK_PIN: it turned the lock output's driver off after
+  // LockController had set it up, so no unlock reached the pin. The door's
+  // camera doesn't use GPIO 14, and esp_camera_init sets up its own pins, so
+  // the workaround is gone. setup() touches no GPIO outside the camera's.
 
   // camera init
   esp_err_t err = esp_camera_init(&cameraConfig);
@@ -209,6 +217,10 @@ void qrCodeDetectTask(void *taskData)
         {
           Serial.printf("Decoding FAILED: %s\n", error);
         }
+        if (len > kMaxPayloadLen)
+        {
+          len = kMaxPayloadLen;
+        }
         for (int i = 0; i < len; i++)
         {
           qrCodeData.payload[i] = error[i];
@@ -216,6 +228,16 @@ void qrCodeDetectTask(void *taskData)
         qrCodeData.valid = false;
         qrCodeData.payload[len] = '\0';
         qrCodeData.payloadLen = len;
+      }
+      else if (data.payload_len < 0 || data.payload_len > kMaxPayloadLen)
+      {
+        // quirc can decode up to QUIRC_MAX_PAYLOAD (8,896) bytes, but the
+        // queue entry holds 1,024. A longer code is reported as a failed
+        // decode instead of being copied past the end of payload.
+        static const char kTooLong[] = "payload too long";
+        memcpy(qrCodeData.payload, kTooLong, sizeof(kTooLong));
+        qrCodeData.valid = false;
+        qrCodeData.payloadLen = sizeof(kTooLong) - 1;
       }
       else
       {
@@ -234,6 +256,9 @@ void qrCodeDetectTask(void *taskData)
         qrCodeData.payload[data.payload_len] = '\0';
         qrCodeData.payloadLen = data.payload_len;
       }
+      // When the decode finished, so the door can drop decodes that waited
+      // in the queue too long (qr-access-v0.md, rule Q1).
+      qrCodeData.decodedAtMs = millis();
       xQueueSend(self->qrCodeQueue, &qrCodeData, (TickType_t)0);
 
       if (self->debug)

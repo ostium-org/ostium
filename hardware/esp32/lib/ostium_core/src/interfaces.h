@@ -56,9 +56,9 @@ struct QrScan {
   uint32_t decodedAtMs = 0;  // Clock time when the decode finished.
 };
 
-// Decoded QR codes waiting for the main loop. On the board, the bench build
-// reads them from Serial, and the camera (SCRUM-68) will queue them from its
-// own task. next() never blocks.
+// Decoded QR codes waiting for the main loop. On the board, the camera task
+// queues them, and board::CameraScanSource reads that queue (SCRUM-68). The
+// bench build also reads them from Serial. next() never blocks.
 class ScanSource {
  public:
   virtual ~ScanSource() = default;

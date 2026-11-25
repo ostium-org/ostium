@@ -281,11 +281,24 @@ bool QrAccess::revoke(const std::string& credentialId, int64_t retainUntilEpochM
                       clock_.nowMs(), kListHoldMs);
 }
 
-size_t drainScans(ScanSource& source, QrAccess& access, size_t limit) {
+QrSignal qrSignalFor(const QrDecision& decision) {
+  switch (decision.outcome) {
+    case QrOutcome::Granted:
+      return QrSignal::Granted;
+    case QrOutcome::Denied:
+      return decision.isFinal ? QrSignal::Denied : QrSignal::Wait;
+    case QrOutcome::Ignored:
+      break;
+  }
+  return QrSignal::None;
+}
+
+size_t drainScans(ScanSource& source, QrAccess& access, size_t limit, QrFeedback* feedback) {
   size_t handled = 0;
   QrScan scan;
   while (handled < limit && source.next(&scan)) {
-    access.handleScan(scan);
+    const QrSignal signal = qrSignalFor(access.handleScan(scan));
+    if (feedback != nullptr && signal != QrSignal::None) feedback->show(signal);
     ++handled;
   }
   return handled;

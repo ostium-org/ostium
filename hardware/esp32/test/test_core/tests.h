@@ -142,6 +142,11 @@ void test_failing_qr_reports_cannot_starve_command_events();  // R14, Q19
 // test_serial_scan.cpp
 void test_serial_scan_lines_are_parsed();  // Q1
 
+// test_camera_scan.cpp
+void test_camera_decode_is_copied_exactly();  // Q1
+void test_qr_signal_follows_decision();       // Q1
+void test_qr_drain_shows_each_decision();     // Q1
+
 // test_qr_backend_replay.cpp, against responses from the real Deno backend
 void test_backend_qr_token_is_granted();                       // Q4
 void test_backend_accepts_firmware_qr_report_bodies();         // Q18

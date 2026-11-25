@@ -15,7 +15,7 @@ Supabase Auth handles accounts and sessions. Edge Functions handle QR issuance, 
 
 The Expo Router application serves both tenant and manager roles. It uses React Native Web for the browser dashboard and React Native for iOS and Android, sharing routes, components, and the Supabase client.
 
-The ESP32-S3 door firmware uses Arduino. It controls the relay, checks QR credentials locally against configuration set at build time, and uses HTTPS rather than MQTT. Camera scanning is SCRUM-68.
+The ESP32-S3 door firmware uses Arduino. It controls the relay, checks QR credentials locally against configuration set at build time, and uses HTTPS rather than MQTT. Its onboard camera scans the QR codes (SCRUM-68).
 
 ## Trust Boundary
 

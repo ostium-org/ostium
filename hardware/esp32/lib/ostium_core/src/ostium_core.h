@@ -6,6 +6,7 @@
 
 #include "base64url.h"
 #include "body_reader.h"
+#include "camera_scan.h"
 #include "command_processor.h"
 #include "duplicate_list.h"
 #include "ed25519.h"

@@ -111,9 +111,27 @@ class QrAccess {
   uint32_t lastSeenMs_ = 0;
 };
 
+// What the door shows the person at the door for one decision:
+// - Granted: the door unlocked.
+// - Denied: a final denial. Showing the same code again won't help.
+// - Wait: a transient denial (clock_unsynced or not_yet_valid). The same code
+//   may work if shown again in a moment.
+// - None: an ignored decode (stale_scan or repeat). Change nothing.
+enum class QrSignal { None, Granted, Denied, Wait };
+
+QrSignal qrSignalFor(const QrDecision& decision);
+
+// Door feedback for each decision, such as the access panel's LCD.
+class QrFeedback {
+ public:
+  virtual ~QrFeedback() = default;
+  virtual void show(QrSignal signal) = 0;
+};
+
 // Hands up to `limit` waiting scans from source to access, in order. Returns
-// how many it handled. Decisions are logged by QrAccess. SCRUM-68 can write its
-// own loop instead to read each QrDecision for LCD feedback.
-size_t drainScans(ScanSource& source, QrAccess& access, size_t limit = 4);
+// how many it handled. Decisions are logged by QrAccess. When feedback isn't
+// null, it shows each decision's signal, except None, right after the decision.
+size_t drainScans(ScanSource& source, QrAccess& access, size_t limit = 4,
+                  QrFeedback* feedback = nullptr);
 
 }  // namespace ostium

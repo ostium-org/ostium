@@ -60,19 +60,49 @@ namespace board
       }
     }
 
+    const char *wifiStatusName(wl_status_t status)
+    {
+      switch (status)
+      {
+      case WL_IDLE_STATUS:
+        return "IDLE";
+
+      case WL_NO_SSID_AVAIL:
+        return "SSID NOT FOUND";
+
+      case WL_SCAN_COMPLETED:
+        return "SCAN COMPLETED";
+
+      case WL_CONNECTED:
+        return "CONNECTED";
+
+      case WL_CONNECT_FAILED:
+        return "CONNECTION FAILED";
+
+      case WL_CONNECTION_LOST:
+        return "CONNECTION LOST";
+
+      case WL_DISCONNECTED:
+        return "DISCONNECTED";
+
+      default:
+        return "UNKNOWN";
+      }
+    }
     const char *kCollectedHeaders[] = {"Transfer-Encoding"};
 
   } // namespace
 
   void GpioLockOutput::write(bool unlocked)
   {
+    // The level first, so the pin never drives the other level, even for an
+    // instant.
     digitalWrite(pin_, unlocked == activeHigh_ ? HIGH : LOW);
 
-    if (!configured_)
-    {
-      pinMode(pin_, OUTPUT);
-      configured_ = true;
-    }
+    // Then the output driver, on every write. If other setup code turned the
+    // driver off, the level would only reach the output latch, and the pin
+    // wouldn't switch.
+    pinMode(pin_, OUTPUT);
   }
 
   bool EspOneShotTimer::begin()
@@ -234,6 +264,7 @@ namespace board
       return HTTPC_ERROR_CONNECTION_REFUSED;
     }
 
+    const uint32_t requestStartedMs = millis();
     log_.write(
         std::string("HTTP: starting ") +
         (requestBody != nullptr ? "POST " : "GET ") +
@@ -241,7 +272,10 @@ namespace board
 
     if (!http_.begin(*client_, url))
     {
-      log_.write("HTTP ERROR: failed to initialize HTTP connection");
+      log_.write(
+          "HTTP ERROR: failed to initialize HTTP connection; elapsed=" +
+          std::to_string(millis() - requestStartedMs) + " ms");
+
       return HTTPC_ERROR_CONNECTION_REFUSED;
     }
 
@@ -271,11 +305,18 @@ namespace board
 
     log_.write(
         "HTTP: response status=" + std::to_string(status));
+    log_.write(
+        "HTTP: request duration=" +
+        std::to_string(millis() - requestStartedMs) + " ms");
 
     if (status < 0)
     {
       log_.write(
-          "HTTP ERROR: request failed; check DNS, routing, TLS certificate, "
+          "HTTP ERROR: transport/request failure, code=" +
+          std::to_string(status));
+
+      log_.write(
+          "HTTP ERROR: investigate DNS, routing, TLS certificate, "
           "server availability, and timeout settings");
     }
     else if (status >= 200 && status < 300)
@@ -331,7 +372,9 @@ namespace board
       }
       else
       {
-        log_.write("HTTP: response body read successfully");
+        log_.write(
+            "HTTP: response body read successfully; bytes=" +
+            std::to_string(body.size()));
       }
     }
 
@@ -407,16 +450,24 @@ namespace board
 
     log_.write("NET: testing DNS resolution for example.com");
 
+    const uint32_t dnsStartedMs = millis();
     if (!WiFi.hostByName("example.com", resolved))
     {
       log_.write(
-          "NET FAIL: DNS lookup failed; check DNS configuration or internet access");
+          "NET FAIL: DNS lookup failed; elapsed=" +
+          std::to_string(millis() - dnsStartedMs) + " ms");
+
+      log_.write(
+          "NET FAIL: check DNS configuration or internet access");
       return;
     }
 
     log_.write(
         "NET OK: example.com resolved to " +
         std::string(resolved.toString().c_str()));
+    log_.write(
+        "NET: DNS lookup duration=" +
+        std::to_string(millis() - dnsStartedMs) + " ms");
 
     // Outbound TCP test. This does not use the backend's credentials
     // or alter the door's lock state.
@@ -425,13 +476,20 @@ namespace board
 
     log_.write("NET: testing outbound TCP to example.com:80");
 
+    const uint32_t tcpStartedMs = millis();
     if (!testClient.connect("example.com", 80))
     {
       log_.write(
-          "NET FAIL: DNS works, but TCP connection to example.com:80 failed");
+          "NET FAIL: TCP connection to example.com:80 failed; elapsed=" +
+          std::to_string(millis() - tcpStartedMs) + " ms");
+
       testClient.stop();
       return;
     }
+
+    log_.write(
+        "NET: TCP connection duration=" +
+        std::to_string(millis() - tcpStartedMs) + " ms");
 
     testClient.stop();
 
@@ -443,17 +501,26 @@ namespace board
   {
     const bool up = connected();
 
+    // Detect connection state changes.
     if (up != wasConnected_)
     {
       if (up)
       {
+        log_.write("========== WIFI CONNECTED ==========");
+
         log_.write(
-            "Wi-Fi connected, IP " +
+            "NET: SSID=" +
+            std::string(WiFi.SSID().c_str()));
+
+        log_.write(
+            "NET: IP=" +
             std::string(WiFi.localIP().toString().c_str()));
 
         log_.write(
-            "Wi-Fi signal strength: " +
+            "NET: RSSI=" +
             std::to_string(WiFi.RSSI()) + " dBm");
+
+        log_.write("====================================");
 
         checkInternet();
       }
@@ -466,8 +533,58 @@ namespace board
       wasConnected_ = up;
     }
 
-    // Automatic reconnect is temporarily handling reconnection.
-    // Do not call WiFi.disconnect() or WiFi.begin() here.
+    // Periodic connection diagnostics.
+    static uint32_t lastStatusLogMs = 0;
+
+    const uint32_t intervalMs = up ? 30000 : 5000;
+
+    if (nowMs - lastStatusLogMs >= intervalMs)
+    {
+      lastStatusLogMs = nowMs;
+
+      log_.write("========== WIFI STATUS ==========");
+
+      log_.write(
+          "NET: Status=" +
+          std::string(wifiStatusName(WiFi.status())));
+
+      log_.write(
+          "NET: SSID=" +
+          std::string(ssid_));
+
+      if (up)
+      {
+        log_.write(
+            "NET: IP=" +
+            std::string(WiFi.localIP().toString().c_str()));
+
+        log_.write(
+            "NET: Gateway=" +
+            std::string(WiFi.gatewayIP().toString().c_str()));
+
+        log_.write(
+            "NET: Subnet=" +
+            std::string(WiFi.subnetMask().toString().c_str()));
+
+        log_.write(
+            "NET: DNS=" +
+            std::string(WiFi.dnsIP().toString().c_str()));
+
+        log_.write(
+            "NET: RSSI=" +
+            std::to_string(WiFi.RSSI()) + " dBm");
+      }
+      else
+      {
+        log_.write(
+            "NET: Waiting for Wi-Fi connection");
+
+        log_.write(
+            "NET: Check SSID, password, signal, and router availability");
+      }
+
+      log_.write("=================================");
+    }
   }
 
 } // namespace board

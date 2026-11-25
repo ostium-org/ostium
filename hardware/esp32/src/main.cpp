@@ -67,8 +67,9 @@ namespace
       OSTIUM_WIFI_RETRY_MS,
       serialLog);
 
-  // Access panel
+  // Access panel: the camera, LCD, and sensors (SCRUM-68).
   board::AccessPanel accessPanel;
+  board::CameraScanSource cameraScans;
 
   bool backendReady = false;
 
@@ -93,14 +94,14 @@ namespace
     return settings;
   }
 
-  // Hands waiting decoded QR codes to QrAccess (Q1). Only the bench serial
-  // input feeds it so far. The camera still runs AccessPanel's own fixed-code
-  // check until a camera scan source adds:
-  // ostium::drainScans(cameraScans, qrAccess);
+  // Hands waiting decoded QR codes to QrAccess, at most 4 from each source per
+  // call (Q1), and shows each decision on the panel. The bench build also
+  // takes "qr <token>" lines from Serial.
   void pumpScans()
   {
+    ostium::drainScans(cameraScans, qrAccess, 4, &accessPanel);
 #ifdef OSTIUM_BENCH_TOOLS
-    ostium::drainScans(serialScans, qrAccess);
+    ostium::drainScans(serialScans, qrAccess, 4, &accessPanel);
 #endif
   }
 
@@ -171,6 +172,12 @@ void setup()
     serialLog.write("Access panel initialized");
   }
 
+  // R1: the panel's camera and sensor setup must leave OSTIUM_LOCK_PIN alone.
+  // Write the locked level again, which also makes the pin an output again, so
+  // a library that reconfigured it can't leave the lock undriven until the
+  // first command or QR grant.
+  lockController.lock();
+
   nextNetworkCheckMs = millis() + kNetworkCheckIntervalMs;
 
   serialLog.write("Ostium Core startup complete");
@@ -186,21 +193,8 @@ void loop()
   // Access panel update
   accessPanel.update(nowMs);
 
-  // QR code processing
-  const board::AccessResult qrResult = accessPanel.processQr();
-
-  if (qrResult == board::AccessResult::Granted)
-  {
-    serialLog.write(
-        "QR: ACCESS GRANTED");
-  }
-  else if (qrResult == board::AccessResult::Denied)
-  {
-    serialLog.write(
-        "QR: ACCESS DENIED");
-  }
-
-  // Signed QR codes work offline while the server clock is known.
+  // Signed QR codes, from the camera (and Serial in the bench build). They
+  // work offline while the server clock is known. QrAccess logs each decision.
   pumpScans();
 
   // Check internet reachability periodically while Wi-Fi is connected.

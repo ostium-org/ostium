@@ -15,8 +15,10 @@
 
 namespace board {
 
-// Drives the lock GPIO. The first write sets the level before the pin becomes
-// an output, so the pin never drives the unlocked level by accident (R1).
+// Drives the lock GPIO. Each write sets the level before it makes the pin an
+// output, so the pin never drives the unlocked level by accident (R1). Making
+// it an output on every write, not only the first, means a library that
+// reconfigured the pin can't leave the lock undriven.
 class GpioLockOutput : public ostium::LockOutput {
  public:
   GpioLockOutput(uint8_t pin, bool activeHigh) : pin_(pin), activeHigh_(activeHigh) {}
@@ -26,7 +28,6 @@ class GpioLockOutput : public ostium::LockOutput {
  private:
   const uint8_t pin_;
   const bool activeHigh_;
-  bool configured_ = false;
 };
 
 // A one-shot esp_timer. Its callback runs in the esp_timer task, so the relock
