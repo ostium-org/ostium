@@ -172,8 +172,10 @@ deno task --config backend/supabase/deno.json lint
 Frontend tests mock the SDK and network; Edge Function tests use in-memory
 fixtures. Neither suite writes to live Supabase or validates a physical lock.
 Keep `application/package-lock.json` as the only package-manager lockfile.
-No GitLab CI configuration is checked in; the assignment's automated build,
-test, and merge workflow still needs configuration.
+On every pull request, GitHub Actions runs the type checks, the frontend and Edge
+Function tests, the Edge Function lint, and the firmware build and tests. It
+merges the pull request when they pass, and publishes a firmware release from
+`main`. See [Continuous integration](docs/ci.md).
 
 ## Further documentation
 
