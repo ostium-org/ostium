@@ -1,0 +1,55 @@
+Firmware static checks, commit a798359 (2026-11-25), run locally on macOS.
+
+== 1. Native unit tests, built with -std=gnu++17 -Wall -Wextra -Werror (Apple Clang)
+$ pio test -d hardware/esp32/native-tests
+hardware/esp32/test/test_core/test_main.cpp:27: test_network_error_keeps_door_locked	[PASSED]
+================ 119 test cases: 119 succeeded in 00:00:04.805 ================
+
+== 2. Every core and test file under GCC 8.4 (xtensa-esp32s3-elf-g++), -Wall -Wextra -Werror, 64-bit Unity asserts on
+31 files checked, 0 with warnings or errors
+
+== 3. Board builds (with -Wall). The firmware's own code (src/, lib/ostium_core/) gives only the expected
+   "secrets.h not found" notice. Every other warning is in the vendored camera library, lib/ESP32QRCodeReader,
+   which SCRUM-68 brought in.
+$ pio run -d hardware/esp32 -e esp32s3
+src/main.cpp:20:2: warning: #warning "include/secrets.h not found; building with the placeholders in secrets.example.h" [-Wcpp]
+lib/ESP32QRCodeReader/src/openmv/collections.c:20:23: warning: implicit declaration of function 'ps_malloc'; did you mean 'lifo_alloc'? [-Wimplicit-function-declaration]
+lib/ESP32QRCodeReader/src/openmv/collections.c:36:5: warning: implicit declaration of function 'free' [-Wimplicit-function-declaration]
+lib/ESP32QRCodeReader/src/openmv/collections.c:36:5: warning: incompatible implicit declaration of built-in function 'free'
+lib/ESP32QRCodeReader/src/openmv/collections.c:62:3: warning: implicit declaration of function 'memcpy' [-Wimplicit-function-declaration]
+lib/ESP32QRCodeReader/src/openmv/collections.c:62:3: warning: incompatible implicit declaration of built-in function 'memcpy'
+lib/ESP32QRCodeReader/src/openmv/collections.c:71:5: warning: incompatible implicit declaration of built-in function 'memcpy'
+lib/ESP32QRCodeReader/src/openmv/collections.c:79:3: warning: incompatible implicit declaration of built-in function 'memcpy'
+lib/ESP32QRCodeReader/src/openmv/collections.c:84:3: warning: incompatible implicit declaration of built-in function 'memcpy'
+lib/ESP32QRCodeReader/src/quirc/decode.c:936:27: warning: implicit declaration of function 'ps_malloc'; did you mean 'malloc'? [-Wimplicit-function-declaration]
+lib/ESP32QRCodeReader/src/quirc/decode.c:936:27: warning: initialization of 'struct datastream *' from 'int' makes pointer from integer without a cast [-Wint-conversion]
+lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:49:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_sda' is deprecated: please use pin_sccb_sda instead [-Wdeprecated-declarations]
+lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:49:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_sda' is deprecated: please use pin_sccb_sda instead [-Wdeprecated-declarations]
+lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:49:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_sda' is deprecated: please use pin_sccb_sda instead [-Wdeprecated-declarations]
+lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:50:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_scl' is deprecated: please use pin_sccb_scl instead [-Wdeprecated-declarations]
+lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:50:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_scl' is deprecated: please use pin_sccb_scl instead [-Wdeprecated-declarations]
+lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:50:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_scl' is deprecated: please use pin_sccb_scl instead [-Wdeprecated-declarations]
+RAM:   [==        ]  15.8% (used 51828 bytes from 327680 bytes)
+Flash: [===       ]  31.0% (used 1035057 bytes from 3342336 bytes)
+========================= [SUCCESS] Took 15.42 seconds =========================
+$ pio run -d hardware/esp32 -e esp32s3-bench
+lib/ESP32QRCodeReader/src/openmv/collections.c:20:23: warning: implicit declaration of function 'ps_malloc'; did you mean 'lifo_alloc'? [-Wimplicit-function-declaration]
+lib/ESP32QRCodeReader/src/openmv/collections.c:36:5: warning: implicit declaration of function 'free' [-Wimplicit-function-declaration]
+lib/ESP32QRCodeReader/src/openmv/collections.c:36:5: warning: incompatible implicit declaration of built-in function 'free'
+lib/ESP32QRCodeReader/src/openmv/collections.c:62:3: warning: implicit declaration of function 'memcpy' [-Wimplicit-function-declaration]
+lib/ESP32QRCodeReader/src/openmv/collections.c:62:3: warning: incompatible implicit declaration of built-in function 'memcpy'
+lib/ESP32QRCodeReader/src/openmv/collections.c:71:5: warning: incompatible implicit declaration of built-in function 'memcpy'
+lib/ESP32QRCodeReader/src/openmv/collections.c:79:3: warning: incompatible implicit declaration of built-in function 'memcpy'
+lib/ESP32QRCodeReader/src/openmv/collections.c:84:3: warning: incompatible implicit declaration of built-in function 'memcpy'
+src/main.cpp:20:2: warning: #warning "include/secrets.h not found; building with the placeholders in secrets.example.h" [-Wcpp]
+lib/ESP32QRCodeReader/src/quirc/decode.c:936:27: warning: implicit declaration of function 'ps_malloc'; did you mean 'malloc'? [-Wimplicit-function-declaration]
+lib/ESP32QRCodeReader/src/quirc/decode.c:936:27: warning: initialization of 'struct datastream *' from 'int' makes pointer from integer without a cast [-Wint-conversion]
+lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:49:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_sda' is deprecated: please use pin_sccb_sda instead [-Wdeprecated-declarations]
+lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:49:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_sda' is deprecated: please use pin_sccb_sda instead [-Wdeprecated-declarations]
+lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:49:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_sda' is deprecated: please use pin_sccb_sda instead [-Wdeprecated-declarations]
+lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:50:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_scl' is deprecated: please use pin_sccb_scl instead [-Wdeprecated-declarations]
+lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:50:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_scl' is deprecated: please use pin_sccb_scl instead [-Wdeprecated-declarations]
+lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:50:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_scl' is deprecated: please use pin_sccb_scl instead [-Wdeprecated-declarations]
+RAM:   [==        ]  15.8% (used 51868 bytes from 327680 bytes)
+Flash: [===       ]  31.2% (used 1041533 bytes from 3342336 bytes)
+========================= [SUCCESS] Took 17.88 seconds =========================
