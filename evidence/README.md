@@ -17,7 +17,9 @@ All firmware files come from commit [`a798359`](https://github.com/ostium-org/os
 | Both board builds compile and are packaged on every run. | [`deployment/firmware-build-run21.log`](deployment/firmware-build-run21.log), the `firmware-build` job log |
 | A green run on `main` publishes the firmware as a release. | [`deployment/firmware-release-run21.log`](deployment/firmware-release-run21.log), the `firmware-release` job log |
 | The release files match their published checksums. | [`deployment/firmware-r21-SHA256SUMS`](deployment/firmware-r21-SHA256SUMS) |
+| Every job in run #21 passed, and the run published the release. | [`deployment/firmware-ci-run21.png`](deployment/firmware-ci-run21.png), a screenshot of the run page |
+| The release holds both board images, their checksums, and the test report. | [`deployment/firmware-r21-release.png`](deployment/firmware-r21-release.png), a screenshot of the release page |
 | The code builds with warnings treated as errors, on Clang and GCC. | [`quality/firmware-static-checks.txt`](quality/firmware-static-checks.txt) |
 | Adversarial review findings were confirmed and fixed. | [`quality/firmware-review-findings.md`](quality/firmware-review-findings.md) |
 
-The logs come from GitHub Actions. GitHub masks the workflow token in them as `***`, and the firmware images hold only placeholder settings, so no secret appears here.
+The logs come from GitHub Actions. GitHub masks the workflow token in them as `***`, and the firmware images hold only placeholder settings, so no secret appears here. The screenshots were taken signed out on November 25, 2026, so they show only what any visitor sees.
