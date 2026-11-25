@@ -3,7 +3,13 @@
  * This work is licensed under the MIT license, see the file LICENSE for details.
  */
 
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+#include <esp32-hal-psram.h>
+
 #include "collections.h"
+
 #define CHAR_BITS (sizeof(char) * 8)
 #define CHAR_MASK (CHAR_BITS - 1)
 #define CHAR_SHIFT IM_LOG2(CHAR_MASK)

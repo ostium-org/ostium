@@ -348,7 +348,27 @@ namespace board
         reader.cameraConfig.grab_mode =
             CAMERA_GRAB_WHEN_EMPTY;
 
+        Serial.println("Starting camera setup...");
+
+        Serial.printf("Free heap before camera: %u\n",
+                      ESP.getFreeHeap());
+
+        Serial.printf("Free PSRAM before camera: %u\n",
+                      ESP.getFreePsram());
+
         QRCodeReaderSetupErr result = reader.setup();
+
+        Serial.printf("Camera setup returned: %d\n",
+                      (int)result);
+
+        Serial.printf("Free heap after camera: %u\n",
+                      ESP.getFreeHeap());
+
+        if (result != SETUP_OK)
+        {
+            Serial.println("ERROR: Camera setup failed!");
+            return false;
+        }
 
         if (result != SETUP_OK)
         {
