@@ -7,6 +7,8 @@
 #include <LiquidCrystal.h>
 #include <DHT.h>
 
+#include "board_config.h"
+
 #include <math.h>
 #include <string.h>
 
@@ -21,23 +23,21 @@ namespace board
     {
 
         // --------------------------------------------------
-        // AUTHORIZED QR
-        // --------------------------------------------------
-
-        // Testing credential only.
-        // Replace with a protected authorization mechanism
-        // before deploying this as a real access-control system.
-
-        constexpr char AUTHORIZED_QR[] =
-            "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-
-        // --------------------------------------------------
         // PIN CONFIGURATION
         // --------------------------------------------------
 
         constexpr int DHT_PIN = 19;
         constexpr int SOUND_PIN = 1;
         constexpr int LED_PIN = 14;
+
+        // There's no lock relay yet, so the LED on GPIO 14 stands in for it:
+        // it's the lock output, OSTIUM_LOCK_PIN. While LED_PIN is that pin,
+        // only LockController drives it, so the LED lights for exactly each
+        // unlock. The panel's own LED patterns stay off, so a denial never
+        // flashes the "lock" open and a grant never relocks it early. The
+        // camera reader must not set up that pin either: its ESP-EYE pull-up
+        // workaround did, so it's removed from ESP32QRCodeReader::setup().
+        constexpr bool kPanelDrivesLed = LED_PIN != OSTIUM_LOCK_PIN;
 
         constexpr int LCD_RS = 2;
         constexpr int LCD_EN = 41;
@@ -48,7 +48,7 @@ namespace board
 
         constexpr uint32_t SENSOR_INTERVAL_MS = 2000;
         constexpr uint32_t DISPLAY_INTERVAL_MS = 500;
-        constexpr uint32_t QR_COOLDOWN_MS = 5000;
+        constexpr uint32_t QR_MESSAGE_MS = 3000;
 
         // --------------------------------------------------
         // CAMERA CONFIGURATION
@@ -156,6 +156,12 @@ namespace board
         void setLed(bool state)
         {
             ledState = state;
+
+            if (!kPanelDrivesLed)
+            {
+                return;
+            }
+
             digitalWrite(LED_PIN, state ? HIGH : LOW);
         }
 
@@ -319,13 +325,6 @@ namespace board
             writeLCDMessage(line1, line2);
         }
 
-        // --------------------------------------------------
-        // QR COOLDOWN
-        // --------------------------------------------------
-
-        bool hasHandledQr = false;
-        uint32_t lastQrAction = 0;
-
     } // anonymous namespace
 
     // ==================================================
@@ -373,11 +372,19 @@ namespace board
         // 2. Initialize LED.
         // ----------------------------------------------
 
-        pinMode(LED_PIN, OUTPUT);
+        if (kPanelDrivesLed)
+        {
+            pinMode(LED_PIN, OUTPUT);
 
-        setLed(false);
+            setLed(false);
 
-        Serial.println("LED initialized.");
+            Serial.println("LED initialized.");
+        }
+        else
+        {
+            Serial.println(
+                "LED is the lock stand-in on OSTIUM_LOCK_PIN; LockController drives it.");
+        }
 
         // ----------------------------------------------
         // 3. Initialize LCD.
@@ -485,122 +492,79 @@ namespace board
     }
 
     // ==================================================
-    // QR PROCESSING
+    // QR FEEDBACK
     // ==================================================
 
-    AccessResult AccessPanel::processQr()
+    void AccessPanel::show(ostium::QrSignal signal)
     {
         if (!initialized)
         {
-            return AccessResult::None;
+            return;
         }
 
         const uint32_t nowMs = millis();
 
-        QRCodeData qrCodeData;
-
-        // ----------------------------------------------
-        // Cooldown handling.
-        // ----------------------------------------------
-
-        if (hasHandledQr &&
-            nowMs - lastQrAction < QR_COOLDOWN_MS)
+        switch (signal)
         {
+        case ostium::QrSignal::Granted:
+            showTimedMessage("ACCESS GRANTED", "Welcome!", QR_MESSAGE_MS);
 
-            while (reader.receiveQrCode(&qrCodeData, 0))
-            {
-                // Discard detections during cooldown.
-            }
-
-            return AccessResult::None;
-        }
-
-        // ----------------------------------------------
-        // Receive QR code.
-        // ----------------------------------------------
-
-        if (!reader.receiveQrCode(&qrCodeData, 0))
-        {
-            return AccessResult::None;
-        }
-
-        if (!qrCodeData.valid)
-        {
-            Serial.println("QR detected but invalid.");
-            return AccessResult::None;
-        }
-
-        // ----------------------------------------------
-        // Safely extract payload.
-        // ----------------------------------------------
-
-        const size_t payloadSize =
-            sizeof(qrCodeData.payload);
-
-        const char *payload =
-            reinterpret_cast<const char *>(qrCodeData.payload);
-
-        const char *terminator =
-            static_cast<const char *>(
-                memchr(payload, '\0', payloadSize));
-
-        if (terminator == nullptr)
-        {
-            Serial.println("QR payload too long or unterminated.");
-            return AccessResult::None;
-        }
-
-        Serial.print("QR payload: ");
-        Serial.println(payload);
-
-        // ----------------------------------------------
-        // Compare authorization.
-        // ----------------------------------------------
-
-        const bool authorized =
-            strcmp(payload, AUTHORIZED_QR) == 0;
-
-        hasHandledQr = true;
-        lastQrAction = nowMs;
-
-        // ----------------------------------------------
-        // ACCESS GRANTED.
-        // ----------------------------------------------
-
-        if (authorized)
-        {
-            Serial.println("========== ACCESS GRANTED ==========");
-
-            showTimedMessage(
-                "ACCESS GRANTED",
-                "Welcome!",
-                3000);
-
-            // LED stays on for 2 seconds.
+            // With its own LED, the panel lights it for 2 seconds
+            // (kPanelDrivesLed).
             startLedPattern(nowMs, 1, 2000, 150);
+            break;
 
-            Serial.println("QR authorization accepted.");
+        case ostium::QrSignal::Denied:
+            showTimedMessage("ACCESS DENIED", "Try again later", QR_MESSAGE_MS);
 
-            return AccessResult::Granted;
+            // With its own LED, the panel flashes it three times
+            // (kPanelDrivesLed).
+            startLedPattern(nowMs, 3, 200, 150);
+            break;
+
+        case ostium::QrSignal::Wait:
+            // A transient denial: the door hasn't polled yet, or the code is
+            // newer than the door's clock. The same code may work shortly.
+            showTimedMessage("PLEASE WAIT", "Show code again", QR_MESSAGE_MS);
+            break;
+
+        case ostium::QrSignal::None:
+            break;
+        }
+    }
+
+    // ==================================================
+    // CAMERA SCAN SOURCE
+    // ==================================================
+
+    bool CameraScanSource::next(ostium::QrScan *scan)
+    {
+        if (!initialized || scan == nullptr)
+        {
+            return false;
         }
 
-        // ----------------------------------------------
-        // ACCESS DENIED.
-        // ----------------------------------------------
+        // One entry is about 1 KB, so it stays off the loop task's stack.
+        // Only the loop task calls next().
+        static QRCodeData decode;
 
-        Serial.println("========== ACCESS DENIED ==========");
+        // Failed decodes carry quirc's error text, not a payload, so skip
+        // them. Never log a payload: it's a bearer credential (Q20).
+        while (reader.receiveQrCode(&decode, 0))
+        {
+            if (ostium::scanFromCameraDecode(
+                    decode.valid,
+                    decode.payload,
+                    decode.payloadLen,
+                    sizeof(decode.payload) - 1,
+                    decode.decodedAtMs,
+                    scan))
+            {
+                return true;
+            }
+        }
 
-        showTimedMessage(
-            "ACCESS DENIED",
-            "Try again later",
-            3000);
-
-        // Three LED flashes.
-        startLedPattern(nowMs, 3, 200, 150);
-
-        Serial.println("QR authorization rejected.");
-
-        return AccessResult::Denied;
+        return false;
     }
 
     // ==================================================

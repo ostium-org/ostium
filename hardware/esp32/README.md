@@ -8,7 +8,7 @@ The door unit runs Arduino-ESP32 on an ESP32-S3 board. It polls the backend for 
 - `native-tests/` is the laptop test project, kept separate from the board's `platformio.ini`.
 - `tools/capture_backend_responses.py` recorded responses from the old FastAPI backend for the command replay tests. It can't run against the Supabase backend.
 - `tools/capture_qr_backend.ts` records tokens and responses from the Deno backend for the QR replay tests, on a microsecond clock and on the backend's default whole-millisecond clock, and generates the startup self-test vector. CI runs it with `--check`.
-- `src/` and `include/` hold the board code: `main.cpp`, and the adapters in `board_adapters.h` for the lock GPIO, the esp_timer relock, Wi-Fi, the HTTPS client, and the bench build's serial QR input.
+- `src/` and `include/` hold the board code: `main.cpp`, the adapters in `board_adapters.h` for the lock GPIO, the esp_timer relock, Wi-Fi, the HTTPS client, and the bench build's serial QR input, and `access_panel.h` for the camera, LCD, and sensors, with the camera's QR scan source (SCRUM-68).
 
 ## Build and flash the board
 
@@ -66,6 +66,6 @@ Leave either secret empty to turn QR access off. The door refuses the test-only 
 
 ### Scan a token on the bench
 
-The camera panel (`src/access_panel.cpp`, SCRUM-68) doesn't hand its decodes to `QrAccess` yet, so for now the `esp32s3-bench` build reads decoded QR text from the serial monitor. Send a line of the form `qr <token>`, where the token is the `payload` from `POST /api/v1/houses/{houseId}/qr-credentials`. The door handles it like a camera decode. A line can end in CR, LF, or CRLF, so any serial terminal works. Any other line prints the usage line, and the door never logs the token. The contract's [bench procedure](../../docs/firmware/qr-access-v0.md#bench-procedure) has a command that issues a token and prints the line to paste.
+The camera panel (`src/access_panel.cpp`, SCRUM-68) hands its decodes to `QrAccess` in both builds, and its LCD shows each grant or denial. The team has no lock yet, so the LED on GPIO 14, `OSTIUM_LOCK_PIN`, stands in for the relay, and lights for each 3-second unlock. Only `LockController` sets up and drives that pin. The camera reader doesn't touch it, and step 5 of the contract's [bench procedure](../../docs/firmware/qr-access-v0.md#bench-procedure) checks it with a meter. The `esp32s3-bench` build also reads decoded QR text from the serial monitor, so you can check a token without showing it to the camera. Send a line of the form `qr <token>`, where the token is the `payload` from `POST /api/v1/houses/{houseId}/qr-credentials`. The door handles it like a camera decode. A line can end in CR, LF, or CRLF, so any serial terminal works. Any other line prints the usage line, and the door never logs the token. The contract's [bench procedure](../../docs/firmware/qr-access-v0.md#bench-procedure) has a command that issues a token and prints the line to paste.
 
-For the interface the camera code must implement, see the contract's [camera handoff](../../docs/firmware/qr-access-v0.md#camera-handoff-scrum-68).
+For how the camera feeds `QrAccess`, and the steps that remain before a camera goes on a door, see the contract's [camera handoff](../../docs/firmware/qr-access-v0.md#camera-handoff-scrum-68).

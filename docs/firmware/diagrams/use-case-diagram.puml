@@ -66,9 +66,10 @@ ReportScan ..> Verify : <<extend>>
 Timed ..> Verify : <<extend>>
 
 note right of Scan
-  The camera is SCRUM-68. Until then,
-  the bench build reads the decoded
-  text from Serial.
+  The onboard camera decodes the code
+  (SCRUM-68), and the panel's LCD shows
+  each grant or denial. The bench build
+  also reads decoded text from Serial.
 end note
 
 note right of Verify

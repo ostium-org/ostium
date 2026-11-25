@@ -129,6 +129,10 @@ int main(int, char**) {
 
   RUN_TEST(test_serial_scan_lines_are_parsed);
 
+  RUN_TEST(test_camera_decode_is_copied_exactly);
+  RUN_TEST(test_qr_signal_follows_decision);
+  RUN_TEST(test_qr_drain_shows_each_decision);
+
   RUN_TEST(test_backend_qr_token_is_granted);
   RUN_TEST(test_backend_accepts_firmware_qr_report_bodies);
   RUN_TEST(test_backend_qr_statuses_follow_response_table);

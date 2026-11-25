@@ -26,7 +26,8 @@ struct QRCodeData
   bool valid;
   int dataType;
   uint8_t payload[1024];
-  int payloadLen;
+  int payloadLen;     // Never more than sizeof(payload) - 1.
+  uint32_t decodedAtMs; // millis() when the decode finished.
 };
 
 class ESP32QRCodeReader

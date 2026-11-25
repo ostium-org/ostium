@@ -7,7 +7,7 @@ The workflow in `.github/workflows/ci.yml` covers Assignment 1 Part C. A push to
 | build | `firmware-build` | Compiles the ESP32-S3 firmware in both board builds (`pio run`). |
 | build | `backend-build` | Type-checks and lints the Supabase Edge Functions with Deno 2. |
 | build | `frontend-build` | Installs the app's dependencies and type-checks the Expo app (`tsc --noEmit`). |
-| test | `firmware-test` | Checks that the generated QR fixture headers match the Deno backend (`capture_qr_backend.ts --check`), then runs the 119 firmware unit tests on the native platform (`pio test`). |
+| test | `firmware-test` | Checks that the generated QR fixture headers match the Deno backend (`capture_qr_backend.ts --check`), then runs the 122 firmware unit tests on the native platform (`pio test`). |
 | test | `backend-test` | Runs the Edge Function handler tests (`deno test`). |
 | test | `frontend-test` | Type-checks and runs the frontend unit tests (`vitest run`). |
 | merge | `auto-merge` | Runs only in a pull request into `main`. It merges the pull request (`gh pr merge`). |

@@ -56,12 +56,14 @@ const char* kCollectedHeaders[] = {"Transfer-Encoding"};
 }  // namespace
 
 void GpioLockOutput::write(bool unlocked) {
+  // The level first, so the pin never drives the other level, even for an
+  // instant.
   digitalWrite(pin_, unlocked == activeHigh_ ? HIGH : LOW);
 
-  if (!configured_) {
-    pinMode(pin_, OUTPUT);
-    configured_ = true;
-  }
+  // Then the output driver, on every write. If other setup code turned the
+  // driver off, the level would only reach the output latch, and the pin
+  // wouldn't switch.
+  pinMode(pin_, OUTPUT);
 }
 
 bool EspOneShotTimer::begin() {
