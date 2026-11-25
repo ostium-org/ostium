@@ -38,7 +38,7 @@ Keeping the drivers separate from the core logic has three benefits:
 
 ![Door unit firmware class diagram](diagrams/firmware-class-diagram.svg)
 
-The source is [`diagrams/class-diagram.puml`](diagrams/class-diagram.puml), and [`firmware-class-diagram.png`](diagrams/firmware-class-diagram.png) is a copy for the report. The rendered SVG and PNG predate SCRUM-38. To show the QR access and camera classes, render them again from the source, as its header comment describes. The diagram shows the firmware's classes, interfaces, and data structs, with their key attributes and operations. It leaves out private helper structs, such as `DuplicateList::Entry`. SCRUM-54 names the classes by their roles, which map to the code like this:
+The source is [`diagrams/class-diagram.puml`](diagrams/class-diagram.puml), and [`firmware-class-diagram.png`](diagrams/firmware-class-diagram.png) is a copy for the report. The diagram shows the firmware's classes, interfaces, and data structs, with their key attributes and operations. It leaves out private helper structs, such as `DuplicateList::Entry`. SCRUM-54 names the classes by their roles, which map to the code like this:
 
 | Role in SCRUM-54 | Classes |
 |---|---|
@@ -82,7 +82,7 @@ Polling costs about 40 requests a minute per door, plus up to one poll interval 
 
 ![Door unit use case diagram](diagrams/firmware-use-case-diagram.svg)
 
-The source is [`diagrams/use-case-diagram.puml`](diagrams/use-case-diagram.puml), and [`firmware-use-case-diagram.png`](diagrams/firmware-use-case-diagram.png) is a copy for the report. The rendered SVG and PNG predate SCRUM-38. To show the QR access boundary, render them again from the source.
+The source is [`diagrams/use-case-diagram.puml`](diagrams/use-case-diagram.puml), and [`firmware-use-case-diagram.png`](diagrams/firmware-use-case-diagram.png) is a copy for the report.
 
 - **The Assignment 1 MVP boundary holds the remote commands.** The property manager locks or unlocks the door through the backend API. The smart access device receives each command and checks it. For an Unlock that passes, the device unlocks the door for a set time and then relocks it. For a Lock that passes, it relocks the door right away. The device rejects a command that fails a check, and it reports each result as a lock event (R13).
 - **The QR access boundary (SCRUM-38) holds the local QR checks.** A tenant or guest presents a QR code, and the device scans it and verifies the credential. It reports the scan only when the token's signature verified, the token is for this door's unit, and the door knows the server's time (Q8). It never reports a forged, malformed, or foreign token, or a transient denial. A valid credential uses the same timed unlock as an app command. The camera decodes each code (SCRUM-68), and the bench build also reads decoded text from Serial.
