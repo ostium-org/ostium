@@ -7,7 +7,7 @@
 #include <Arduino.h>
 #include <esp_system.h>
 #include <ostium_core.h>
-
+#include <WiFi.h>
 #include <string>
 
 #include "board_adapters.h"

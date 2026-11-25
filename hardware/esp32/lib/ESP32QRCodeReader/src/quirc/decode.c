@@ -14,6 +14,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdbool.h>
+#include <stdlib.h>
+#include <esp32-hal-psram.h>
+
 #include "quirc_internal.h"
 
 #include <string.h>
@@ -388,8 +392,8 @@ static quirc_decode_error_t correct_format(uint16_t *f_ret)
   uint8_t sigma[MAX_POLY];
 
   /* Evaluate U (received codeword) at each of alpha_1 .. alpha_6
-     * to get S_1 .. S_6 (but we index them from 0).
-     */
+   * to get S_1 .. S_6 (but we index them from 0).
+   */
   if (!format_syndromes(u, s))
     return QUIRC_SUCCESS;
 
@@ -516,9 +520,9 @@ static int reserved_cell(int version, int i, int j)
     return 1;
 
   /* Exclude version info, if it exists. Version info sits adjacent to
-     * the top-right and bottom-left finders in three rows, bounded by
-     * the timing pattern.
-     */
+   * the top-right and bottom-left finders in three rows, bounded by
+   * the timing pattern.
+   */
   if (version >= 7)
   {
     if (i < 6 && j + 11 >= size)
