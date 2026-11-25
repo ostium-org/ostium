@@ -243,14 +243,51 @@ namespace board
         double soundSum = 0.0;
         double soundSumSquares = 0.0;
 
+        uint16_t soundDiagnosticMin = 4095;
+        uint16_t soundDiagnosticMax = 0;
+
+        double soundDiagnosticSum = 0.0;
+        uint32_t soundDiagnosticCount = 0;
+
+        uint16_t soundWindowMin = 4095;
+        uint16_t soundWindowMax = 0;
+        double soundWindowMean = 0.0;
+
+        bool dhtLastReadValid = false;
+        uint32_t dhtLastSuccessMs = 0;
+
         void updateSound(uint32_t nowMs)
         {
             const uint16_t reading = analogRead(SOUND_PIN);
+
+            // Collect readings for the longer diagnostic window.
+            soundDiagnosticSum += reading;
+            soundDiagnosticCount++;
+
+            if (reading < soundDiagnosticMin)
+            {
+                soundDiagnosticMin = reading;
+            }
+
+            if (reading > soundDiagnosticMax)
+            {
+                soundDiagnosticMax = reading;
+            }
 
             soundSum += reading;
 
             soundSumSquares +=
                 static_cast<double>(reading) * reading;
+
+            if (reading < soundWindowMin)
+            {
+                soundWindowMin = reading;
+            }
+
+            if (reading > soundWindowMax)
+            {
+                soundWindowMax = reading;
+            }
 
             soundSampleCount++;
 
@@ -272,6 +309,8 @@ namespace board
 
                 currentTelemetry.soundRMS =
                     sqrt(fmax(0.0, variance));
+
+                soundWindowMean = mean;
             }
 
             soundWindowStart = nowMs;
@@ -280,6 +319,9 @@ namespace board
 
             soundSum = 0.0;
             soundSumSquares = 0.0;
+
+            soundWindowMin = 4095;
+            soundWindowMax = 0;
         }
 
         // --------------------------------------------------
@@ -424,6 +466,19 @@ namespace board
 
         pinMode(SOUND_PIN, INPUT);
 
+        // Initialize telemetry so unavailable readings are not
+        // mistakenly displayed as zero.
+        currentTelemetry.temperature = NAN;
+        currentTelemetry.humidity = NAN;
+        currentTelemetry.soundRMS = 0.0;
+
+        dhtLastReadValid = false;
+        dhtLastSuccessMs = 0;
+
+        soundWindowMin = 4095;
+        soundWindowMax = 0;
+        soundWindowMean = 0.0;
+
         dht.begin();
 
         lastSensorRead = millis();
@@ -492,11 +547,78 @@ namespace board
             {
                 currentTelemetry.temperature = temperature;
                 currentTelemetry.humidity = humidity;
+
+                dhtLastReadValid = true;
+                dhtLastSuccessMs = nowMs;
             }
             else
             {
-                Serial.println("Warning: DHT11 reading failed.");
+                dhtLastReadValid = false;
+
+                Serial.println(
+                    "[SENSOR WARNING] DHT11 reading unavailable.");
             }
+
+            // ----------------------------------------------
+            // SENSOR DIAGNOSTICS
+            // ----------------------------------------------
+
+            Serial.println();
+            Serial.println("========== ACCESS PANEL SENSORS ==========");
+
+            // DHT11 readings.
+            if (dhtLastReadValid)
+            {
+                Serial.printf(
+                    "Temperature: %.1f C\n",
+                    currentTelemetry.temperature);
+
+                Serial.printf(
+                    "Humidity:    %.1f %%\n",
+                    currentTelemetry.humidity);
+            }
+            else
+            {
+                Serial.println("Temperature: unavailable");
+                Serial.println("Humidity:    unavailable");
+
+                if (dhtLastSuccessMs > 0)
+                {
+                    Serial.printf(
+                        "Last successful DHT11 reading: %lu ms ago\n",
+                        static_cast<unsigned long>(
+                            nowMs - dhtLastSuccessMs));
+                }
+            }
+
+            // Sound sensor readings.
+            Serial.printf(
+                "Sound RMS:   %.2f ADC\n",
+                currentTelemetry.soundRMS);
+
+            Serial.printf(
+                "Sound Avg:   %.1f ADC\n",
+                soundDiagnosticCount > 0
+                    ? soundDiagnosticSum / soundDiagnosticCount
+                    : 0.0);
+
+            Serial.printf(
+                "Sound Min:   %u ADC\n",
+                soundDiagnosticMin);
+
+            Serial.printf(
+                "Sound Max:   %u ADC\n",
+                soundDiagnosticMax);
+
+            Serial.println("==========================================");
+            Serial.println();
+
+            // Reset 2-second sound diagnostic collection.
+            soundDiagnosticMin = 4095;
+            soundDiagnosticMax = 0;
+
+            soundDiagnosticSum = 0.0;
+            soundDiagnosticCount = 0;
         }
 
         // ----------------------------------------------
@@ -567,11 +689,31 @@ namespace board
         // One entry is about 1 KB, so it stays off the loop task's stack.
         // Only the loop task calls next().
         static QRCodeData decode;
+        // Periodically report that the camera is waiting for a QR code.
+        static uint32_t lastCameraStatusMs = 0;
+
+        if (millis() - lastCameraStatusMs >= 3000)
+        {
+            lastCameraStatusMs = millis();
+
+            Serial.println(
+                "[CAMERA] Running - waiting for QR code...");
+        }
 
         // Failed decodes carry quirc's error text, not a payload, so skip
         // them. Never log a payload: it's a bearer credential (Q20).
         while (reader.receiveQrCode(&decode, 0))
         {
+            Serial.println("[CAMERA] QR decoding result received.");
+
+            Serial.printf(
+                "[CAMERA] Decode valid: %s\n",
+                decode.valid ? "YES" : "NO");
+
+            Serial.printf(
+                "[CAMERA] Payload length: %u bytes\n",
+                static_cast<unsigned int>(decode.payloadLen));
+
             if (ostium::scanFromCameraDecode(
                     decode.valid,
                     decode.payload,
@@ -580,8 +722,14 @@ namespace board
                     decode.decodedAtMs,
                     scan))
             {
+                Serial.println(
+                    "[CAMERA] QR successfully converted into a scan.");
+
                 return true;
             }
+
+            Serial.println(
+                "[CAMERA] QR result rejected by scan parser.");
         }
 
         return false;
