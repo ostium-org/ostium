@@ -12,12 +12,12 @@ The door unit runs Arduino-ESP32 on an ESP32-S3 board. It polls the backend for 
 
 ## Build and flash the board
 
-The board build is `platformio.ini` in this folder. Its board ID is a generic ESP32-S3 until SCRUM-49 records the exact model.
+The board build is `platformio.ini` in this folder. It targets the Freenove ESP32-S3 WROOM (`freenove_esp32_s3_wroom`: 8 MB flash, octal PSRAM, and `partitions_8mb.csv`).
 
 1. Copy `include/secrets.example.h` to `include/secrets.h`, and fill in the Wi-Fi network, `OSTIUM_API_ROOT`, the device key, the device token, and the backend's root certificate. For QR access, also fill in `OSTIUM_UNIT_ID` and `OSTIUM_QR_PUBLIC_KEY`, as [Set up QR access](#set-up-qr-access) describes. Git ignores `secrets.h`.
 2. In `include/board_config.h`, set `OSTIUM_LOCK_PIN` to the GPIO that drives the lock, from the board's pinout. If the relay turns on when its input is low, as most opto-isolated relay modules do, also set `OSTIUM_LOCK_ACTIVE_HIGH` to `0`. Wire a pull resistor toward the locked level: a pull-down for an active-high relay, or a pull-up for an active-low one. You can also set both values as build flags.
 3. Before you connect the lock, flash the board and confirm with a meter or the relay's LED that the relay stays off after boot and through a reset.
-4. Connect the board's UART port, labeled UART on an ESP32-S3-DevKitC-1. If the board has only a native USB port, add `-DARDUINO_USB_CDC_ON_BOOT=1` to `build_flags`, or the serial monitor shows nothing.
+4. Connect the board's USB-to-serial port, not its native USB port. If the board has only a native USB port, add `-DARDUINO_USB_CDC_ON_BOOT=1` to `build_flags`, or the serial monitor shows nothing.
 5. To build and flash, run one of these from the repository root.
 
    For a door that uses an `https://` root:

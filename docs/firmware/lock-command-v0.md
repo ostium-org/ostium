@@ -27,7 +27,7 @@ Because the backend is in the unlock path for a command, this contract departs f
 ## Firmware platform
 
 - **Framework:** Arduino-ESP32 on PlatformIO.
-- **Board:** ESP32-S3 with an onboard camera. The firmware team sets the PlatformIO board ID after it records the exact model (SCRUM-49).
+- **Board:** Freenove ESP32-S3 WROOM with an onboard camera (PlatformIO board `freenove_esp32_s3_wroom`).
 - **Lock:** the rules assume a fail-secure lock that's locked when its output is off, such as a solenoid on a relay. A motor-driven lock needs different rules.
 - **Core logic:** plain C++ that doesn't include `Arduino.h`. The lock output, clock, timer, and network sit behind interfaces, so the Unity tests run on a laptop with `pio test -d hardware/esp32/native-tests` (SCRUM-51). The tests don't need a board or a backend.
 - **Libraries:** ArduinoJson 7.4.3 for JSON, pinned exactly because the QR replay tests depend on its number parse, and `HTTPClient` with `WiFiClientSecure` for HTTPS.

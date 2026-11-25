@@ -16,8 +16,8 @@ Supabase Auth + PostgreSQL
 Supabase Edge Functions
     ^                         ^
     | User JWT                | Device bearer token
-Expo client               ESP32-CAM + lock relay
-ostium-api                device-api (planned firmware integration)
+Expo client               ESP32-S3 door unit
+ostium-api                device-api
 ```
 
 - **Client:** one Expo Router application in `application/`, using React Native,
@@ -29,8 +29,9 @@ ostium-api                device-api (planned firmware integration)
 - **Database:** Supabase PostgreSQL stores profiles, units, devices, access
   grants, credentials, and access events. The existing schema reference is in
   `backend/schema/`; this branch does not change or automatically apply it.
-- **Hardware:** `hardware/` documents the planned ESP32-CAM and relay. Firmware
-  source and physical integration remain to be supplied.
+- **Door unit:** `hardware/esp32/` holds the ESP32-S3 firmware. It polls
+  `device-api` for Lock and Unlock commands, checks signed QR codes itself, and
+  reports each result. An LED stands in for the lock relay.
 
 This branch explores Edge Functions in place of FastAPI. There is no Python API
 process or laptop-hosted backend to start. Deploy the functions separately when
@@ -52,8 +53,9 @@ confirm physical relay movement.
 credentials valid for up to 60 seconds. It requires a separately provisioned
 private signing key. The QR screen displays the signed payload, counts down to
 expiry, and automatically requests a replacement. “Access granted” appears only
-for an authenticated device report matching the user's credential. Physical
-QR reader verification and reporting still require firmware integration.
+for an authenticated device report matching the user's credential. The door
+verifies these credentials itself and reports each scan (SCRUM-38). The camera's
+link to that check is in draft PR #33.
 
 **Houses:** live lists, details, and the QR selector read active Supabase units
 using the signed-in client and existing RLS policies. Managers and admins see
@@ -64,8 +66,8 @@ Hardcoded placeholder houses have been removed. Demo mode shows an empty house l
 **Remaining integration:** live membership administration is not connected;
 the local add/remove controls appear only in demo mode. Live
 QR issuance uses real unit UUIDs from the house list.
-Firmware verification, relay execution, configuration/revocation syncing, and
-camera/doorbell features remain future integration work.
+A real lock relay, configuration and revocation syncing, and doorbell features
+remain future work.
 
 ## Repository layout
 
@@ -181,4 +183,5 @@ test, and merge workflow still needs configuration.
 - [API contracts](docs/api.md)
 - [Testing guide](docs/testing.md)
 - [Architecture design](docs/architecture.md) and [security design](docs/security.md)
-- [Hardware documentation](hardware/README.md)
+- [Hardware documentation](hardware/README.md) and the [door unit README](hardware/esp32/README.md)
+- [Maintenance guide](docs/maintenance-guide.md) and [operations guide](docs/operations-guide.md)

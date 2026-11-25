@@ -4,7 +4,7 @@ This guide explains how to deploy, configure, check, and roll back each part of 
 
 ## Door unit firmware
 
-The door unit is an ESP32-S3 board that runs the firmware in `hardware/esp32`. It polls the backend's `device-api` for Lock and Unlock commands, checks signed QR codes itself, and reports each result. There's no lock relay yet, so an LED on the lock output, GPIO 14, stands in for the lock: it lights for each 3-second unlock.
+The door unit is a Freenove ESP32-S3 WROOM board (8 MB flash, octal PSRAM) that runs the firmware in `hardware/esp32`. It polls the backend's `device-api` for Lock and Unlock commands, checks signed QR codes itself, and reports each result. There's no lock relay yet, so an LED on the lock output, GPIO 14, stands in for the lock: it lights for each 3-second unlock.
 
 The door has no over-the-air updates. Every deploy and rollback means flashing the board over USB.
 
@@ -82,7 +82,7 @@ pio pkg exec -p tool-esptoolpy -- esptool.py --chip esp32s3 --baud 460800 write_
 
 ### Check that the door is healthy
 
-Open the serial monitor at 115,200 baud: `pio device monitor -d hardware/esp32 -e esp32s3`. Each line starts with the milliseconds since boot. A healthy door logs these lines, in this order:
+Open the serial monitor at 115,200 baud: `pio device monitor -d hardware/esp32 -e esp32s3`. Lines from the door's core start with the milliseconds since boot. The access panel's own setup lines don't. A healthy door logs these lines, in this order:
 
 | Line | What it shows | If it's missing or different |
 |---|---|---|
@@ -92,8 +92,8 @@ Open the serial monitor at 115,200 baud: `pio device monitor -d hardware/esp32 -
 | `QR access on for unit <uuid>, key ostium-qr-1` | The QR settings are valid. | `QR access off: <reason>` names the setting to fix in `secrets.h`. |
 | `loop stack: <n> bytes never used` | Stack headroom. It should be at least 2,048. | A smaller number risks a crash. Report it. |
 | `Backend configuration OK` | The API root, device ID, token, and certificate are set. | An `ERROR:` line before it names the missing setting, and the door doesn't poll. |
-| `Wi-Fi: connecting to SSID <ssid>` | The door is joining Wi-Fi. | `Wi-Fi ERROR: SSID not found` or `connection failed` means check the network name, password, and 2.4 GHz. |
-| `Access panel initialized` | The camera, LCD, and sensors started. | `Camera initialization failed: <n>` means check the camera ribbon cable and the board's PSRAM. |
+| `Wi-Fi: connecting to SSID <ssid>` | The door is joining Wi-Fi. | If `Wi-Fi connected, IP <ip>` doesn't follow, check the network name, password, and 2.4 GHz. The door keeps retrying. |
+| `Access panel initialized` | The camera, LCD, and sensors started. | `ERROR: Camera setup failed!` means check the camera ribbon cable and the board's PSRAM. `Camera setup returned: <n>` gives the error code. |
 | `Ostium Core startup complete` | Setup finished. | |
 | `server clock set (window <n> ms)` | The first poll succeeded, so the door knows the server's time and QR access can work. | Repeated `poll failed:` lines mean the backend, the certificate, or the token is wrong. `backend refused this device (401)` means the token or device status is wrong. |
 
@@ -101,7 +101,7 @@ Then check the lock and the reports:
 
 1. **After boot:** the lock LED is off.
 2. **Remote unlock:** send Unlock from the app. Within about 2 seconds, the door logs `ran command <id>: unlock`, the LED lights for 3 seconds, and then the door logs `event <id> delivered`.
-3. **QR access:** show a code from the app's QR screen. The door logs `QR granted credential <jti>`, the LED lights for 3 seconds, and the door logs `event qr-<jti>-granted delivered`. The app then shows *Access granted*.
+3. **QR access:** this needs the camera connected to the QR check, which is in draft [PR #33](https://github.com/ostium-org/ostium/pull/33). With it, show a code from the app's QR screen. The door logs `QR granted credential <jti>`, the LED lights for 3 seconds, and the door logs `event qr-<jti>-granted delivered`. The app then shows *Access granted*. Without it, check only that the boot log shows `QR access on for unit <uuid>`.
 
 A `dropped event` line means the backend refused a report for good. If it says to check `devices.unit_id`, ask the backend owner to set it to `OSTIUM_UNIT_ID`. A line that ends in `retrying` is normal while the backend is unavailable: the door keeps the report and tries again.
 
