@@ -1,0 +1,513 @@
+firmware-test	UNKNOWN STEP	﻿2026-11-25T03:09:13.8287457Z Current runner version: '2.338.2'
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8310257Z ##[group]Runner Image Provisioner
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8311095Z Hosted Compute Agent
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8311752Z Version: 20261111.635
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8312328Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8313236Z Build Date: 2026-11-11T01:49:01Z
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8313883Z Worker ID: {711d36fa-4d0f-4cd3-8df4-1aab99599ded}
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8314563Z Region: westus3
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8315098Z Cloud: Azure
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8315590Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8316852Z ##[group]Operating System
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8317436Z Ubuntu
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8317945Z 26.04.1
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8318469Z LTS
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8318946Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8319452Z ##[group]Runner Image
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8320020Z Image: ubuntu-26.04
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8320694Z Version: 20261116.202.1
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8321919Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261116.202/images/ubuntu/Ubuntu2604-Readme.md
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8323680Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261116.202
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8324593Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8325722Z ##[group]GITHUB_TOKEN Permissions
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8327696Z Contents: read
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8328222Z Metadata: read
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8329120Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8331069Z Secret source: Actions
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8331956Z Cache mode: write
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8332576Z Prepare workflow directory
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8743496Z Prepare all required actions
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:13.8790258Z Getting action download info
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:14.2120404Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:14.3191715Z Download action repository 'denoland/setup-deno@v2' (SHA:22d081ff2d3a40755e97629de92e3bcbfa7cf2ed)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:14.8247333Z Download action repository 'actions/setup-python@v7' (SHA:6d4fd22b20465ccc0f7354476588e8df7c9ca0e0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:14.9606593Z Download action repository 'actions/cache@v6' (SHA:55cc8345863c7cc4c66a329aec7e433d2d1c52a9)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.0663597Z Download action repository 'actions/upload-artifact@v7' (SHA:cf430e030ddbb5b0abf93d22962f4752f3646cd9)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.2722866Z Complete job name: firmware-test
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3636505Z ##[group]Run actions/checkout@v7
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3637833Z with:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3638672Z   repository: ostium-org/ostium
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3646403Z   token: ***
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3647264Z   ssh-strict: true
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3648314Z   ssh-user: git
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3649529Z   persist-credentials: true
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3650494Z   clean: true
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3651361Z   sparse-checkout-cone-mode: true
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3652395Z   fetch-depth: 1
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3653513Z   fetch-tags: false
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3654404Z   show-progress: true
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3655281Z   lfs: false
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3656106Z   submodules: false
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3657016Z   set-safe-directory: true
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3658027Z   allow-unsafe-pr-checkout: false
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3659364Z env:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3660141Z   PYTHON_VERSION: 3.12
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3661035Z   PLATFORMIO_VERSION: 6.2.0
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3661990Z   NODE_VERSION: 22
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.3663158Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6561120Z Syncing repository: ostium-org/ostium
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6566064Z ##[group]Getting Git version info
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6568647Z Working directory is '/home/runner/work/ostium/ostium'
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6571764Z [command]/usr/bin/git version
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6573585Z git version 2.56.1
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6582935Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6594114Z Temporarily overriding HOME='/home/runner/work/_temp/ead5af03-6070-4250-a38c-2c2076b16297' before making global git config changes
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6597128Z Adding repository directory to the temporary git global config as a safe directory
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6599898Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ostium/ostium
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6666053Z Deleting the contents of '/home/runner/work/ostium/ostium'
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6669794Z ##[group]Determining repository object format
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6672230Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6674057Z ##[group]Initializing the repository
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6676201Z [command]/usr/bin/git init /home/runner/work/ostium/ostium
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6791120Z hint: Using 'master' as the name for the initial branch. This default branch name
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6793674Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6795555Z hint: to use in all of your new repositories, which will suppress this warning,
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6797196Z hint: call:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6798042Z hint:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6799044Z hint: 	git config --global init.defaultBranch <name>
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6800446Z hint:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6801559Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6803500Z hint: 'development'. The just-created branch can be renamed via this command:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6805573Z hint:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6806658Z hint: 	git branch -m <name>
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6807769Z hint:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6809536Z hint: Disable this message with "git config set advice.defaultBranchName false"
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6811611Z Initialized empty Git repository in /home/runner/work/ostium/ostium/.git/
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6829931Z [command]/usr/bin/git remote add origin https://github.com/ostium-org/ostium
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6880153Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6882213Z ##[group]Disabling automatic garbage collection
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6884040Z [command]/usr/bin/git config --local gc.auto 0
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6919115Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6921001Z ##[group]Setting up auth
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6922281Z Removing SSH command configuration
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6924726Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.6965802Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.7392624Z Removing HTTP extra header
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.7399415Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.7429146Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.7635542Z Removing includeIf entries pointing to credentials config files
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.7639446Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.7668714Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.7878073Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-ce10f08c-31e4-4ac6-8509-28dff6fe20a1.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.7911661Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/ostium/ostium/.git.path /home/runner/work/_temp/git-credentials-ce10f08c-31e4-4ac6-8509-28dff6fe20a1.config
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.7943154Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/ostium/ostium/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-ce10f08c-31e4-4ac6-8509-28dff6fe20a1.config
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.7976892Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-ce10f08c-31e4-4ac6-8509-28dff6fe20a1.config
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.8005785Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-ce10f08c-31e4-4ac6-8509-28dff6fe20a1.config
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.8035610Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.8038514Z ##[group]Fetching the repository
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:15.8042264Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +a7983599a29cbe73a31eef298e8252b985db87e1:refs/remotes/origin/main
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.6673138Z From https://github.com/ostium-org/ostium
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.6674754Z  * [new ref]         a7983599a29cbe73a31eef298e8252b985db87e1 -> origin/main
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.6682094Z [command]/usr/bin/git branch --list --remote origin/main
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.6706675Z   origin/main
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.6712935Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.6732857Z a7983599a29cbe73a31eef298e8252b985db87e1
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.6735557Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.6736589Z ##[group]Determining the checkout info
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.6737547Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.6739676Z [command]/usr/bin/git sparse-checkout disable
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.6794588Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.6823206Z ##[group]Checking out the ref
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.6826619Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.7178940Z Switched to a new branch 'main'
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.7187403Z branch 'main' set up to track 'origin/main'.
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.7192205Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.7231185Z [command]/usr/bin/git log -1 --format=%H
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.7251497Z a7983599a29cbe73a31eef298e8252b985db87e1
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.7486526Z ##[group]Run denoland/setup-deno@v2
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.7487138Z with:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.7487603Z   deno-version: v2.x
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.7488119Z   deno-binary-name: deno
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.7488618Z   cache: false
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.7489057Z env:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.7489567Z   PYTHON_VERSION: 3.12
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.7490099Z   PLATFORMIO_VERSION: 6.2.0
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.7490611Z   NODE_VERSION: 22
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:16.7491087Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:17.0272369Z Going to install stable version 2.9.8.
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:17.0293366Z Downloading Deno from https://github.com/denoland/deno/releases/download/v2.9.8/deno-x86_64-unknown-linux-gnu.zip.
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:17.3573864Z [command]/usr/bin/unzip -o -q /home/runner/work/_temp/d089fd2f-67ef-4913-a913-14e43ae98a99
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:18.6085066Z Cached Deno to /opt/hostedtoolcache/deno/2.9.8/x64.
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:18.6119637Z Installation complete.
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:18.6241140Z ##[group]Run deno run --check --allow-read hardware/esp32/tools/capture_qr_backend.ts --check
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:18.6242018Z [36;1mdeno run --check --allow-read hardware/esp32/tools/capture_qr_backend.ts --check[0m
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:18.6272073Z shell: /usr/bin/bash -e {0}
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:18.6272481Z env:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:18.6272950Z   PYTHON_VERSION: 3.12
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:18.6273346Z   PLATFORMIO_VERSION: 6.2.0
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:18.6273669Z   NODE_VERSION: 22
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:18.6273980Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:18.7043784Z [0m[32mCheck[0m hardware/esp32/tools/capture_qr_backend.ts
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.7490890Z hardware/esp32/test/test_core/qr_backend_responses.h is current
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.7498573Z hardware/esp32/lib/ostium_core/src/qr_test_vector.h is current
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.7710828Z ##[group]Run actions/setup-python@v7
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.7711237Z with:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.7711531Z   python-version: 3.12
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.7711866Z   check-latest: false
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.7714538Z   token: ***
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.7714976Z   mirror: https://raw.githubusercontent.com/actions/python-versions/main
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.7715474Z   update-environment: true
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.7715795Z   allow-prereleases: false
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.7716144Z   freethreaded: false
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.7716452Z env:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.7716728Z   PYTHON_VERSION: 3.12
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.7717063Z   PLATFORMIO_VERSION: 6.2.0
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.7717378Z   NODE_VERSION: 22
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.7717866Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.8809583Z ##[group]Installed versions
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.8937340Z Successfully set up CPython (3.12.16)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.8964907Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9704395Z ##[group]Run actions/cache@v6
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9704760Z with:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9705060Z   path: ~/.platformio
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9705588Z   key: platformio-native-6.2.0-14b1a29d376c405d208e4d802629c0b7a55b9fd316be93730b4193f0c7101c79
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9706157Z   enableCrossOsArchive: false
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9706517Z   fail-on-cache-miss: false
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9706836Z   lookup-only: false
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9707142Z   save-always: false
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9707424Z env:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9707716Z   PYTHON_VERSION: 3.12
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9708050Z   PLATFORMIO_VERSION: 6.2.0
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9708348Z   NODE_VERSION: 22
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9708767Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9709255Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib/pkgconfig
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9709753Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9710322Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9710773Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9711213Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:19.9711583Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:20.2942277Z Cache hit for: platformio-native-6.2.0-14b1a29d376c405d208e4d802629c0b7a55b9fd316be93730b4193f0c7101c79
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1315903Z Received 1686730 of 1686730 (100.0%), 2.7 MBs/sec
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1316526Z Cache Size: ~2 MB (1686730 B)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1345036Z [command]/usr/bin/tar -xf /home/runner/work/_temp/d4c74cee-376f-433d-a237-876c60015b29/cache.tzst -P -C /home/runner/work/ostium/ostium --use-compress-program unzstd
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1481845Z Cache restored successfully
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1659901Z Cache restored from key: platformio-native-6.2.0-14b1a29d376c405d208e4d802629c0b7a55b9fd316be93730b4193f0c7101c79
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1744467Z ##[group]Run pip install "platformio==$PLATFORMIO_VERSION"
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1744952Z [36;1mpip install "platformio==$PLATFORMIO_VERSION"[0m
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1781019Z shell: /usr/bin/bash -e {0}
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1781542Z env:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1781866Z   PYTHON_VERSION: 3.12
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1782172Z   PLATFORMIO_VERSION: 6.2.0
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1782489Z   NODE_VERSION: 22
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1783193Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1783678Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib/pkgconfig
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1784186Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1784619Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1785099Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1785530Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.1785930Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:21.9913271Z Collecting platformio==6.2.0
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.0144645Z   Downloading platformio-6.2.0-py3-none-any.whl.metadata (7.2 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.0191991Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages (from platformio==6.2.0) (26.3)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.0322856Z Collecting bottle==0.13.* (from platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.0360674Z   Downloading bottle-0.13.4-py2.py3-none-any.whl.metadata (1.6 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.0515353Z Collecting click!=8.3,<8.6,>=8.0.4 (from platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.0556987Z   Downloading click-8.5.1-py3-none-any.whl.metadata (2.6 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.0687190Z Collecting colorama (from platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.0793696Z   Downloading colorama-0.4.6-py2.py3-none-any.whl.metadata (17 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.1055144Z Collecting marshmallow<5,>=3 (from platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.1094404Z   Downloading marshmallow-4.4.0-py3-none-any.whl.metadata (6.8 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.1202265Z Collecting pyelftools<1,>=0.27 (from platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.1239223Z   Downloading pyelftools-0.33-py3-none-any.whl.metadata (1.0 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.1343168Z Collecting pyserial==3.5.* (from platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.1377928Z   Downloading pyserial-3.5-py2.py3-none-any.whl.metadata (1.6 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.1620734Z Collecting requests==2.* (from platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.1660494Z   Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.1773332Z Collecting semantic_version==2.10.* (from platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.1805259Z   Downloading semantic_version-2.10.0-py2.py3-none-any.whl.metadata (9.7 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.1931681Z Collecting tabulate==0.* (from platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.1968452Z   Downloading tabulate-0.10.0-py3-none-any.whl.metadata (40 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.2108806Z Collecting ajsonrpc==1.2.* (from platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.2146413Z   Downloading ajsonrpc-1.2.0-py3-none-any.whl.metadata (6.9 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.2492166Z Collecting starlette<2 (from platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.2530407Z   Downloading starlette-1.10.0-py3-none-any.whl.metadata (6.6 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.2753328Z Collecting uvicorn<1 (from platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.2786469Z   Downloading uvicorn-0.54.0-py3-none-any.whl.metadata (6.6 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.2900675Z Collecting wsproto==1.* (from platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.2943289Z   Downloading wsproto-1.3.2-py3-none-any.whl.metadata (5.2 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.3982935Z Collecting charset_normalizer<4,>=2 (from requests==2.*->platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.4020567Z   Downloading charset_normalizer-3.5.3-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (43 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.4179259Z Collecting idna<4,>=2.5 (from requests==2.*->platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.4225453Z   Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.4402233Z Collecting urllib3<3,>=1.26 (from requests==2.*->platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.4437359Z   Downloading urllib3-2.8.0-py3-none-any.whl.metadata (7.4 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.4590570Z Collecting certifi>=2023.5.7 (from requests==2.*->platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.4625202Z   Downloading certifi-2026.11.20-py3-none-any.whl.metadata (2.5 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.4787476Z Collecting anyio<5,>=4.0.0 (from starlette<2->platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.4822014Z   Downloading anyio-4.16.0-py3-none-any.whl.metadata (4.7 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.4966311Z Collecting typing-extensions>=4.10.0 (from starlette<2->platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.5003364Z   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.5173323Z Collecting h11>=0.8 (from uvicorn<1->platformio==6.2.0)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.5206545Z   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.5329681Z Downloading platformio-6.2.0-py3-none-any.whl (418 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.5430259Z Downloading ajsonrpc-1.2.0-py3-none-any.whl (22 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.5487876Z Downloading bottle-0.13.4-py2.py3-none-any.whl (103 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.5549969Z Downloading click-8.5.1-py3-none-any.whl (126 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.5604517Z Downloading marshmallow-4.4.0-py3-none-any.whl (53 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.5657778Z Downloading pyelftools-0.33-py3-none-any.whl (201 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.5718303Z Downloading pyserial-3.5-py2.py3-none-any.whl (90 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.5776685Z Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.5832142Z Downloading charset_normalizer-3.5.3-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (257 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.5892188Z Downloading idna-3.20-py3-none-any.whl (69 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.5951400Z Downloading semantic_version-2.10.0-py2.py3-none-any.whl (15 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.6007948Z Downloading starlette-1.10.0-py3-none-any.whl (80 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.6065060Z Downloading anyio-4.16.0-py3-none-any.whl (134 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.6121885Z Downloading tabulate-0.10.0-py3-none-any.whl (39 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.6178343Z Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.6234200Z Downloading uvicorn-0.54.0-py3-none-any.whl (87 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.6288089Z Downloading wsproto-1.3.2-py3-none-any.whl (24 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.6340967Z Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.6406418Z Downloading certifi-2026.11.20-py3-none-any.whl (127 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.6475507Z Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.6530808Z Downloading colorama-0.4.6-py2.py3-none-any.whl (25 kB)
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:22.7750540Z Installing collected packages: pyserial, bottle, urllib3, typing-extensions, tabulate, semantic_version, pyelftools, marshmallow, idna, h11, colorama, click, charset_normalizer, certifi, ajsonrpc, wsproto, uvicorn, requests, anyio, starlette, platformio
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.8510815Z 
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.8530926Z Successfully installed ajsonrpc-1.2.0 anyio-4.16.0 bottle-0.13.4 certifi-2026.11.20 charset_normalizer-3.5.3 click-8.5.1 colorama-0.4.6 h11-0.16.0 idna-3.20 marshmallow-4.4.0 platformio-6.2.0 pyelftools-0.33 pyserial-3.5 requests-2.34.2 semantic_version-2.10.0 starlette-1.10.0 tabulate-0.10.0 typing-extensions-4.16.0 urllib3-2.8.0 uvicorn-0.54.0 wsproto-1.3.2
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9252206Z ##[group]Run mkdir -p reports
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9252673Z [36;1mmkdir -p reports[0m
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9274901Z shell: /usr/bin/bash -e {0}
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9275259Z env:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9275614Z   PYTHON_VERSION: 3.12
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9275956Z   PLATFORMIO_VERSION: 6.2.0
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9276265Z   NODE_VERSION: 22
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9276668Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9277214Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib/pkgconfig
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9277723Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9278269Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9278763Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9279422Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9279811Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9413427Z ##[group]Run pio test -d hardware/esp32/native-tests --junit-output-path "$GITHUB_WORKSPACE/reports/firmware-tests.xml"
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9414331Z [36;1mpio test -d hardware/esp32/native-tests --junit-output-path "$GITHUB_WORKSPACE/reports/firmware-tests.xml"[0m
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9432527Z shell: /usr/bin/bash -e {0}
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9432953Z env:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9433350Z   PYTHON_VERSION: 3.12
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9433704Z   PLATFORMIO_VERSION: 6.2.0
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9434044Z   NODE_VERSION: 22
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9434421Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9434971Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib/pkgconfig
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9435467Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9435939Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9436438Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9436977Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:23.9437397Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:24.6386023Z Verbosity level can be increased via `-v, -vv, or -vvv` option
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:24.6386890Z Collected 1 tests
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:24.6400310Z 
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:24.6400886Z Processing test_core in native environment
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:24.6401637Z --------------------------------------------------------------------------------
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:24.6402191Z Building...
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:24.6901532Z Library Manager: Installing bblanchon/ArduinoJson @ 7.4.3
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:24.7229606Z Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:24.7330030Z Library Manager: ArduinoJson@7.4.3 has been installed!
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:24.7335086Z Library Manager: Installing throwtheswitch/Unity @ ^2.6.1
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:25.2089158Z Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:25.2151329Z Library Manager: Unity@2.6.1 has been installed!
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8448618Z Testing...
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8467492Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:11: test_lock_is_locked_after_startup	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8469020Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:12: test_commands_run_in_response_order	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8470495Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:13: test_unlock_then_lock_in_one_poll_ends_locked	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8471531Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:14: test_duplicate_command_is_not_run_again	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8472611Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:15: test_redelivered_unlock_does_not_restart_timer	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8484415Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:16: test_duplicate_list_never_drops_unexpired_id	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8495991Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:17: test_expired_command_is_rejected	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8497200Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:18: test_command_issued_before_boot_is_rejected	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8498330Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:19: test_boot_time_is_set_once_from_first_poll	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8499422Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:20: test_command_for_other_door_is_rejected	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8500517Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:21: test_malformed_command_is_rejected	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8501589Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:22: test_unknown_action_is_rejected	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8503156Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:23: test_unlock_pulses_for_configured_time	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8504308Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:24: test_unlock_never_exceeds_maximum	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8505343Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:25: test_second_unlock_does_not_extend	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8506501Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:26: test_lock_during_unlock_relocks_immediately	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8507497Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:27: test_network_error_keeps_door_locked	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8508741Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:28: test_relock_fires_while_request_blocks	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8509603Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:29: test_event_id_derives_from_command_id	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8510430Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:30: test_failed_event_post_does_not_block_lock_control	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8511343Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:31: test_timestamp_parser_accepts_utc_formats	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8512196Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:32: test_bad_poll_response_runs_nothing	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8513694Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:34: test_unlock_stays_locked_when_timer_fails	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8514824Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:35: test_checks_report_first_failure_in_contract_order	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8526892Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:36: test_cache_full_rejection_is_final	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8538498Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:37: test_cache_full_rejection_is_queued_once	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8539579Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:38: test_duplicate_id_kept_until_its_own_expiry	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8540890Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:39: test_boot_time_uses_poll_start_time	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8542872Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:40: test_slow_response_cannot_rerun_command_from_before_boot	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8544373Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:41: test_run_poll_backs_off_after_a_failed_poll	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8545743Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:42: test_duplicate_id_kept_while_backend_still_serves	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8546975Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:43: test_long_action_is_malformed_and_event_stays_small	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8556479Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:44: test_poll_command_count_is_capped	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8557689Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:45: test_timestamp_formats_as_utc_with_milliseconds	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8558806Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:46: test_event_body_matches_contract_examples	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8559880Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:47: test_example_poll_response_parses	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8561010Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:48: test_event_responses_follow_contract_table	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8562226Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:49: test_event_retry_backoff_is_2_4_8_seconds	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8563741Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:50: test_event_queue_drops_oldest_when_full	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8564668Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:51: test_event_service_posts_at_most_one_event	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8565505Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:52: test_event_retry_backoff_starts_after_slow_post	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8566377Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:53: test_event_retry_survives_millis_wraparound	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8567196Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:54: test_poll_interval_is_start_to_start	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8568020Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:55: test_poll_backoff_is_2_4_8_seconds	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8568976Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:56: test_poll_scheduler_survives_millis_wraparound	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8577286Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:57: test_body_read_stops_when_server_stalls	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8580262Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:58: test_body_read_follows_content_length_and_chunks	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8586329Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:59: test_body_read_rejects_bad_or_large_bodies	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8587992Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:61: test_backend_poll_runs_unlock_then_lock	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8589905Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:62: test_backend_accepts_firmware_event_bodies	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8591506Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:63: test_backend_event_statuses_follow_response_table	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8604838Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:64: test_backend_rejected_token_runs_nothing	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8605797Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:65: test_backend_timestamps_parse	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8606677Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:66: test_backend_door_id_is_the_device_key	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8607487Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:67: test_backend_command_matches_poll	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8608294Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:68: test_backend_stops_serving_expired_commands	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8609184Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:69: test_backend_accepts_report_after_reset	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8659459Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:71: test_ed25519_matches_rfc8032_vectors	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8669547Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:72: test_ed25519_rejects_non_canonical_signature	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8674404Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:73: test_ed25519_test_seed_derives_fixture_public_key	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8675348Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:75: test_base64url_decoding_is_strict	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8677956Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:76: test_base64url_round_trips	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8734542Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:77: test_malformed_qr_text_is_rejected	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8740073Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:78: test_qr_demo_payload_is_rejected	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8804581Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:79: test_qr_header_must_match_configured_key	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8903304Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:80: test_forged_qr_is_rejected	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.8915348Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:81: test_qr_signature_matches_backend_fixture	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.9170156Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:82: test_qr_claims_must_parse	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.9622617Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:83: test_qr_times_round_inward	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.9623829Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:85: test_server_clock_bounds_use_request_and_response_times	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.9626298Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:86: test_server_clock_bounds_bracket_true_time	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.9627647Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:87: test_server_clock_combines_polls	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.9628567Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:88: test_server_clock_restarts_when_server_clock_moves	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.9629601Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:89: test_server_clock_stops_after_offline_limit	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.9630520Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:90: test_server_clock_forgets_bounds_before_millis_wraps	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.9631689Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:91: test_server_clock_survives_millis_wraparound	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.9632532Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:92: test_server_clock_boot_time_is_latest_possible	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.9633675Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:93: test_run_poll_feeds_server_clock	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.9651204Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:95: test_valid_qr_unlocks_and_reports_granted	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.9672588Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:96: test_qr_for_other_unit_is_rejected	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.9824992Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:97: test_unverified_qr_never_reports	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.9956518Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:98: test_qr_with_invalid_claims_is_rejected	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:40.9978740Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:99: test_qr_denied_before_first_sync	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.0024301Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:100: test_qr_offline_validation_stops_at_limit	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.0229405Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:101: test_qr_disabled_without_valid_configuration	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.0271569Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:102: test_test_only_key_disabled_outside_bench	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.0292109Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:103: test_qr_denied_while_backend_refuses_device	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.0404743Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:104: test_qr_self_test_detects_bad_verifier	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.0464641Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:105: test_revoked_qr_is_rejected	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.0506985Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:106: test_qr_is_single_use	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.0752633Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:107: test_used_list_full_denies_new_credentials	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.0857238Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:108: test_used_qr_stays_used_when_server_clock_moves_back	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.0891315Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:109: test_qr_issued_before_boot_is_rejected	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.0933672Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:110: test_power_cycle_cannot_replay_used_qr	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.1059599Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:111: test_expired_qr_is_rejected	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.1086444Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:112: test_fresh_qr_waits_until_issue_time_has_passed	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.1110473Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:113: test_qr_unlock_failure_is_reported	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.1137812Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:114: test_qr_grant_does_not_extend_unlock	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.1317869Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:115: test_qr_checks_report_first_failure_in_order	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.1587933Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:116: test_qr_report_time_is_inside_credential_window	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.1865210Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:117: test_qr_denial_reported_once_per_credential	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.1953484Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:118: test_repeated_decodes_are_ignored	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.1977529Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:119: test_stale_scan_is_ignored	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.1992230Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:120: test_qr_scan_drain_is_bounded	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2063143Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:121: test_qr_failed_report_does_not_block_scans	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2114358Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:122: test_qr_log_never_contains_token	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2116376Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:124: test_qr_report_body_matches_contract	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2120412Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:125: test_qr_event_responses_follow_table	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2127040Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:126: test_qr_denial_never_evicts_a_grant_report	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2127957Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:127: test_one_report_post_per_pass_qr_first	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2131813Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:128: test_failing_qr_reports_cannot_starve_command_events	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2138270Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:130: test_serial_scan_lines_are_parsed	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2161878Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:132: test_backend_qr_token_is_granted	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2180922Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:133: test_backend_accepts_firmware_qr_report_bodies	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2200534Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:134: test_backend_qr_statuses_follow_response_table	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2235806Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:135: test_backend_rejects_grants_outside_credential_window	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2276718Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:136: test_backend_capped_qr_expiry_is_honored	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2306088Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:137: test_backend_production_qr_token_is_granted	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2394651Z /home/runner/work/ostium/ostium/hardware/esp32/test/test_core/test_main.cpp:138: test_backend_production_qr_window_boundaries	[PASSED]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2400232Z ----------------- native:test_core [PASSED] Took 16.60 seconds -----------------
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2403438Z 
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2404771Z =================================== SUMMARY ===================================
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2409374Z Environment    Test       Status    Duration
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2409990Z -------------  ---------  --------  ------------
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2410406Z native         test_core  PASSED    00:00:16.599
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.2410848Z ================ 119 test cases: 119 succeeded in 00:00:16.599 ================
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3068560Z Saved JUnit report to the /home/runner/work/ostium/ostium/reports/firmware-tests.xml
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3457941Z ##[group]Run actions/upload-artifact@v7
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3458318Z with:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3458623Z   name: firmware-test-report
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3458986Z   path: reports/firmware-tests.xml
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3459391Z   if-no-files-found: ignore
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3459714Z   compression-level: 6
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3460031Z   overwrite: false
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3460337Z   include-hidden-files: false
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3460732Z   archive: true
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3461145Z env:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3461428Z   PYTHON_VERSION: 3.12
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3461754Z   PLATFORMIO_VERSION: 6.2.0
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3462089Z   NODE_VERSION: 22
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3462509Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3463295Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib/pkgconfig
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3463793Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3464670Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3465198Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3465646Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.3466016Z ##[endgroup]
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.4831184Z With the provided path, there will be 1 file uploaded
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.4849316Z Artifact name is valid!
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.4861420Z Root directory input is valid!
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.8296607Z Uploading artifact: firmware-test-report.zip
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:41.8331772Z Beginning upload of artifact content to blob storage
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:42.0675697Z Uploaded bytes 2566
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:42.1276202Z Finished uploading artifact content to blob storage!
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:42.1277523Z SHA256 digest of uploaded artifact is 14018d9468c6f9c6bf3fdd6422933e6c6f671c006d18f7a0ec224c0017a8a38c
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:42.1278568Z Finalizing artifact upload
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:42.6247298Z Artifact firmware-test-report successfully finalized. Artifact ID 14987512573
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:42.6248596Z Artifact firmware-test-report has been successfully uploaded! Final size is 2566 bytes. Artifact ID is 14987512573
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:42.6251447Z Artifact download URL: https://github.com/ostium-org/ostium/actions/runs/45537793630/artifacts/14987512573
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:42.6940580Z Post job cleanup.
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:42.8064314Z Cache hit occurred on the primary key platformio-native-6.2.0-14b1a29d376c405d208e4d802629c0b7a55b9fd316be93730b4193f0c7101c79, not saving cache.
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:42.8169081Z Post job cleanup.
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:42.9361111Z Post job cleanup.
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.0501308Z Caching is not enabled. Caching is skipped.
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.0627427Z Post job cleanup.
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.1495027Z [command]/usr/bin/git version
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.1540618Z git version 2.56.1
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.1579219Z Temporarily overriding HOME='/home/runner/work/_temp/c9de95b5-5ae3-4875-bebd-4813d3177deb' before making global git config changes
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.1580314Z Adding repository directory to the temporary git global config as a safe directory
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.1585159Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ostium/ostium
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.1620016Z Removing SSH command configuration
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.1626313Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.1657971Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.1911719Z Removing HTTP extra header
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.1917795Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.1948196Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2197804Z Removing includeIf entries pointing to credentials config files
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2198761Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2223896Z includeif.gitdir:/home/runner/work/ostium/ostium/.git.path
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2225081Z includeif.gitdir:/home/runner/work/ostium/ostium/.git/worktrees/*.path
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2226307Z includeif.gitdir:/github/workspace/.git.path
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2227228Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2233063Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/ostium/ostium/.git.path
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2252060Z /home/runner/work/_temp/git-credentials-ce10f08c-31e4-4ac6-8509-28dff6fe20a1.config
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2261158Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/ostium/ostium/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-ce10f08c\-31e4\-4ac6\-8509\-28dff6fe20a1\.config
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2297724Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/ostium/ostium/.git/worktrees/*.path
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2328000Z /home/runner/work/_temp/git-credentials-ce10f08c-31e4-4ac6-8509-28dff6fe20a1.config
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2335670Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/ostium/ostium/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-ce10f08c\-31e4\-4ac6\-8509\-28dff6fe20a1\.config
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2382629Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2397455Z /github/runner_temp/git-credentials-ce10f08c-31e4-4ac6-8509-28dff6fe20a1.config
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2404156Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-ce10f08c\-31e4\-4ac6\-8509\-28dff6fe20a1\.config
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2435749Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2453687Z /github/runner_temp/git-credentials-ce10f08c-31e4-4ac6-8509-28dff6fe20a1.config
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2461470Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-ce10f08c\-31e4\-4ac6\-8509\-28dff6fe20a1\.config
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2494893Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2706284Z Removing credentials config '/home/runner/work/_temp/git-credentials-ce10f08c-31e4-4ac6-8509-28dff6fe20a1.config'
+firmware-test	UNKNOWN STEP	2026-11-25T03:09:43.2845114Z Cleaning up orphan processes

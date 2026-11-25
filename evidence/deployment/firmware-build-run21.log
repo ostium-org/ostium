@@ -1,0 +1,926 @@
+firmware-build	UNKNOWN STEP	﻿2026-11-25T03:07:51.9228875Z Current runner version: '2.338.2'
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9265964Z ##[group]Runner Image Provisioner
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9267356Z Hosted Compute Agent
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9268280Z Version: 20261111.635
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9269348Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9270637Z Build Date: 2026-11-11T01:49:01Z
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9272060Z Worker ID: {1b320259-247f-48b8-8ecf-00a98f0530c8}
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9273368Z Region: eastus2
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9274375Z Cloud: Azure
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9275821Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9278521Z ##[group]Operating System
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9279877Z Ubuntu
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9280841Z 26.04.1
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9281873Z LTS
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9282806Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9283762Z ##[group]Runner Image
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9285184Z Image: ubuntu-26.04
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9286191Z Version: 20261116.202.1
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9288511Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261116.202/images/ubuntu/Ubuntu2604-Readme.md
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9292036Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261116.202
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9293824Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9296090Z ##[group]GITHUB_TOKEN Permissions
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9299307Z Contents: read
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9300438Z Metadata: read
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9301409Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9304699Z Secret source: Actions
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9306520Z Cache mode: write
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9308455Z Prepare workflow directory
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9910260Z Prepare all required actions
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:51.9983360Z Getting action download info
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.2155961Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.3509098Z Download action repository 'actions/setup-python@v7' (SHA:6d4fd22b20465ccc0f7354476588e8df7c9ca0e0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.4628884Z Download action repository 'actions/cache@v6' (SHA:55cc8345863c7cc4c66a329aec7e433d2d1c52a9)
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.5482536Z Download action repository 'actions/upload-artifact@v7' (SHA:cf430e030ddbb5b0abf93d22962f4752f3646cd9)
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.7532226Z Complete job name: firmware-build
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8600689Z ##[group]Run actions/checkout@v7
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8601637Z with:
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8602098Z   repository: ostium-org/ostium
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8606233Z   token: ***
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8606694Z   ssh-strict: true
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8607132Z   ssh-user: git
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8607641Z   persist-credentials: true
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8608155Z   clean: true
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8608607Z   sparse-checkout-cone-mode: true
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8609131Z   fetch-depth: 1
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8609570Z   fetch-tags: false
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8610144Z   show-progress: true
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8610768Z   lfs: false
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8611191Z   submodules: false
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8611648Z   set-safe-directory: true
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8612153Z   allow-unsafe-pr-checkout: false
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8612990Z env:
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8613436Z   PYTHON_VERSION: 3.12
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8613923Z   PLATFORMIO_VERSION: 6.2.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8614415Z   NODE_VERSION: 22
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:52.8615031Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3595322Z Syncing repository: ostium-org/ostium
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3597695Z ##[group]Getting Git version info
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3598551Z Working directory is '/home/runner/work/ostium/ostium'
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3599731Z [command]/usr/bin/git version
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3638153Z git version 2.56.1
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3661793Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3672742Z Temporarily overriding HOME='/home/runner/work/_temp/58b1d8b2-c6a5-46b1-9217-24ad030682ff' before making global git config changes
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3674577Z Adding repository directory to the temporary git global config as a safe directory
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3678878Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ostium/ostium
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3766211Z Deleting the contents of '/home/runner/work/ostium/ostium'
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3786522Z ##[group]Determining repository object format
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3787624Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3788493Z ##[group]Initializing the repository
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3789278Z [command]/usr/bin/git init /home/runner/work/ostium/ostium
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3907529Z hint: Using 'master' as the name for the initial branch. This default branch name
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3910098Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3911984Z hint: to use in all of your new repositories, which will suppress this warning,
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3913461Z hint: call:
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3914219Z hint:
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3915446Z hint: 	git config --global init.defaultBranch <name>
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3916671Z hint:
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3917874Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3919849Z hint: 'development'. The just-created branch can be renamed via this command:
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3921461Z hint:
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3922364Z hint: 	git branch -m <name>
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3923627Z hint:
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3925579Z hint: Disable this message with "git config set advice.defaultBranchName false"
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3927899Z Initialized empty Git repository in /home/runner/work/ostium/ostium/.git/
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.3942301Z [command]/usr/bin/git remote add origin https://github.com/ostium-org/ostium
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.4013293Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.4014807Z ##[group]Disabling automatic garbage collection
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.4016948Z [command]/usr/bin/git config --local gc.auto 0
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.4055582Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.4057002Z ##[group]Setting up auth
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.4057985Z Removing SSH command configuration
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.4061539Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.4101378Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.4638051Z Removing HTTP extra header
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.4644093Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.4677609Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.4949063Z Removing includeIf entries pointing to credentials config files
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.4953654Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.4990136Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.5270657Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-a263a3ff-01ad-4992-a857-86e1bb106c9a.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.5311249Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/ostium/ostium/.git.path /home/runner/work/_temp/git-credentials-a263a3ff-01ad-4992-a857-86e1bb106c9a.config
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.5344113Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/ostium/ostium/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-a263a3ff-01ad-4992-a857-86e1bb106c9a.config
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.5382885Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-a263a3ff-01ad-4992-a857-86e1bb106c9a.config
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.5419644Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-a263a3ff-01ad-4992-a857-86e1bb106c9a.config
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.5453123Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.5455500Z ##[group]Fetching the repository
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.5460654Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +a7983599a29cbe73a31eef298e8252b985db87e1:refs/remotes/origin/main
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.8952894Z From https://github.com/ostium-org/ostium
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.8955478Z  * [new ref]         a7983599a29cbe73a31eef298e8252b985db87e1 -> origin/main
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.8963997Z [command]/usr/bin/git branch --list --remote origin/main
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.8992043Z   origin/main
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.9000795Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.9025359Z a7983599a29cbe73a31eef298e8252b985db87e1
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.9030223Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.9031433Z ##[group]Determining the checkout info
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.9032998Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.9034373Z [command]/usr/bin/git sparse-checkout disable
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.9113207Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.9145731Z ##[group]Checking out the ref
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.9149238Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.9683123Z Switched to a new branch 'main'
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.9685944Z branch 'main' set up to track 'origin/main'.
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.9700711Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.9705194Z [command]/usr/bin/git log -1 --format=%H
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:53.9709206Z a7983599a29cbe73a31eef298e8252b985db87e1
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.0143865Z ##[group]Run actions/setup-python@v7
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.0145311Z with:
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.0146240Z   python-version: 3.12
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.0147302Z   check-latest: false
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.0158269Z   token: ***
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.0159722Z   mirror: https://raw.githubusercontent.com/actions/python-versions/main
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.0161535Z   update-environment: true
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.0162668Z   allow-prereleases: false
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.0163773Z   freethreaded: false
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.0164757Z env:
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.0165764Z   PYTHON_VERSION: 3.12
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.0166821Z   PLATFORMIO_VERSION: 6.2.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.0167906Z   NODE_VERSION: 22
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.0168846Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.1416845Z ##[group]Installed versions
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.1543933Z Successfully set up CPython (3.12.16)
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.1547023Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2534374Z ##[group]Run actions/cache@v6
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2535717Z with:
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2536584Z   path: ~/.platformio
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2538442Z   key: platformio-esp32s3-6.2.0-a19738b8aec1c3c9526ac853766f64f33d6f1229d5ea9b712caafb69335edabe
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2540585Z   enableCrossOsArchive: false
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2541694Z   fail-on-cache-miss: false
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2542757Z   lookup-only: false
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2543729Z   save-always: false
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2544649Z env:
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2545606Z   PYTHON_VERSION: 3.12
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2546622Z   PLATFORMIO_VERSION: 6.2.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2547671Z   NODE_VERSION: 22
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2548880Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2550789Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib/pkgconfig
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2552650Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2554361Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2556130Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2557829Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.2559270Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:54.4801704Z Cache hit for: platformio-esp32s3-6.2.0-a19738b8aec1c3c9526ac853766f64f33d6f1229d5ea9b712caafb69335edabe
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:55.5343597Z Received 209715200 of 985596594 (21.3%), 198.6 MBs/sec
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:56.5396519Z Received 440401920 of 985596594 (44.7%), 209.2 MBs/sec
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:57.5403997Z Received 704643072 of 985596594 (71.5%), 223.3 MBs/sec
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:58.5496615Z Received 973078528 of 985596594 (98.7%), 231.1 MBs/sec
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:58.5718924Z Received 985596594 of 985596594 (100.0%), 232.4 MBs/sec
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:58.5722280Z Cache Size: ~940 MB (985596594 B)
+firmware-build	UNKNOWN STEP	2026-11-25T03:07:58.5772996Z [command]/usr/bin/tar -xf /home/runner/work/_temp/fe499e35-30d3-4993-a401-9861f3409361/cache.tzst -P -C /home/runner/work/ostium/ostium --use-compress-program unzstd
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:03.2531547Z Cache restored successfully
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:03.3379833Z Cache restored from key: platformio-esp32s3-6.2.0-a19738b8aec1c3c9526ac853766f64f33d6f1229d5ea9b712caafb69335edabe
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:03.3755238Z ##[group]Run pip install "platformio==$PLATFORMIO_VERSION"
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:03.3756094Z [36;1mpip install "platformio==$PLATFORMIO_VERSION"[0m
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:03.3810585Z shell: /usr/bin/bash -e {0}
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:03.3810893Z env:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:03.3811111Z   PYTHON_VERSION: 3.12
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:03.3811390Z   PLATFORMIO_VERSION: 6.2.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:03.3811656Z   NODE_VERSION: 22
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:03.3811977Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:03.3812436Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib/pkgconfig
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:03.3812886Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:03.3813310Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:03.3813717Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:03.3814128Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:03.3814468Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:05.3021952Z Collecting platformio==6.2.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:05.4825333Z   Downloading platformio-6.2.0-py3-none-any.whl.metadata (7.2 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:05.4878562Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages (from platformio==6.2.0) (26.3)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:05.5610200Z Collecting bottle==0.13.* (from platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:05.6157713Z   Downloading bottle-0.13.4-py2.py3-none-any.whl.metadata (1.6 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:05.6947079Z Collecting click!=8.3,<8.6,>=8.0.4 (from platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:05.7494171Z   Downloading click-8.5.1-py3-none-any.whl.metadata (2.6 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:05.8234130Z Collecting colorama (from platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:05.8791315Z   Downloading colorama-0.4.6-py2.py3-none-any.whl.metadata (17 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:06.0329788Z Collecting marshmallow<5,>=3 (from platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:06.0880457Z   Downloading marshmallow-4.4.0-py3-none-any.whl.metadata (6.8 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:06.1637489Z Collecting pyelftools<1,>=0.27 (from platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:06.2191657Z   Downloading pyelftools-0.33-py3-none-any.whl.metadata (1.0 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:06.2863153Z Collecting pyserial==3.5.* (from platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:06.3416596Z   Downloading pyserial-3.5-py2.py3-none-any.whl.metadata (1.6 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:06.4279085Z Collecting requests==2.* (from platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:06.4825346Z   Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:06.5514654Z Collecting semantic_version==2.10.* (from platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:06.6068709Z   Downloading semantic_version-2.10.0-py2.py3-none-any.whl.metadata (9.7 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:06.6779825Z Collecting tabulate==0.* (from platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:06.7328750Z   Downloading tabulate-0.10.0-py3-none-any.whl.metadata (40 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:06.8228795Z Collecting ajsonrpc==1.2.* (from platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:06.8788097Z   Downloading ajsonrpc-1.2.0-py3-none-any.whl.metadata (6.9 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:06.9802678Z Collecting starlette<2 (from platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:07.0355063Z   Downloading starlette-1.10.0-py3-none-any.whl.metadata (6.6 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:07.1232397Z Collecting uvicorn<1 (from platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:07.1782190Z   Downloading uvicorn-0.54.0-py3-none-any.whl.metadata (6.6 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:07.2474373Z Collecting wsproto==1.* (from platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:07.3023738Z   Downloading wsproto-1.3.2-py3-none-any.whl.metadata (5.2 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:07.5679376Z Collecting charset_normalizer<4,>=2 (from requests==2.*->platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:07.6232297Z   Downloading charset_normalizer-3.5.3-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (43 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:07.7158557Z Collecting idna<4,>=2.5 (from requests==2.*->platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:07.7707529Z   Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:07.8951394Z Collecting urllib3<3,>=1.26 (from requests==2.*->platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:07.9508621Z   Downloading urllib3-2.8.0-py3-none-any.whl.metadata (7.4 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:08.0257042Z Collecting certifi>=2023.5.7 (from requests==2.*->platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:08.0810378Z   Downloading certifi-2026.11.20-py3-none-any.whl.metadata (2.5 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:08.1549901Z Collecting anyio<5,>=4.0.0 (from starlette<2->platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:08.2111413Z   Downloading anyio-4.16.0-py3-none-any.whl.metadata (4.7 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:08.2862358Z Collecting typing-extensions>=4.10.0 (from starlette<2->platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:08.3416738Z   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:08.4237117Z Collecting h11>=0.8 (from uvicorn<1->platformio==6.2.0)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:08.4791936Z   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:08.5439578Z Downloading platformio-6.2.0-py3-none-any.whl (418 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:08.7242617Z Downloading ajsonrpc-1.2.0-py3-none-any.whl (22 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:08.7806750Z Downloading bottle-0.13.4-py2.py3-none-any.whl (103 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:08.8415732Z Downloading click-8.5.1-py3-none-any.whl (126 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:08.9055557Z Downloading marshmallow-4.4.0-py3-none-any.whl (53 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:08.9675388Z Downloading pyelftools-0.33-py3-none-any.whl (201 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:09.0338129Z Downloading pyserial-3.5-py2.py3-none-any.whl (90 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:09.0935592Z Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:09.1527348Z Downloading charset_normalizer-3.5.3-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (257 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:09.2223905Z Downloading idna-3.20-py3-none-any.whl (69 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:09.2808339Z Downloading semantic_version-2.10.0-py2.py3-none-any.whl (15 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:09.3379999Z Downloading starlette-1.10.0-py3-none-any.whl (80 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:09.3982464Z Downloading anyio-4.16.0-py3-none-any.whl (134 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:09.4599221Z Downloading tabulate-0.10.0-py3-none-any.whl (39 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:09.5174101Z Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:09.5808213Z Downloading uvicorn-0.54.0-py3-none-any.whl (87 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:09.6397931Z Downloading wsproto-1.3.2-py3-none-any.whl (24 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:09.7022387Z Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:09.7825663Z Downloading certifi-2026.11.20-py3-none-any.whl (127 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:09.8449984Z Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:09.9040331Z Downloading colorama-0.4.6-py2.py3-none-any.whl (25 kB)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:10.0455447Z Installing collected packages: pyserial, bottle, urllib3, typing-extensions, tabulate, semantic_version, pyelftools, marshmallow, idna, h11, colorama, click, charset_normalizer, certifi, ajsonrpc, wsproto, uvicorn, requests, anyio, starlette, platformio
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.3192191Z 
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.3215953Z Successfully installed ajsonrpc-1.2.0 anyio-4.16.0 bottle-0.13.4 certifi-2026.11.20 charset_normalizer-3.5.3 click-8.5.1 colorama-0.4.6 h11-0.16.0 idna-3.20 marshmallow-4.4.0 platformio-6.2.0 pyelftools-0.33 pyserial-3.5 requests-2.34.2 semantic_version-2.10.0 starlette-1.10.0 tabulate-0.10.0 typing-extensions-4.16.0 urllib3-2.8.0 uvicorn-0.54.0 wsproto-1.3.2
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.3840114Z ##[group]Run pio run -d hardware/esp32 -e esp32s3
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.3840715Z [36;1mpio run -d hardware/esp32 -e esp32s3[0m
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.3874019Z shell: /usr/bin/bash -e {0}
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.3874273Z env:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.3874471Z   PYTHON_VERSION: 3.12
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.3874713Z   PLATFORMIO_VERSION: 6.2.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.3875077Z   NODE_VERSION: 22
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.3875365Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.3875806Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib/pkgconfig
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.3876237Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.3876631Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.3877020Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.3877409Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.3877787Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.7351549Z Processing esp32s3 (platform: espressif32 @ 6.12.0; board: esp32-s3-devkitc-1; framework: arduino)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.7352623Z --------------------------------------------------------------------------------
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.7477688Z Library Manager: Installing bblanchon/ArduinoJson @ 7.4.3
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.7995223Z Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.8230212Z Library Manager: ArduinoJson@7.4.3 has been installed!
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:11.8237174Z Library Manager: Installing arduino-libraries/LiquidCrystal
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:12.2554613Z Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:12.2598940Z Library Manager: LiquidCrystal@1.0.7 has been installed!
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:12.2604611Z Library Manager: Installing adafruit/DHT sensor library
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:12.7557798Z Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:12.7595485Z Library Manager: DHT sensor library@1.4.7 has been installed!
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:12.7597701Z Library Manager: Resolving dependencies...
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:12.7704185Z Library Manager: Installing Adafruit Unified Sensor
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:13.2528643Z Unpacking 0% 10% 20% 30% 40% 50% 60% 70%
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:13.2550752Z Library Manager: Adafruit Unified Sensor@1.1.15 has been installed!
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:13.2565764Z Library Manager: Installing throwtheswitch/Unity @ ^2.6.1
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:13.7739770Z Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:13.7874380Z Library Manager: Unity@2.6.1 has been installed!
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.0754405Z Verbose mode can be enabled via `-v, --verbose` option
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.0875449Z CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32-s3-devkitc-1.html
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.0876803Z PLATFORM: Espressif 32 (6.12.0) > Espressif ESP32-S3-DevKitC-1-N8 (8 MB QD, No PSRAM)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.0877887Z HARDWARE: ESP32S3 240MHz, 320KB RAM, 8MB Flash
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.0879797Z DEBUG: Current (esp-builtin) On-board (esp-builtin) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.0881658Z PACKAGES: 
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.0882340Z  - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.0883182Z  - tool-esptoolpy @ 2.40900.250804 (4.9.0) 
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.0883917Z  - toolchain-riscv32-esp @ 8.4.0+2021r2-patch5 
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.0884696Z  - toolchain-xtensa-esp32s3 @ 8.4.0+2021r2-patch5
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.1158340Z LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.1159159Z LDF Modes: Finder ~ chain, Compatibility ~ soft
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.2151091Z Found 41 compatible libraries
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.2151642Z Scanning dependencies...
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.5329288Z Dependency Graph
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.5330305Z |-- ArduinoJson @ 7.4.3
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.5357486Z |-- LiquidCrystal @ 1.0.7
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.5357986Z |-- DHT sensor library @ 1.4.7
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.5358886Z |-- Adafruit Unified Sensor @ 1.1.15
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.5359453Z |-- ESP32QRCodeReader @ 1.1.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.5360116Z |-- WiFi @ 2.0.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.5360508Z |-- ostium_core @ 0.1.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.5360911Z |-- HTTPClient @ 2.0.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.5361309Z |-- WiFiClientSecure @ 2.0.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.5753378Z Building in release mode
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.7983477Z Compiling .pio/build/esp32s3/src/access_panel.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.8964190Z Compiling .pio/build/esp32s3/src/board_adapters.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.9155787Z Compiling .pio/build/esp32s3/src/main.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:14.9249593Z Building .pio/build/esp32s3/bootloader.bin
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:15.0175872Z esptool.py v4.9.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:15.0205552Z Creating esp32s3 image...
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:15.0235451Z Merged 1 ELF section
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:15.0265443Z Successfully created esp32s3 image.
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:15.0325549Z Generating partitions .pio/build/esp32s3/partitions.bin
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:15.2546140Z Compiling .pio/build/esp32s3/libcd3/LiquidCrystal/LiquidCrystal.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:15.2946466Z src/main.cpp:20:2: warning: #warning "include/secrets.h not found; building with the placeholders in secrets.example.h" [-Wcpp]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:15.2965834Z  #warning "include/secrets.h not found; building with the placeholders in secrets.example.h"
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:15.2995394Z   ^~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:16.0296185Z Compiling .pio/build/esp32s3/lib1a2/Adafruit Unified Sensor/Adafruit_Sensor.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:16.3406273Z Archiving .pio/build/esp32s3/libcd3/libLiquidCrystal.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:16.3496009Z Indexing .pio/build/esp32s3/libcd3/libLiquidCrystal.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:16.5256048Z Compiling .pio/build/esp32s3/lib781/DHT sensor library/DHT.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:16.5886074Z Compiling .pio/build/esp32s3/lib781/DHT sensor library/DHT_U.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:16.9806341Z Compiling .pio/build/esp32s3/libdd5/ESP32QRCodeReader/ESP32QRCodeReader.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:16.9957693Z Archiving .pio/build/esp32s3/lib1a2/libAdafruit Unified Sensor.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0043272Z Indexing .pio/build/esp32s3/lib1a2/libAdafruit Unified Sensor.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0286220Z Compiling .pio/build/esp32s3/libdd5/ESP32QRCodeReader/openmv/collections.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0536073Z lib/ESP32QRCodeReader/src/openmv/collections.c: In function 'lifo_alloc':
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0566697Z lib/ESP32QRCodeReader/src/openmv/collections.c:20:23: warning: implicit declaration of function 'ps_malloc'; did you mean 'lifo_alloc'? [-Wimplicit-function-declaration]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0575557Z    ptr->data = (char *)ps_malloc(size * data_len);
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0595540Z                        ^~~~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0625476Z                        lifo_alloc
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0655689Z lib/ESP32QRCodeReader/src/openmv/collections.c: In function 'lifo_free':
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0657402Z lib/ESP32QRCodeReader/src/openmv/collections.c:36:5: warning: implicit declaration of function 'free' [-Wimplicit-function-declaration]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0685541Z      free(ptr->data);
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0715455Z      ^~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0746005Z lib/ESP32QRCodeReader/src/openmv/collections.c:36:5: warning: incompatible implicit declaration of built-in function 'free'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0747760Z lib/ESP32QRCodeReader/src/openmv/collections.c:36:5: note: include '<stdlib.h>' or provide a declaration of 'free'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0775600Z lib/ESP32QRCodeReader/src/openmv/collections.c:7:1:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0805517Z +#include <stdlib.h>
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0835509Z  #define CHAR_BITS (sizeof(char) * 8)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0836345Z lib/ESP32QRCodeReader/src/openmv/collections.c:36:5:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0865535Z      free(ptr->data);
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0895474Z      ^~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0925726Z lib/ESP32QRCodeReader/src/openmv/collections.c: In function 'lifo_enqueue':
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0927320Z lib/ESP32QRCodeReader/src/openmv/collections.c:62:3: warning: implicit declaration of function 'memcpy' [-Wimplicit-function-declaration]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0956037Z    memcpy(ptr->data + (ptr->len * ptr->data_len), data, ptr->data_len);
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.0985434Z    ^~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1016065Z lib/ESP32QRCodeReader/src/openmv/collections.c:62:3: warning: incompatible implicit declaration of built-in function 'memcpy'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1017859Z lib/ESP32QRCodeReader/src/openmv/collections.c:62:3: note: include '<string.h>' or provide a declaration of 'memcpy'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1019073Z Compiling .pio/build/esp32s3/libdd5/ESP32QRCodeReader/quirc/decode.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1045737Z lib/ESP32QRCodeReader/src/openmv/collections.c:7:1:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1075516Z +#include <string.h>
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1105495Z  #define CHAR_BITS (sizeof(char) * 8)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1106301Z lib/ESP32QRCodeReader/src/openmv/collections.c:62:3:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1135720Z    memcpy(ptr->data + (ptr->len * ptr->data_len), data, ptr->data_len);
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1165380Z    ^~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1195693Z lib/ESP32QRCodeReader/src/openmv/collections.c: In function 'lifo_dequeue':
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1225944Z lib/ESP32QRCodeReader/src/openmv/collections.c:71:5: warning: incompatible implicit declaration of built-in function 'memcpy'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1255658Z      memcpy(data, ptr->data + ((ptr->len - 1) * ptr->data_len), ptr->data_len);
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1285367Z      ^~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1315884Z lib/ESP32QRCodeReader/src/openmv/collections.c:71:5: note: include '<string.h>' or provide a declaration of 'memcpy'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1345642Z lib/ESP32QRCodeReader/src/openmv/collections.c: In function 'lifo_poke':
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1375977Z lib/ESP32QRCodeReader/src/openmv/collections.c:79:3: warning: incompatible implicit declaration of built-in function 'memcpy'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1405570Z    memcpy(ptr->data + (ptr->len * ptr->data_len), data, ptr->data_len);
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1435360Z    ^~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1465876Z lib/ESP32QRCodeReader/src/openmv/collections.c:79:3: note: include '<string.h>' or provide a declaration of 'memcpy'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1495656Z lib/ESP32QRCodeReader/src/openmv/collections.c: In function 'lifo_peek':
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1526315Z lib/ESP32QRCodeReader/src/openmv/collections.c:84:3: warning: incompatible implicit declaration of built-in function 'memcpy'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1555593Z    memcpy(data, ptr->data + ((ptr->len - 1) * ptr->data_len), ptr->data_len);
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1585348Z    ^~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1624214Z lib/ESP32QRCodeReader/src/openmv/collections.c:84:3: note: include '<string.h>' or provide a declaration of 'memcpy'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1625754Z lib/ESP32QRCodeReader/src/quirc/decode.c: In function 'quirc_decode':
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1656721Z lib/ESP32QRCodeReader/src/quirc/decode.c:936:27: warning: implicit declaration of function 'ps_malloc'; did you mean 'malloc'? [-Wimplicit-function-declaration]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1685573Z    struct datastream *ds = ps_malloc(sizeof(struct datastream));
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1715360Z                            ^~~~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1745357Z                            malloc
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.1766270Z lib/ESP32QRCodeReader/src/quirc/decode.c:936:27: warning: initialization of 'struct datastream *' from 'int' makes pointer from integer without a cast [-Wint-conversion]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.4544789Z Compiling .pio/build/esp32s3/libdd5/ESP32QRCodeReader/quirc/identify.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.5583488Z Compiling .pio/build/esp32s3/libdd5/ESP32QRCodeReader/quirc/quirc.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.5731047Z Archiving .pio/build/esp32s3/lib781/libDHT sensor library.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.5840530Z Indexing .pio/build/esp32s3/lib781/libDHT sensor library.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.6018894Z Compiling .pio/build/esp32s3/libdd5/ESP32QRCodeReader/quirc/version_db.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7626724Z lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp: In member function 'QRCodeReaderSetupErr ESP32QRCodeReader::setup()':
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7633225Z lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:49:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_sda' is deprecated: please use pin_sccb_sda instead [-Wdeprecated-declarations]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7641064Z    cameraConfig.pin_sscb_sda = pins.SIOD_GPIO_NUM;
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7642092Z                 ^~~~~~~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7642832Z In file included from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.h:6,
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7643803Z                  from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:1:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7645739Z /home/runner/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp32-camera/driver/include/esp_camera.h:123:87: note: declared here
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7647988Z          int pin_sscb_sda __attribute__((deprecated("please use pin_sccb_sda instead")));           /*!< GPIO pin for camera SDA line (legacy name) */
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7649171Z                                                                                        ^
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7650926Z lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:49:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_sda' is deprecated: please use pin_sccb_sda instead [-Wdeprecated-declarations]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7652697Z    cameraConfig.pin_sscb_sda = pins.SIOD_GPIO_NUM;
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7653411Z                 ^~~~~~~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7654211Z In file included from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.h:6,
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7655509Z                  from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:1:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7657189Z /home/runner/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp32-camera/driver/include/esp_camera.h:123:87: note: declared here
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7659331Z          int pin_sscb_sda __attribute__((deprecated("please use pin_sccb_sda instead")));           /*!< GPIO pin for camera SDA line (legacy name) */
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7660712Z                                                                                        ^
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7662440Z lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:49:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_sda' is deprecated: please use pin_sccb_sda instead [-Wdeprecated-declarations]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7664558Z    cameraConfig.pin_sscb_sda = pins.SIOD_GPIO_NUM;
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7665515Z                 ^~~~~~~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7666341Z In file included from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.h:6,
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7667358Z                  from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:1:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7669023Z /home/runner/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp32-camera/driver/include/esp_camera.h:123:87: note: declared here
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7671160Z          int pin_sscb_sda __attribute__((deprecated("please use pin_sccb_sda instead")));           /*!< GPIO pin for camera SDA line (legacy name) */
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7672592Z                                                                                        ^
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7674351Z lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:50:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_scl' is deprecated: please use pin_sccb_scl instead [-Wdeprecated-declarations]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7676356Z    cameraConfig.pin_sscb_scl = pins.SIOC_GPIO_NUM;
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7677102Z                 ^~~~~~~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7677896Z In file included from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.h:6,
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7678923Z                  from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:1:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7680571Z /home/runner/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp32-camera/driver/include/esp_camera.h:127:87: note: declared here
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7682685Z          int pin_sscb_scl __attribute__((deprecated("please use pin_sccb_scl instead")));           /*!< GPIO pin for camera SCL line (legacy name) */
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7684065Z                                                                                        ^
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7686386Z lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:50:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_scl' is deprecated: please use pin_sccb_scl instead [-Wdeprecated-declarations]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7688383Z    cameraConfig.pin_sscb_scl = pins.SIOC_GPIO_NUM;
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7689138Z                 ^~~~~~~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7689930Z In file included from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.h:6,
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7690995Z                  from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:1:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7692661Z /home/runner/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp32-camera/driver/include/esp_camera.h:127:87: note: declared here
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7694810Z          int pin_sscb_scl __attribute__((deprecated("please use pin_sccb_scl instead")));           /*!< GPIO pin for camera SCL line (legacy name) */
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7696476Z                                                                                        ^
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7698341Z lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:50:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_scl' is deprecated: please use pin_sccb_scl instead [-Wdeprecated-declarations]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7700121Z    cameraConfig.pin_sscb_scl = pins.SIOC_GPIO_NUM;
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7700888Z                 ^~~~~~~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7701684Z In file included from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.h:6,
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7702776Z                  from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:1:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7704440Z /home/runner/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp32-camera/driver/include/esp_camera.h:127:87: note: declared here
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7706808Z          int pin_sscb_scl __attribute__((deprecated("please use pin_sccb_scl instead")));           /*!< GPIO pin for camera SCL line (legacy name) */
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.7708208Z                                                                                        ^
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.8318058Z Compiling .pio/build/esp32s3/lib989/WiFi/WiFi.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.8556162Z Compiling .pio/build/esp32s3/lib989/WiFi/WiFiAP.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.9356193Z Compiling .pio/build/esp32s3/lib989/WiFi/WiFiClient.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.9756131Z Archiving .pio/build/esp32s3/libdd5/libESP32QRCodeReader.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:17.9915826Z Indexing .pio/build/esp32s3/libdd5/libESP32QRCodeReader.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:18.0306046Z Compiling .pio/build/esp32s3/lib989/WiFi/WiFiGeneric.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:19.2602144Z Compiling .pio/build/esp32s3/lib989/WiFi/WiFiMulti.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:19.2865881Z Compiling .pio/build/esp32s3/lib989/WiFi/WiFiSTA.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:19.5616446Z Compiling .pio/build/esp32s3/lib989/WiFi/WiFiScan.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:19.8938659Z Compiling .pio/build/esp32s3/lib989/WiFi/WiFiServer.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:20.5493684Z Compiling .pio/build/esp32s3/lib989/WiFi/WiFiUdp.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:20.7551898Z Compiling .pio/build/esp32s3/lib0a1/monocypher/monocypher-ed25519.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:20.7776422Z Compiling .pio/build/esp32s3/lib0a1/monocypher/monocypher.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:20.9986028Z Compiling .pio/build/esp32s3/libf8e/ostium_core/base64url.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:21.0201250Z Compiling .pio/build/esp32s3/libf8e/ostium_core/body_reader.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:21.5418110Z Compiling .pio/build/esp32s3/libf8e/ostium_core/command_processor.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:21.5578508Z Compiling .pio/build/esp32s3/libf8e/ostium_core/duplicate_list.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:21.6224377Z Archiving .pio/build/esp32s3/lib989/libWiFi.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:21.6371659Z Indexing .pio/build/esp32s3/lib989/libWiFi.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:21.6696062Z Compiling .pio/build/esp32s3/libf8e/ostium_core/ed25519.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:22.4827638Z Compiling .pio/build/esp32s3/libf8e/ostium_core/event.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:22.5027057Z Compiling .pio/build/esp32s3/libf8e/ostium_core/event_outbox.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:22.5170509Z Compiling .pio/build/esp32s3/libf8e/ostium_core/lock_controller.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:23.1756513Z Compiling .pio/build/esp32s3/libf8e/ostium_core/poll_parser.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:23.4060488Z Compiling .pio/build/esp32s3/libf8e/ostium_core/poll_scheduler.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:23.4714707Z Compiling .pio/build/esp32s3/libf8e/ostium_core/qr_access.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:24.4011086Z Compiling .pio/build/esp32s3/libf8e/ostium_core/qr_event.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:24.4905902Z Archiving .pio/build/esp32s3/lib0a1/libmonocypher.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:24.5025888Z Indexing .pio/build/esp32s3/lib0a1/libmonocypher.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:24.5206033Z Compiling .pio/build/esp32s3/libf8e/ostium_core/qr_self_test.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:24.8925104Z Compiling .pio/build/esp32s3/libf8e/ostium_core/qr_token.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:25.1025700Z Compiling .pio/build/esp32s3/libf8e/ostium_core/serial_scan.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:25.6646449Z Compiling .pio/build/esp32s3/libf8e/ostium_core/server_clock.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:25.8388360Z Compiling .pio/build/esp32s3/libf8e/ostium_core/timestamp.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:26.4968575Z Compiling .pio/build/esp32s3/lib552/WiFiClientSecure/WiFiClientSecure.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:26.5131314Z Compiling .pio/build/esp32s3/lib552/WiFiClientSecure/esp_crt_bundle.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:26.5313689Z Compiling .pio/build/esp32s3/lib552/WiFiClientSecure/ssl_client.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:26.9086193Z Compiling .pio/build/esp32s3/lib67b/HTTPClient/HTTPClient.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:27.2076213Z Archiving .pio/build/esp32s3/libf8e/libostium_core.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:27.2336025Z Indexing .pio/build/esp32s3/libf8e/libostium_core.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:27.5446211Z Compiling .pio/build/esp32s3/FrameworkArduino/Esp.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:27.7075959Z Compiling .pio/build/esp32s3/FrameworkArduino/FirmwareMSC.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:27.9145410Z Archiving .pio/build/esp32s3/lib552/libWiFiClientSecure.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:27.9235832Z Indexing .pio/build/esp32s3/lib552/libWiFiClientSecure.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:27.9496375Z Compiling .pio/build/esp32s3/FrameworkArduino/FunctionalInterrupt.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:28.2726027Z Compiling .pio/build/esp32s3/FrameworkArduino/HWCDC.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:28.6966142Z Compiling .pio/build/esp32s3/FrameworkArduino/HardwareSerial.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:28.9045969Z Compiling .pio/build/esp32s3/FrameworkArduino/IPAddress.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:28.9226005Z Archiving .pio/build/esp32s3/lib67b/libHTTPClient.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:28.9332257Z Indexing .pio/build/esp32s3/lib67b/libHTTPClient.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:28.9500525Z Compiling .pio/build/esp32s3/FrameworkArduino/IPv6Address.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:28.9678291Z Compiling .pio/build/esp32s3/FrameworkArduino/MD5Builder.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:29.8445960Z Compiling .pio/build/esp32s3/FrameworkArduino/Print.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:29.8686213Z Compiling .pio/build/esp32s3/FrameworkArduino/Stream.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:29.9416165Z Compiling .pio/build/esp32s3/FrameworkArduino/StreamString.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:29.9596173Z Compiling .pio/build/esp32s3/FrameworkArduino/Tone.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:30.9389618Z Compiling .pio/build/esp32s3/FrameworkArduino/USB.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:30.9570894Z Compiling .pio/build/esp32s3/FrameworkArduino/USBCDC.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:30.9706990Z Compiling .pio/build/esp32s3/FrameworkArduino/USBMSC.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:30.9806375Z Compiling .pio/build/esp32s3/FrameworkArduino/WMath.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:31.1019847Z Compiling .pio/build/esp32s3/FrameworkArduino/WString.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:31.4286196Z Compiling .pio/build/esp32s3/FrameworkArduino/base64.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:31.5245940Z Compiling .pio/build/esp32s3/FrameworkArduino/cbuf.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:31.6096099Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-adc.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:31.6650916Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-bt.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:31.8481784Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-cpu.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:31.8766284Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-dac.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:32.0596364Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-gpio.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:32.0965218Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-i2c-slave.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:32.3206301Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-i2c.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:32.3896161Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-ledc.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:32.4596125Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-matrix.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:32.4926063Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-misc.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:32.5700010Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-psram.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:32.5992288Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-rgb-led.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:32.6189185Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-rmt.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:32.7186514Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-sigmadelta.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:32.7522953Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-spi.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:32.7815816Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-time.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:32.8799962Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-timer.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:32.9566358Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-tinyusb.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:32.9986371Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-touch.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:33.1295800Z Compiling .pio/build/esp32s3/FrameworkArduino/esp32-hal-uart.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:33.1856012Z Compiling .pio/build/esp32s3/FrameworkArduino/firmware_msc_fat.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:33.2656324Z Compiling .pio/build/esp32s3/FrameworkArduino/libb64/cdecode.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:33.3436280Z Compiling .pio/build/esp32s3/FrameworkArduino/libb64/cencode.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:33.3626134Z Compiling .pio/build/esp32s3/FrameworkArduino/main.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:33.3835471Z Compiling .pio/build/esp32s3/FrameworkArduino/stdlib_noniso.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:33.4066171Z Compiling .pio/build/esp32s3/FrameworkArduino/wiring_pulse.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:33.5414281Z Compiling .pio/build/esp32s3/FrameworkArduino/wiring_shift.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:34.0447135Z Archiving .pio/build/esp32s3/libFrameworkArduino.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:34.0641878Z Indexing .pio/build/esp32s3/libFrameworkArduino.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:34.1111433Z Linking .pio/build/esp32s3/firmware.elf
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.6152936Z Retrieving maximum program size .pio/build/esp32s3/firmware.elf
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.6155229Z Checking size .pio/build/esp32s3/firmware.elf
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.6189833Z Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.6190475Z RAM:   [==        ]  15.8% (used 51828 bytes from 327680 bytes)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.6190874Z Flash: [===       ]  31.0% (used 1034673 bytes from 3342336 bytes)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.6205505Z Building .pio/build/esp32s3/firmware.bin with action:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.6206888Z   "$PYTHONEXE" "$OBJCOPY" --chip esp32s3 elf2image --flash_mode ${__get_board_flash_mode(__env__)} --flash_freq ${__get_board_f_image(__env__)} --flash_size 8MB --elf-sha256-offset 0xb0 -o $TARGET $SOURCES
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.6207807Z Building .pio/build/esp32s3/firmware.bin
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.7375598Z esptool.py v4.9.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.7376065Z Creating esp32s3 image...
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.7376462Z Merged 2 ELF sections
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.7376821Z Successfully created esp32s3 image.
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9115144Z ========================= [SUCCESS] Took 26.18 seconds =========================
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9115553Z 
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9119567Z Environment    Status    Duration
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9120032Z -------------  --------  ------------
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9120484Z esp32s3        SUCCESS   00:00:26.176
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9120907Z ========================= 1 succeeded in 00:00:26.176 =========================
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9453472Z ##[group]Run pio run -d hardware/esp32 -e esp32s3-bench
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9453918Z [36;1mpio run -d hardware/esp32 -e esp32s3-bench[0m
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9487548Z shell: /usr/bin/bash -e {0}
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9487805Z env:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9488010Z   PYTHON_VERSION: 3.12
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9488262Z   PLATFORMIO_VERSION: 6.2.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9488519Z   NODE_VERSION: 22
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9488808Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9489562Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib/pkgconfig
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9490010Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9490400Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9490788Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9491178Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:37.9491524Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:38.1453847Z Processing esp32s3-bench (platform: espressif32 @ 6.12.0; board: esp32-s3-devkitc-1; framework: arduino)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:38.1455330Z --------------------------------------------------------------------------------
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:38.1583107Z Library Manager: Installing bblanchon/ArduinoJson @ 7.4.3
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:38.2103117Z Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:38.2339559Z Library Manager: ArduinoJson@7.4.3 has been installed!
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:38.2346484Z Library Manager: Installing arduino-libraries/LiquidCrystal
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:38.6659045Z Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:38.6702787Z Library Manager: LiquidCrystal@1.0.7 has been installed!
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:38.6709497Z Library Manager: Installing adafruit/DHT sensor library
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:39.1916880Z Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:39.1955646Z Library Manager: DHT sensor library@1.4.7 has been installed!
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:39.1958256Z Library Manager: Resolving dependencies...
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:39.2071173Z Library Manager: Installing Adafruit Unified Sensor
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:39.6777091Z Unpacking 0% 10% 20% 30% 40% 50% 60% 70%
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:39.6800705Z Library Manager: Adafruit Unified Sensor@1.1.15 has been installed!
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:39.6815874Z Library Manager: Installing throwtheswitch/Unity @ ^2.6.1
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.1852493Z Unpacking 0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100%
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.1987924Z Library Manager: Unity@2.6.1 has been installed!
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.4840010Z Verbose mode can be enabled via `-v, --verbose` option
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.4964745Z CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32-s3-devkitc-1.html
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.4966235Z PLATFORM: Espressif 32 (6.12.0) > Espressif ESP32-S3-DevKitC-1-N8 (8 MB QD, No PSRAM)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.4967094Z HARDWARE: ESP32S3 240MHz, 320KB RAM, 8MB Flash
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.4968846Z DEBUG: Current (esp-builtin) On-board (esp-builtin) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.4970521Z PACKAGES: 
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.4971062Z  - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.4971770Z  - tool-esptoolpy @ 2.40900.250804 (4.9.0) 
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.4972460Z  - toolchain-riscv32-esp @ 8.4.0+2021r2-patch5 
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.4973130Z  - toolchain-xtensa-esp32s3 @ 8.4.0+2021r2-patch5
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.5249230Z LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.5250069Z LDF Modes: Finder ~ chain, Compatibility ~ soft
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.6225430Z Found 41 compatible libraries
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.6226000Z Scanning dependencies...
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.9438299Z Dependency Graph
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.9438829Z |-- ArduinoJson @ 7.4.3
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.9439287Z |-- LiquidCrystal @ 1.0.7
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.9440999Z |-- DHT sensor library @ 1.4.7
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.9443241Z |-- Adafruit Unified Sensor @ 1.1.15
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.9444177Z |-- ESP32QRCodeReader @ 1.1.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.9445033Z |-- WiFi @ 2.0.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.9445436Z |-- ostium_core @ 0.1.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.9446471Z |-- HTTPClient @ 2.0.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.9447414Z |-- WiFiClientSecure @ 2.0.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:40.9850663Z Building in release mode
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:41.2072106Z Compiling .pio/build/esp32s3-bench/src/access_panel.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:41.3085205Z Compiling .pio/build/esp32s3-bench/src/board_adapters.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:41.3337853Z Compiling .pio/build/esp32s3-bench/src/main.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:41.3445595Z Building .pio/build/esp32s3-bench/bootloader.bin
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:41.4426457Z esptool.py v4.9.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:41.4465656Z Creating esp32s3 image...
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:41.4466578Z Merged 1 ELF section
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:41.4495474Z Successfully created esp32s3 image.
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:41.4584361Z Generating partitions .pio/build/esp32s3-bench/partitions.bin
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:41.6909944Z src/main.cpp:20:2: warning: #warning "include/secrets.h not found; building with the placeholders in secrets.example.h" [-Wcpp]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:41.6955863Z  #warning "include/secrets.h not found; building with the placeholders in secrets.example.h"
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:41.6956721Z   ^~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:41.7075787Z Compiling .pio/build/esp32s3-bench/lib1c7/LiquidCrystal/LiquidCrystal.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:42.3696263Z Compiling .pio/build/esp32s3-bench/lib7d2/Adafruit Unified Sensor/Adafruit_Sensor.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:42.7578430Z Archiving .pio/build/esp32s3-bench/lib1c7/libLiquidCrystal.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:42.7675828Z Indexing .pio/build/esp32s3-bench/lib1c7/libLiquidCrystal.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:42.9686321Z Compiling .pio/build/esp32s3-bench/libfad/DHT sensor library/DHT.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.0236379Z Compiling .pio/build/esp32s3-bench/libfad/DHT sensor library/DHT_U.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.3597798Z Compiling .pio/build/esp32s3-bench/libdd5/ESP32QRCodeReader/ESP32QRCodeReader.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.3748850Z Archiving .pio/build/esp32s3-bench/lib7d2/libAdafruit Unified Sensor.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.3834808Z Indexing .pio/build/esp32s3-bench/lib7d2/libAdafruit Unified Sensor.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4076082Z Compiling .pio/build/esp32s3-bench/libdd5/ESP32QRCodeReader/openmv/collections.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4326010Z lib/ESP32QRCodeReader/src/openmv/collections.c: In function 'lifo_alloc':
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4356484Z lib/ESP32QRCodeReader/src/openmv/collections.c:20:23: warning: implicit declaration of function 'ps_malloc'; did you mean 'lifo_alloc'? [-Wimplicit-function-declaration]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4365557Z    ptr->data = (char *)ps_malloc(size * data_len);
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4395456Z                        ^~~~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4425449Z                        lifo_alloc
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4426194Z lib/ESP32QRCodeReader/src/openmv/collections.c: In function 'lifo_free':
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4427634Z lib/ESP32QRCodeReader/src/openmv/collections.c:36:5: warning: implicit declaration of function 'free' [-Wimplicit-function-declaration]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4428838Z      free(ptr->data);
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4429229Z      ^~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4430175Z lib/ESP32QRCodeReader/src/openmv/collections.c:36:5: warning: incompatible implicit declaration of built-in function 'free'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4431876Z lib/ESP32QRCodeReader/src/openmv/collections.c:36:5: note: include '<stdlib.h>' or provide a declaration of 'free'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4433029Z lib/ESP32QRCodeReader/src/openmv/collections.c:7:1:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4433601Z +#include <stdlib.h>
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4434033Z  #define CHAR_BITS (sizeof(char) * 8)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4434596Z lib/ESP32QRCodeReader/src/openmv/collections.c:36:5:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4435392Z      free(ptr->data);
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4435732Z      ^~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4436285Z lib/ESP32QRCodeReader/src/openmv/collections.c: In function 'lifo_enqueue':
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4437988Z lib/ESP32QRCodeReader/src/openmv/collections.c:62:3: warning: implicit declaration of function 'memcpy' [-Wimplicit-function-declaration]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4439414Z    memcpy(ptr->data + (ptr->len * ptr->data_len), data, ptr->data_len);
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4440089Z    ^~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4441039Z lib/ESP32QRCodeReader/src/openmv/collections.c:62:3: warning: incompatible implicit declaration of built-in function 'memcpy'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4442739Z lib/ESP32QRCodeReader/src/openmv/collections.c:62:3: note: include '<string.h>' or provide a declaration of 'memcpy'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4444187Z lib/ESP32QRCodeReader/src/openmv/collections.c:7:1:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4444801Z +#include <string.h>
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4445465Z  #define CHAR_BITS (sizeof(char) * 8)
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4446077Z lib/ESP32QRCodeReader/src/openmv/collections.c:62:3:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4446864Z    memcpy(ptr->data + (ptr->len * ptr->data_len), data, ptr->data_len);
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4447547Z    ^~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4448178Z lib/ESP32QRCodeReader/src/openmv/collections.c: In function 'lifo_dequeue':
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4449527Z lib/ESP32QRCodeReader/src/openmv/collections.c:71:5: warning: incompatible implicit declaration of built-in function 'memcpy'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4450857Z      memcpy(data, ptr->data + ((ptr->len - 1) * ptr->data_len), ptr->data_len);
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4451559Z      ^~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4452434Z lib/ESP32QRCodeReader/src/openmv/collections.c:71:5: note: include '<string.h>' or provide a declaration of 'memcpy'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4453716Z lib/ESP32QRCodeReader/src/openmv/collections.c: In function 'lifo_poke':
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4469419Z lib/ESP32QRCodeReader/src/openmv/collections.c:79:3: warning: incompatible implicit declaration of built-in function 'memcpy'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4485629Z    memcpy(ptr->data + (ptr->len * ptr->data_len), data, ptr->data_len);
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4486310Z    ^~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4487164Z lib/ESP32QRCodeReader/src/openmv/collections.c:79:3: note: include '<string.h>' or provide a declaration of 'memcpy'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4488421Z lib/ESP32QRCodeReader/src/openmv/collections.c: In function 'lifo_peek':
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4489729Z lib/ESP32QRCodeReader/src/openmv/collections.c:84:3: warning: incompatible implicit declaration of built-in function 'memcpy'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4491009Z    memcpy(data, ptr->data + ((ptr->len - 1) * ptr->data_len), ptr->data_len);
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4491691Z    ^~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4492531Z lib/ESP32QRCodeReader/src/openmv/collections.c:84:3: note: include '<string.h>' or provide a declaration of 'memcpy'
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.4816011Z Compiling .pio/build/esp32s3-bench/libdd5/ESP32QRCodeReader/quirc/decode.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.5416128Z lib/ESP32QRCodeReader/src/quirc/decode.c: In function 'quirc_decode':
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.5446373Z lib/ESP32QRCodeReader/src/quirc/decode.c:936:27: warning: implicit declaration of function 'ps_malloc'; did you mean 'malloc'? [-Wimplicit-function-declaration]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.5470275Z    struct datastream *ds = ps_malloc(sizeof(struct datastream));
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.5505440Z                            ^~~~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.5525564Z                            malloc
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.5556240Z lib/ESP32QRCodeReader/src/quirc/decode.c:936:27: warning: initialization of 'struct datastream *' from 'int' makes pointer from integer without a cast [-Wint-conversion]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.8366160Z Compiling .pio/build/esp32s3-bench/libdd5/ESP32QRCodeReader/quirc/identify.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:43.9824152Z Compiling .pio/build/esp32s3-bench/libdd5/ESP32QRCodeReader/quirc/quirc.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.0169458Z Archiving .pio/build/esp32s3-bench/libfad/libDHT sensor library.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.0255048Z Indexing .pio/build/esp32s3-bench/libfad/libDHT sensor library.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.0434826Z Compiling .pio/build/esp32s3-bench/libdd5/ESP32QRCodeReader/quirc/version_db.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1751588Z lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp: In member function 'QRCodeReaderSetupErr ESP32QRCodeReader::setup()':
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1773246Z lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:49:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_sda' is deprecated: please use pin_sccb_sda instead [-Wdeprecated-declarations]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1775295Z    cameraConfig.pin_sscb_sda = pins.SIOD_GPIO_NUM;
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1776080Z                 ^~~~~~~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1776909Z In file included from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.h:6,
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1777928Z                  from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:1:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1779866Z /home/runner/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp32-camera/driver/include/esp_camera.h:123:87: note: declared here
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1782001Z          int pin_sscb_sda __attribute__((deprecated("please use pin_sccb_sda instead")));           /*!< GPIO pin for camera SDA line (legacy name) */
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1783361Z                                                                                        ^
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1785304Z lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:49:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_sda' is deprecated: please use pin_sccb_sda instead [-Wdeprecated-declarations]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1786998Z    cameraConfig.pin_sscb_sda = pins.SIOD_GPIO_NUM;
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1787708Z                 ^~~~~~~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1788485Z In file included from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.h:6,
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1789491Z                  from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:1:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1791133Z /home/runner/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp32-camera/driver/include/esp_camera.h:123:87: note: declared here
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1793209Z          int pin_sscb_sda __attribute__((deprecated("please use pin_sccb_sda instead")));           /*!< GPIO pin for camera SDA line (legacy name) */
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1794542Z                                                                                        ^
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1796443Z lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:49:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_sda' is deprecated: please use pin_sccb_sda instead [-Wdeprecated-declarations]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1798158Z    cameraConfig.pin_sscb_sda = pins.SIOD_GPIO_NUM;
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1798881Z                 ^~~~~~~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1799655Z In file included from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.h:6,
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1800642Z                  from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:1:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1802252Z /home/runner/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp32-camera/driver/include/esp_camera.h:123:87: note: declared here
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1804353Z          int pin_sscb_sda __attribute__((deprecated("please use pin_sccb_sda instead")));           /*!< GPIO pin for camera SDA line (legacy name) */
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1805876Z                                                                                        ^
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1807574Z lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:50:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_scl' is deprecated: please use pin_sccb_scl instead [-Wdeprecated-declarations]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1809289Z    cameraConfig.pin_sscb_scl = pins.SIOC_GPIO_NUM;
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1810021Z                 ^~~~~~~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1810794Z In file included from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.h:6,
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1811801Z                  from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:1:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1813434Z /home/runner/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp32-camera/driver/include/esp_camera.h:127:87: note: declared here
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1815643Z          int pin_sscb_scl __attribute__((deprecated("please use pin_sccb_scl instead")));           /*!< GPIO pin for camera SCL line (legacy name) */
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1817223Z                                                                                        ^
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1818939Z lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:50:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_scl' is deprecated: please use pin_sccb_scl instead [-Wdeprecated-declarations]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1820626Z    cameraConfig.pin_sscb_scl = pins.SIOC_GPIO_NUM;
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1821337Z                 ^~~~~~~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1822092Z In file included from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.h:6,
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1823269Z                  from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:1:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1824843Z /home/runner/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp32-camera/driver/include/esp_camera.h:127:87: note: declared here
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1827176Z          int pin_sscb_scl __attribute__((deprecated("please use pin_sccb_scl instead")));           /*!< GPIO pin for camera SCL line (legacy name) */
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1828557Z                                                                                        ^
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1830360Z lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:50:16: warning: 'camera_config_t::<unnamed union>::pin_sscb_scl' is deprecated: please use pin_sccb_scl instead [-Wdeprecated-declarations]
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1832122Z    cameraConfig.pin_sscb_scl = pins.SIOC_GPIO_NUM;
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1832841Z                 ^~~~~~~~~~~~
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1833604Z In file included from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.h:6,
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1834625Z                  from lib/ESP32QRCodeReader/src/ESP32QRCodeReader.cpp:1:
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1836449Z /home/runner/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/esp32-camera/driver/include/esp_camera.h:127:87: note: declared here
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1838563Z          int pin_sscb_scl __attribute__((deprecated("please use pin_sccb_scl instead")));           /*!< GPIO pin for camera SCL line (legacy name) */
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.1839921Z                                                                                        ^
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.2717976Z Compiling .pio/build/esp32s3-bench/lib989/WiFi/WiFi.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.2906110Z Compiling .pio/build/esp32s3-bench/lib989/WiFi/WiFiAP.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.3246012Z Compiling .pio/build/esp32s3-bench/lib989/WiFi/WiFiClient.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.4064390Z Archiving .pio/build/esp32s3-bench/libdd5/libESP32QRCodeReader.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.4175639Z Indexing .pio/build/esp32s3-bench/libdd5/libESP32QRCodeReader.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:44.4425977Z Compiling .pio/build/esp32s3-bench/lib989/WiFi/WiFiGeneric.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:45.3201826Z Compiling .pio/build/esp32s3-bench/lib989/WiFi/WiFiMulti.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:45.4466243Z Compiling .pio/build/esp32s3-bench/lib989/WiFi/WiFiSTA.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:45.7273908Z Compiling .pio/build/esp32s3-bench/lib989/WiFi/WiFiScan.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:46.1636253Z Compiling .pio/build/esp32s3-bench/lib989/WiFi/WiFiServer.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:46.4652506Z Compiling .pio/build/esp32s3-bench/lib989/WiFi/WiFiUdp.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:46.7786284Z Compiling .pio/build/esp32s3-bench/lib0a1/monocypher/monocypher-ed25519.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:46.8356102Z Compiling .pio/build/esp32s3-bench/lib0a1/monocypher/monocypher.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:47.0466356Z Compiling .pio/build/esp32s3-bench/libf8e/ostium_core/base64url.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:47.2606364Z Compiling .pio/build/esp32s3-bench/libf8e/ostium_core/body_reader.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:47.5504727Z Compiling .pio/build/esp32s3-bench/libf8e/ostium_core/command_processor.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:47.5665769Z Archiving .pio/build/esp32s3-bench/lib989/libWiFi.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:47.5815836Z Indexing .pio/build/esp32s3-bench/lib989/libWiFi.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:47.6146117Z Compiling .pio/build/esp32s3-bench/libf8e/ostium_core/duplicate_list.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:47.8056115Z Compiling .pio/build/esp32s3-bench/libf8e/ostium_core/ed25519.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:48.5050656Z Compiling .pio/build/esp32s3-bench/libf8e/ostium_core/event.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:48.5210814Z Compiling .pio/build/esp32s3-bench/libf8e/ostium_core/event_outbox.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:48.5299456Z Compiling .pio/build/esp32s3-bench/libf8e/ostium_core/lock_controller.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:49.1876292Z Compiling .pio/build/esp32s3-bench/libf8e/ostium_core/poll_parser.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:49.4396377Z Compiling .pio/build/esp32s3-bench/libf8e/ostium_core/poll_scheduler.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:49.5026292Z Compiling .pio/build/esp32s3-bench/libf8e/ostium_core/qr_access.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:50.3390496Z Compiling .pio/build/esp32s3-bench/libf8e/ostium_core/qr_event.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:50.6026494Z Archiving .pio/build/esp32s3-bench/lib0a1/libmonocypher.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:50.6116355Z Indexing .pio/build/esp32s3-bench/lib0a1/libmonocypher.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:50.6329700Z Compiling .pio/build/esp32s3-bench/libf8e/ostium_core/qr_self_test.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:50.8976231Z Compiling .pio/build/esp32s3-bench/libf8e/ostium_core/qr_token.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:51.2586280Z Compiling .pio/build/esp32s3-bench/libf8e/ostium_core/serial_scan.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:51.7694202Z Compiling .pio/build/esp32s3-bench/libf8e/ostium_core/server_clock.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:51.7871217Z Compiling .pio/build/esp32s3-bench/libf8e/ostium_core/timestamp.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:52.4626145Z Compiling .pio/build/esp32s3-bench/lib552/WiFiClientSecure/WiFiClientSecure.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:52.4849017Z Compiling .pio/build/esp32s3-bench/lib552/WiFiClientSecure/esp_crt_bundle.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:52.5106197Z Compiling .pio/build/esp32s3-bench/lib552/WiFiClientSecure/ssl_client.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:52.9518188Z Compiling .pio/build/esp32s3-bench/lib67b/HTTPClient/HTTPClient.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:53.2358959Z Archiving .pio/build/esp32s3-bench/libf8e/libostium_core.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:53.2655909Z Indexing .pio/build/esp32s3-bench/libf8e/libostium_core.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:53.5246161Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/Esp.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:53.6836200Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/FirmwareMSC.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:53.8614435Z Archiving .pio/build/esp32s3-bench/lib552/libWiFiClientSecure.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:53.8727869Z Indexing .pio/build/esp32s3-bench/lib552/libWiFiClientSecure.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:53.8972610Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/FunctionalInterrupt.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:54.2296236Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/HWCDC.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:54.7136140Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/HardwareSerial.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:54.8896178Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/IPAddress.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:54.9346115Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/IPv6Address.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:54.9868570Z Archiving .pio/build/esp32s3-bench/lib67b/libHTTPClient.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:54.9967213Z Indexing .pio/build/esp32s3-bench/lib67b/libHTTPClient.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:55.0226242Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/MD5Builder.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:55.8602128Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/Print.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:55.8807519Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/Stream.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:55.9139686Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/StreamString.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:56.0196053Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/Tone.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:56.9345843Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/USB.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:56.9527804Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/USBCDC.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:56.9687598Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/USBMSC.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:56.9826114Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/WMath.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:57.0994123Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/WString.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:57.4290869Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/base64.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:57.5179455Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/cbuf.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:57.5906765Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-adc.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:57.6588124Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-bt.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:57.8126136Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-cpu.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:57.8335992Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-dac.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:57.9976532Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-gpio.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:58.0282276Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-i2c-slave.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:58.2456076Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-i2c.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:58.4025511Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-ledc.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:58.4421047Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-matrix.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:58.4789597Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-misc.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:58.5069073Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-psram.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:58.5920633Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-rgb-led.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:58.6186668Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-rmt.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:58.6601284Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-sigmadelta.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:58.7400891Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-spi.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:58.7615779Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-time.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:58.8315338Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-timer.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:58.9688078Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-tinyusb.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:58.9950289Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-touch.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:59.0746231Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/esp32-hal-uart.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:59.1966272Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/firmware_msc_fat.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:59.2376847Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/libb64/cdecode.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:59.3210685Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/libb64/cencode.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:59.3645971Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/main.cpp.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:59.3832003Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/stdlib_noniso.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:59.4065913Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/wiring_pulse.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:08:59.5312978Z Compiling .pio/build/esp32s3-bench/FrameworkArduino/wiring_shift.c.o
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:00.0286119Z Archiving .pio/build/esp32s3-bench/libFrameworkArduino.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:00.0483272Z Indexing .pio/build/esp32s3-bench/libFrameworkArduino.a
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:00.0999103Z Linking .pio/build/esp32s3-bench/firmware.elf
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.6530488Z Retrieving maximum program size .pio/build/esp32s3-bench/firmware.elf
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.6532352Z Checking size .pio/build/esp32s3-bench/firmware.elf
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.6568364Z Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.6569180Z RAM:   [==        ]  15.8% (used 51868 bytes from 327680 bytes)
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.6569683Z Flash: [===       ]  31.2% (used 1041149 bytes from 3342336 bytes)
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.6582263Z Building .pio/build/esp32s3-bench/firmware.bin with action:
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.6583572Z   "$PYTHONEXE" "$OBJCOPY" --chip esp32s3 elf2image --flash_mode ${__get_board_flash_mode(__env__)} --flash_freq ${__get_board_f_image(__env__)} --flash_size 8MB --elf-sha256-offset 0xb0 -o $TARGET $SOURCES
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.6585123Z Building .pio/build/esp32s3-bench/firmware.bin
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.7761277Z esptool.py v4.9.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.7761654Z Creating esp32s3 image...
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.7761993Z Merged 2 ELF sections
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.7762302Z Successfully created esp32s3 image.
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9392261Z ========================= [SUCCESS] Took 25.79 seconds =========================
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9392886Z 
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9397232Z Environment    Status    Duration
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9397797Z -------------  --------  ------------
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9398374Z esp32s3-bench  SUCCESS   00:00:25.794
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9399083Z ========================= 1 succeeded in 00:00:25.794 =========================
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9759199Z ##[group]Run hardware/esp32/tools/package_firmware.sh dist "r$GITHUB_RUN_NUMBER" "$GITHUB_SHA"
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9760714Z [36;1mhardware/esp32/tools/package_firmware.sh dist "r$GITHUB_RUN_NUMBER" "$GITHUB_SHA"[0m
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9811218Z shell: /usr/bin/bash -e {0}
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9811666Z env:
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9812069Z   PYTHON_VERSION: 3.12
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9812504Z   PLATFORMIO_VERSION: 6.2.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9812939Z   NODE_VERSION: 22
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9813444Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9814249Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib/pkgconfig
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9815329Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9816047Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9816737Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9817509Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:03.9818122Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1557755Z packaged r21 into dist
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1707163Z ##[group]Run actions/upload-artifact@v7
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1707764Z with:
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1708127Z   name: firmware-release
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1708560Z   path: dist/
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1708929Z   if-no-files-found: error
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1709365Z   compression-level: 6
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1709768Z   overwrite: false
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1710169Z   include-hidden-files: false
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1710634Z   archive: true
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1710978Z env:
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1711316Z   PYTHON_VERSION: 3.12
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1711721Z   PLATFORMIO_VERSION: 6.2.0
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1712151Z   NODE_VERSION: 22
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1712632Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1713421Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib/pkgconfig
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1714221Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1715270Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1716045Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1716749Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.1717328Z ##[endgroup]
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.3246248Z With the provided path, there will be 4 files uploaded
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.3253022Z Artifact name is valid!
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.3253511Z Root directory input is valid!
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.5128910Z Uploading artifact: firmware-release.zip
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:06.5170341Z Beginning upload of artifact content to blob storage
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:07.0765294Z Uploaded bytes 8388608
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:07.3981922Z Uploaded bytes 15654863
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:07.4091197Z Finished uploading artifact content to blob storage!
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:07.4092498Z SHA256 digest of uploaded artifact is aa94837b5a09e279b0694ba298ccc6d7fbd69860eb03cc425b270bfc20b2e81a
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:07.4093724Z Finalizing artifact upload
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:07.7487640Z Artifact firmware-release successfully finalized. Artifact ID 14988011143
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:07.7489142Z Artifact firmware-release has been successfully uploaded! Final size is 15654863 bytes. Artifact ID is 14988011143
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:07.7492552Z Artifact download URL: https://github.com/ostium-org/ostium/actions/runs/45537793630/artifacts/14988011143
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:07.8270155Z Post job cleanup.
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:07.9539996Z Cache hit occurred on the primary key platformio-esp32s3-6.2.0-a19738b8aec1c3c9526ac853766f64f33d6f1229d5ea9b712caafb69335edabe, not saving cache.
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:07.9670287Z Post job cleanup.
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.1097094Z Post job cleanup.
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2012724Z [command]/usr/bin/git version
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2068132Z git version 2.56.1
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2109713Z Temporarily overriding HOME='/home/runner/work/_temp/17982e0f-61f8-474a-930d-f37ad0ec50f5' before making global git config changes
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2111455Z Adding repository directory to the temporary git global config as a safe directory
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2116635Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ostium/ostium
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2155101Z Removing SSH command configuration
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2162299Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2206776Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2516888Z Removing HTTP extra header
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2524415Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2570618Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2897064Z Removing includeIf entries pointing to credentials config files
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2907349Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2932822Z includeif.gitdir:/home/runner/work/ostium/ostium/.git.path
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2933570Z includeif.gitdir:/home/runner/work/ostium/ostium/.git/worktrees/*.path
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2934420Z includeif.gitdir:/github/workspace/.git.path
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2935369Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2942497Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/ostium/ostium/.git.path
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2967390Z /home/runner/work/_temp/git-credentials-a263a3ff-01ad-4992-a857-86e1bb106c9a.config
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.2978209Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/ostium/ostium/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-a263a3ff\-01ad\-4992\-a857\-86e1bb106c9a\.config
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.3019075Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/ostium/ostium/.git/worktrees/*.path
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.3042707Z /home/runner/work/_temp/git-credentials-a263a3ff-01ad-4992-a857-86e1bb106c9a.config
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.3067215Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/ostium/ostium/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-a263a3ff\-01ad\-4992\-a857\-86e1bb106c9a\.config
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.3099609Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.3126214Z /github/runner_temp/git-credentials-a263a3ff-01ad-4992-a857-86e1bb106c9a.config
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.3135538Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-a263a3ff\-01ad\-4992\-a857\-86e1bb106c9a\.config
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.3173001Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.3198897Z /github/runner_temp/git-credentials-a263a3ff-01ad-4992-a857-86e1bb106c9a.config
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.3207064Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-a263a3ff\-01ad\-4992\-a857\-86e1bb106c9a\.config
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.3244797Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.3541603Z Removing credentials config '/home/runner/work/_temp/git-credentials-a263a3ff-01ad-4992-a857-86e1bb106c9a.config'
+firmware-build	UNKNOWN STEP	2026-11-25T03:09:08.3706271Z Cleaning up orphan processes

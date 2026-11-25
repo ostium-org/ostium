@@ -1,0 +1,107 @@
+firmware-release	UNKNOWN STEP	﻿2026-11-25T03:09:50.2201715Z Current runner version: '2.338.2'
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2228003Z ##[group]Runner Image Provisioner
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2228972Z Hosted Compute Agent
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2229567Z Version: 20261111.635
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2230237Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2231050Z Build Date: 2026-11-11T01:49:01Z
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2231735Z Worker ID: {bf289434-f5df-47d4-9ea9-fbd2c8ea5238}
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2232499Z Region: westus2
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2233106Z Cloud: Azure
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2233703Z ##[endgroup]
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2235397Z ##[group]Operating System
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2236100Z Ubuntu
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2236711Z 26.04.1
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2237222Z LTS
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2237714Z ##[endgroup]
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2238400Z ##[group]Runner Image
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2238993Z Image: ubuntu-26.04
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2239593Z Version: 20261116.202.1
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2240846Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261116.202/images/ubuntu/Ubuntu2604-Readme.md
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2242485Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261116.202
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2243451Z ##[endgroup]
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2245147Z ##[group]GITHUB_TOKEN Permissions
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2247303Z Contents: write
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2248001Z Metadata: read
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2248602Z ##[endgroup]
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2250605Z Secret source: Actions
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2251741Z Cache mode: write
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2252466Z Prepare workflow directory
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2694516Z Prepare all required actions
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.2743340Z Getting action download info
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.6059373Z Download action repository 'actions/download-artifact@v8' (SHA:9000827ccba6bdab643e8b6fd33ac0654aef8333)
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:50.9911050Z Complete job name: firmware-release
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:51.0767450Z ##[group]Run actions/download-artifact@v8
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:51.0768399Z with:
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:51.0768856Z   name: firmware-release
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:51.0769376Z   path: dist
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:51.0769820Z   merge-multiple: false
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:51.0770317Z   repository: ostium-org/ostium
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:51.0770831Z   run-id: 45537793630
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:51.0771299Z   skip-decompress: false
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:51.0771785Z   digest-mismatch: error
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:51.0772436Z env:
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:51.0772859Z   PYTHON_VERSION: 3.12
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:51.0773342Z   PLATFORMIO_VERSION: 6.2.0
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:51.0773833Z   NODE_VERSION: 22
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:51.0774267Z ##[endgroup]
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:51.4563900Z Downloading single artifact
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:51.7137722Z Preparing to download the following artifacts:
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:51.7139878Z - firmware-release (ID: 14988011143, Size: 15654863, Expected Digest: sha256:aa94837b5a09e279b0694ba298ccc6d7fbd69860eb03cc425b270bfc20b2e81a)
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:52.2128623Z Redirecting to blob download url: https://productionresultssa19.blob.core.windows.net/actions-results/dfaf84f1-00d4-4a4d-8db8-55581f9f58f4/workflow-job-run-c2977301-36b5-562e-bb62-13089ff2321f/artifacts/0d12a6b8a1c9fc1b65e0738736aad2d474c37c6f790907436801289c7fc42c41.zip
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:52.2136195Z Starting download of artifact to: /home/runner/work/ostium/ostium/dist
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:52.5463209Z (node:2888) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:52.5465686Z (Use `node --trace-deprecation ...` to show where the warning was created)
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6255271Z SHA256 digest of downloaded artifact is aa94837b5a09e279b0694ba298ccc6d7fbd69860eb03cc425b270bfc20b2e81a
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6256568Z Artifact download completed successfully.
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6286079Z Total of 1 artifact(s) downloaded
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6380870Z Download artifact has finished successfully
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6524626Z ##[group]Run actions/download-artifact@v8
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6525303Z with:
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6525580Z   name: firmware-test-report
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6526131Z   path: dist
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6526399Z   merge-multiple: false
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6526693Z   repository: ostium-org/ostium
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6526995Z   run-id: 45537793630
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6527293Z   skip-decompress: false
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6527598Z   digest-mismatch: error
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6527866Z env:
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6528103Z   PYTHON_VERSION: 3.12
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6528382Z   PLATFORMIO_VERSION: 6.2.0
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6528667Z   NODE_VERSION: 22
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.6528923Z ##[endgroup]
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:53.7956778Z Downloading single artifact
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.0671508Z Preparing to download the following artifacts:
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.0673212Z - firmware-test-report (ID: 14987512573, Size: 2566, Expected Digest: sha256:14018d9468c6f9c6bf3fdd6422933e6c6f671c006d18f7a0ec224c0017a8a38c)
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.5792175Z Redirecting to blob download url: https://productionresultssa19.blob.core.windows.net/actions-results/dfaf84f1-00d4-4a4d-8db8-55581f9f58f4/workflow-job-run-6ba387d2-cff6-5b71-a3fa-a8e2ea11f060/artifacts/032aab1af840d5103a5dfeb06c5b3bad86dd05d4b9325bb29b8ddee4fce0a46b.zip
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.5795029Z Starting download of artifact to: /home/runner/work/ostium/ostium/dist
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8679004Z (node:2900) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8680858Z (Use `node --trace-deprecation ...` to show where the warning was created)
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8723343Z SHA256 digest of downloaded artifact is 14018d9468c6f9c6bf3fdd6422933e6c6f671c006d18f7a0ec224c0017a8a38c
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8724491Z Artifact download completed successfully.
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8736649Z Total of 1 artifact(s) downloaded
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8737420Z Download artifact has finished successfully
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8901306Z ##[group]Run tag="firmware-r$GITHUB_RUN_NUMBER"
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8901823Z [36;1mtag="firmware-r$GITHUB_RUN_NUMBER"[0m
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8902178Z [36;1massets=(dist/*.zip dist/SHA256SUMS)[0m
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8902664Z [36;1mif [ -f dist/firmware-tests.xml ]; then assets+=(dist/firmware-tests.xml); fi[0m
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8903175Z [36;1mif gh release view "$tag" >/dev/null 2>&1; then[0m
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8903580Z [36;1m  gh release upload "$tag" "${assets[@]}" --clobber[0m
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8903915Z [36;1melse[0m
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8904275Z [36;1m  # GitHub marks a newly published release Latest unless told not to.[0m
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8904797Z [36;1m  newest=$(gh release list --exclude-drafts --limit 1000 --json tagName \[0m
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8905893Z [36;1m    --jq '[.[].tagName | select(startswith("firmware-r")) | ltrimstr("firmware-r") | tonumber?] | max // 0')[0m
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8906408Z [36;1m  latest=true[0m
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8906777Z [36;1m  if [ "$newest" -gt "$GITHUB_RUN_NUMBER" ]; then latest=false; fi[0m
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8907297Z [36;1m  gh release create "$tag" "${assets[@]}" --target "$GITHUB_SHA" --latest="$latest" \[0m
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8907914Z [36;1m    --title "Door firmware r$GITHUB_RUN_NUMBER" --notes-file dist/release-notes.md[0m
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8908341Z [36;1mfi[0m
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8946454Z shell: /usr/bin/bash -e {0}
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8946733Z env:
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8946966Z   PYTHON_VERSION: 3.12
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8947213Z   PLATFORMIO_VERSION: 6.2.0
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8947451Z   NODE_VERSION: 22
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8950208Z   GH_TOKEN: ***
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8950448Z   GH_REPO: ostium-org/ostium
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:54.8950707Z ##[endgroup]
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:59.2266863Z https://github.com/ostium-org/ostium/releases/tag/firmware-r21
+firmware-release	UNKNOWN STEP	2026-11-25T03:09:59.2359091Z Cleaning up orphan processes
